@@ -10,28 +10,16 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// --------------------------------------------------------------------------
-// DOCTOR ROUTES
-// --------------------------------------------------------------------------
 Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->group(function () {
-    Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('dashboard');
-    // We will add routes for /prescribe and /analytics here
+    Route::get('/dashboard', [DoctorController::class, 'index'])->name('dashboard');
 });
 
-// --------------------------------------------------------------------------
-// PHARMACIST ROUTES
-// --------------------------------------------------------------------------
 Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('pharmacist.')->group(function () {
-    Route::get('/dashboard', [PharmacistController::class, 'dashboard'])->name('dashboard');
-    // Scanner routes will go here
+    Route::get('/dashboard', [PharmacistController::class, 'index'])->name('dashboard');
 });
 
-// --------------------------------------------------------------------------
-// PATIENT ROUTES
-// --------------------------------------------------------------------------
 Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')->group(function () {
-    Route::get('/dashboard', [PatientController::class, 'dashboard'])->name('dashboard');
-    // QR viewing routes will go here
+    Route::get('/dashboard', [PatientController::class, 'index'])->name('dashboard');
 });
 
 Route::middleware('auth')->group(function () {
