@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 
 class DoctorController extends Controller
 {
-    //
-    return view('doctor.dashboard');
+    public function index()
+    {
+        return view('doctor.dashboard');
+    }
 }
