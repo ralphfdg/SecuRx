@@ -3,27 +3,46 @@
 @section('header', 'My Prescriptions')
 
 @section('content')
-<div class="mb-6">
-    <h2 class="text-lg font-bold text-gray-800">Active SecuRx Tokens</h2>
-    <p class="text-sm text-gray-500">Present these secure QR codes to your pharmacist.</p>
-</div>
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('Patient Dashboard - My Prescriptions') }}
+        </h2>
+    </x-slot>
 
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-        <div class="bg-blue-50 p-4 border-b border-gray-200 text-center">
-            <div class="w-32 h-32 bg-white border-2 border-dashed border-gray-300 mx-auto flex items-center justify-center text-xs text-gray-400">
-                [ QR Code Space ]
-            </div>
-        </div>
-        <div class="p-4">
-            <h3 class="font-bold text-gray-800 text-lg">Amoxicillin 500mg</h3>
-            <p class="text-sm text-gray-600 mt-1">Take 1 capsule every 8 hours for 7 days.</p>
-            
-            <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between text-xs">
-                <span class="text-gray-500">Dr. Gregory House</span>
-                <span class="font-semibold text-blue-600">Valid</span>
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6 text-center">
+
+                @if($latestPrescription)
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2">Active Prescription</h3>
+                    <p class="text-gray-600 mb-8">Present this secure QR code to your pharmacist to verify your medication.</p>
+
+                    <div class="flex justify-center mb-8">
+                        <div class="p-4 bg-white border-4 border-blue-500 rounded-lg shadow-lg inline-block">
+                            {!! \SimpleSoftwareIO\QrCode\Facades\QrCode::size(250)->generate($latestPrescription->qr_token) !!}
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 rounded-lg p-6 max-w-md mx-auto text-left border border-gray-200 shadow-inner">
+                        <p class="mb-2"><strong class="text-gray-700">Medication:</strong> {{ $latestPrescription->medication->name }} ({{ $latestPrescription->medication->dosage_form }})</p>
+                        <p class="mb-2"><strong class="text-gray-700">Instructions:</strong> {{ $latestPrescription->dosage_instructions }}</p>
+                        <p class="mb-2"><strong class="text-gray-700">Prescribed by:</strong> Dr. {{ $latestPrescription->doctor->last_name }}</p>
+                        <p><strong class="text-gray-700">Refills Remaining:</strong> {{ $latestPrescription->max_refills - $latestPrescription->refills_used }}</p>
+                    </div>
+
+                @else
+                    <div class="py-16">
+                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <h3 class="text-lg font-medium text-gray-900">No Active Prescriptions</h3>
+                        <p class="mt-1 text-gray-500">You currently do not have any active prescriptions on file.</p>
+                    </div>
+                @endif
+
             </div>
         </div>
     </div>
-</div>
+</x-app-layout>
 @endsection

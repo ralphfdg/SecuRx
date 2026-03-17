@@ -50,5 +50,17 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'role' => 'patient',
         ]);
+
+        $medications = [
+            ['name' => 'Amoxicillin', 'dosage_form' => '500mg Capsule'],
+            ['name' => 'Lisinopril', 'dosage_form' => '10mg Tablet'],
+            ['name' => 'Metformin', 'dosage_form' => '500mg Tablet'],
+            ['name' => 'Ibuprofen', 'dosage_form' => '400mg Tablet'],
+            ['name' => 'Omeprazole', 'dosage_form' => '20mg Capsule'],
+        ];
+
+        foreach ($medications as $med) {
+            \App\Models\Medication::create($med);
+        }
     }
 }
