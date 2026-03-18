@@ -46,7 +46,7 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
 // PHARMACIST ROUTES
 // --------------------------------------------------------------------------
 Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('pharmacist.')->group(function () {
-    Route::get('/dashboard', [PharmacistController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [PharmacistController::class, 'dashboard'])->name('dashboard');
     // API Endpoint for the Javascript Webcam Scanner
     Route::post('/verify-qr', [PharmacistController::class, 'verifyQr'])->name('verify');
     // The Route to officially log the transaction
