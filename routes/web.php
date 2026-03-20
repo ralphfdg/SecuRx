@@ -5,27 +5,35 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\PharmacistController;
 use App\Http\Controllers\PatientController;
-
-Route::get('/', function () {
-    return view('welcome');
-});
+use App\Http\Controllers\AdminController;
 
 // --------------------------------------------------------------------------
-// THE TRAFFIC DIRECTOR (Fixes Breeze Login & Navigation)
+// PUBLIC & INFORMATIONAL PAGES
+// --------------------------------------------------------------------------
+Route::get('/', function () { return view('public.home'); })->name('home');
+Route::get('/about', function () { return view('public.about'); })->name('about');
+Route::get('/help-center', function () { return view('public.help'); })->name('help');
+Route::get('/contact', function () { return view('public.contact'); })->name('contact');
+Route::get('/privacy-policy', function () { return view('public.privacy'); })->name('privacy');
+Route::get('/terms', function () { return view('public.terms'); })->name('terms');
+Route::get('/accessibility', function () { return view('public.accessibility'); })->name('accessibility');
+
+// --------------------------------------------------------------------------
+// THE TRAFFIC DIRECTOR (Updated for Admin)
 // --------------------------------------------------------------------------
 Route::get('/dashboard', function () {
-    /** @var \App\Models\User|null $user */
     /** @disregard */
     $user = auth()->user();
     
-    // IDE Fix: Prove to VS Code that the user is definitely not null
     if (!$user) {
         return redirect('/login');
     }
 
     $role = $user->role;
     
-    if ($role === 'doctor') {
+    if ($role === 'admin') {
+        return redirect()->route('admin.dashboard'); 
+    } elseif ($role === 'doctor') {
         return redirect()->route('doctor.dashboard');
     } elseif ($role === 'pharmacist') {
         return redirect()->route('pharmacist.dashboard');
@@ -33,6 +41,14 @@ Route::get('/dashboard', function () {
         return redirect()->route('patient.dashboard');
     }
 })->middleware(['auth'])->name('dashboard');
+
+// --------------------------------------------------------------------------
+// ADMIN ROUTES
+// --------------------------------------------------------------------------
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+    Route::post('/medications', [App\Http\Controllers\AdminController::class, 'storeMedication'])->name('medications.store');
+});
 
 // --------------------------------------------------------------------------
 // Doctor ROUTES

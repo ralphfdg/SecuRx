@@ -62,5 +62,16 @@ class DatabaseSeeder extends Seeder
         foreach ($medications as $med) {
             \App\Models\Medication::create($med);
         }
+        
+// 1. Create the Master Admin Account (Bypassing the factory)
+        \App\Models\User::create([
+            'first_name' => 'System',
+            'last_name' => 'Administrator',
+            'username' => 'adminOne',
+            'email' => 'admin@securx.test',
+            'contact_number' => '09191238567',
+            'password' => bcrypt('password'),
+            'role' => 'admin',
+        ]);
     }
 }
