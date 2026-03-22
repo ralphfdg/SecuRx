@@ -139,15 +139,36 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     // Route::post('/settings', [DoctorController::class, 'updateSettings'])->name('settings.update');
 });
 
-// --------------------------------------------------------------------------
-// PHARMACIST ROUTES
-// --------------------------------------------------------------------------
-Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('pharmacist.')->group(function () {
-    Route::get('/dashboard', [PharmacistController::class, 'dashboard'])->name('dashboard');
-    // API Endpoint for the Javascript Webcam Scanner
-    Route::post('/verify-qr', [PharmacistController::class, 'verifyQr'])->name('verify');
-    // The Route to officially log the transaction
-    Route::post('/dispense', [PharmacistController::class, 'dispense'])->name('dispense');
+/*
+|--------------------------------------------------------------------------
+| PHARMACIST PORTAL ROUTES
+|--------------------------------------------------------------------------
+*/
+/*
+|--------------------------------------------------------------------------
+| 6. PHARMACIST PORTAL ROUTES
+|--------------------------------------------------------------------------
+*/
+Route::prefix('pharmacist')->name('pharmacist.')->group(function () {
+    Route::get('/dashboard', function () { 
+        return view('pharmacist.dashboard'); 
+    })->name('dashboard');
+    
+    Route::get('/scanner', function () { 
+        return view('pharmacist.scanner'); 
+    })->name('scanner');
+    
+    Route::get('/dispense', function () { 
+        return view('pharmacist.dispense'); 
+    })->name('dispense');
+    
+    Route::get('/logs', function () { 
+        return view('pharmacist.logs'); 
+    })->name('logs');
+    
+    Route::get('/settings', function () { 
+        return view('pharmacist.settings'); 
+    })->name('settings');
 });
 
 /*
