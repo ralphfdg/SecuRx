@@ -18,6 +18,7 @@ Route::get('/privacy-policy', function () { return view('public.privacy'); })->n
 Route::get('/terms', function () { return view('public.terms'); })->name('terms');
 Route::get('/accessibility', function () { return view('public.accessibility'); })->name('accessibility');
 
+
 // --------------------------------------------------------------------------
 // THE TRAFFIC DIRECTOR (Updated for Admin)
 // --------------------------------------------------------------------------
@@ -41,6 +42,8 @@ Route::get('/dashboard', function () {
         return redirect()->route('patient.dashboard');
     }
 })->middleware(['auth'])->name('dashboard');
+
+
 
 // --------------------------------------------------------------------------
 // ADMIN ROUTES
