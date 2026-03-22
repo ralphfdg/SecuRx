@@ -10,14 +10,15 @@ use App\Http\Controllers\AdminController;
 // --------------------------------------------------------------------------
 // PUBLIC & INFORMATIONAL PAGES
 // --------------------------------------------------------------------------
-Route::get('/', function () { return view('public.home'); })->name('home');
+Route::get('/', function () { return view('public.home'); })->name('home'); // Now Patient-focused
+Route::get('/for-doctors', function () { return view('public.doctors'); })->name('doctors.home');
+Route::get('/for-pharmacies', function () { return view('public.pharmacies'); })->name('pharmacies.home');
 Route::get('/about', function () { return view('public.about'); })->name('about');
 Route::get('/help-center', function () { return view('public.help'); })->name('help');
 Route::get('/contact', function () { return view('public.contact'); })->name('contact');
 Route::get('/privacy-policy', function () { return view('public.privacy'); })->name('privacy');
 Route::get('/terms', function () { return view('public.terms'); })->name('terms');
 Route::get('/accessibility', function () { return view('public.accessibility'); })->name('accessibility');
-
 
 // --------------------------------------------------------------------------
 // THE TRAFFIC DIRECTOR (Updated for Admin)

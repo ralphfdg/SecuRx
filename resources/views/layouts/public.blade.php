@@ -11,17 +11,31 @@
     <div class="absolute top-[-10%] left-[-5%] w-96 h-96 bg-securx-cyan/20 rounded-full blur-[100px] pointer-events-none z-0"></div>
     <div class="absolute bottom-[10%] right-[-5%] w-[500px] h-[500px] bg-securx-gold/15 rounded-full blur-[120px] pointer-events-none z-0"></div>
 
-    <nav class="relative z-10 p-6 max-w-7xl mx-auto w-full flex justify-between items-center">
-        <a href="{{ route('home') }}" class="text-3xl font-extrabold tracking-tight flex items-center gap-1 hover:opacity-80 transition">
-            <span class="text-securx-cyan">Secu</span><span class="text-securx-navy">Rx</span>
-        </a>
-        <div class="hidden md:flex gap-8 items-center text-sm font-semibold text-gray-600">
-            <a href="{{ route('home') }}" class="hover:text-securx-cyan transition">Home</a>
-            <a href="{{ route('about') }}" class="hover:text-securx-cyan transition">About</a>
-            <a href="{{ route('contact') }}" class="text-securx-cyan transition">Contact</a>
-            <a href="{{ route('login') }}" class="glass-btn-secondary ml-4 border-securx-navy/20">Portal Login</a>
-        </div>
-    </nav>
+    <header class="relative z-10 w-full border-b border-gray-200/50 bg-white/40 backdrop-blur-md">
+        <nav class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            
+            <a href="{{ route('home') }}" class="flex items-center gap-2 group">
+                <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo" class="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105">    
+            </a>
+
+            <div class="hidden lg:flex gap-8 items-center text-sm font-semibold text-gray-600">
+                <a href="{{ route('about') }}" class="hover:text-securx-cyan transition">About</a>
+                <a href="{{ route('doctors.home') }}" class="hover:text-securx-cyan transition">For Doctor</a>
+                <a href="{{ route('pharmacies.home') }}" class="hover:text-securx-cyan transition">For Pharmacy</a>
+                <a href="{{ route('contact') }}" class="hover:text-securx-cyan transition">Contact Us</a>
+            </div>
+
+            <div class="hidden lg:flex gap-6 items-center">
+                <a href="{{ route('login') }}" class="text-sm font-bold text-securx-navy hover:text-securx-cyan transition">
+                    Login
+                </a>
+                <a href="{{ route('register') }}" class="glass-btn-primary text-sm px-6 py-2.5">
+                    Register
+                </a>
+            </div>
+
+        </nav>
+    </header>
 
     <main class="relative z-10 flex-grow w-full">
         @yield('content')
