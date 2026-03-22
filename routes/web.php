@@ -91,11 +91,12 @@ Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('phar
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')->group(function () {
-    Route::get('/dashboard', [PatientController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard', [PatientController::class, 'index'])->name('dashboard');
     Route::get('/qr-live', function () { return view('patient.qr-live'); })->name('qr-live');
     Route::get('/qr-print', function () { return view('patient.qr-print'); })->name('qr-print');
     Route::get('/medical-profile', function () { return view('patient.medical-profile'); })->name('profile.medical');
     Route::get('/data-consent', function () { return view('patient.data-consent'); })->name('consent');
+    Route::get('/settings', function () { return view('patient.settings'); })->name('settings');
 });
 
 /*

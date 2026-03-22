@@ -23,7 +23,7 @@
                 <div class="absolute top-0 right-0 w-32 h-32 bg-securx-cyan/5 rounded-bl-full"></div>
                 <div class="absolute bottom-0 left-0 w-24 h-24 bg-securx-gold/10 rounded-tr-full"></div>
 
-                <h2 class="text-2xl font-extrabold text-securx-navy mb-2 relative z-10">Ralph De Guzman</h2>
+                <h2 class="text-2xl font-extrabold text-securx-navy mb-2 relative z-10">John Doe</h2>
                 <p class="text-gray-500 font-mono text-sm mb-8 relative z-10">UUID: 8F92A-4B7C1-9D2E3</p>
 
                 <div class="bg-white p-4 rounded-2xl shadow-lg border border-gray-100 mb-8 relative z-10 hover:scale-105 transition-transform duration-300">

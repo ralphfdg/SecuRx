@@ -7,7 +7,7 @@
 
     <div class="glass-panel p-8 bg-white/80 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
         <div class="relative z-10">
-            <h1 class="text-3xl font-extrabold text-securx-navy mb-2">Welcome back, Ralph.</h1>
+            <h1 class="text-3xl font-extrabold text-securx-navy mb-2">Welcome back, John.</h1>
             <p class="text-gray-600 font-medium">Your medical profile is up to date. You have <span class="text-securx-cyan font-bold">2 active prescriptions</span> ready for dispensing.</p>
         </div>
         

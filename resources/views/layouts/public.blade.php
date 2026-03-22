@@ -15,7 +15,7 @@
         <nav class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
             
             <a href="{{ route('home') }}" class="flex items-center gap-2 group">
-                <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo" class="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105">    
+                <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo" class="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105">    
             </a>
 
             <div class="hidden lg:flex gap-8 items-center text-sm font-semibold text-gray-600">
