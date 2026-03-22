@@ -20,6 +20,18 @@ Route::get('/privacy-policy', function () { return view('public.privacy'); })->n
 Route::get('/terms', function () { return view('public.terms'); })->name('terms');
 Route::get('/accessibility', function () { return view('public.accessibility'); })->name('accessibility');
 
+/*
+|--------------------------------------------------------------------------
+| CUSTOM ONBOARDING & SECURITY PAGES (Auth overrides)
+|--------------------------------------------------------------------------
+| 
+*/
+Route::middleware('auth')->group(function () {
+    Route::get('/pending-approval', function () { return view('auth.pending-approval'); })->name('approval.pending');
+    Route::get('/2fa/setup', function () { return view('auth.2fa-setup'); })->name('2fa.setup');
+    Route::get('/2fa/challenge', function () { return view('auth.2fa-challenge'); })->name('2fa.challenge');
+});
+
 // --------------------------------------------------------------------------
 // THE TRAFFIC DIRECTOR (Updated for Admin)
 // --------------------------------------------------------------------------
@@ -73,12 +85,24 @@ Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('phar
     Route::post('/dispense', [PharmacistController::class, 'dispense'])->name('dispense');
 });
 
-// --------------------------------------------------------------------------
-// PATIENT ROUTES
-// --------------------------------------------------------------------------
+/*
+|--------------------------------------------------------------------------
+| PATIENT PORTAL ROUTES
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')->group(function () {
-    Route::get('/dashboard', [PatientController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [PatientController::class, 'dashboard'])->name('dashboard');
+    Route::get('/qr-live', function () { return view('patient.qr-live'); })->name('qr-live');
+    Route::get('/qr-print', function () { return view('patient.qr-print'); })->name('qr-print');
+    Route::get('/medical-profile', function () { return view('patient.medical-profile'); })->name('profile.medical');
+    Route::get('/data-consent', function () { return view('patient.data-consent'); })->name('consent');
 });
+
+/*
+|--------------------------------------------------------------------------
+| SYSTEM ROUTES (Breeze Profile & Auth)
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
