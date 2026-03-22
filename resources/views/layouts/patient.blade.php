@@ -21,10 +21,10 @@
     <aside
         class="w-64 glass-panel m-4 flex flex-col z-20 hidden md:flex h-[calc(100vh-2rem)] border-r border-gray-200/50">
 
-        <div class="p-6 border-b border-gray-200/50 flex items-center gap-2">
+        <div class="p-6 border-b border-gray-200/50 flex justify-center">
             <a href="{{ route('home') }}" class="flex items-center gap-2 group">
                 <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo"
-                    class="h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-105">
+                    class="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105">
             </a>
         </div>
 
