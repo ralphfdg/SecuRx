@@ -12,28 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            // UUID 
-            $table->uuid('id')->primary();
-
-            // Core Identity (Split for formal reporting)
-            $table->string('first_name');
-            $table->string('middle_name')->nullable();
-            $table->string('last_name');
-            $table->string('suffix')->nullable(); // e.g., Jr., III
-
-            // Authentication & Contact
-            $table->string('username')->unique();
+            $table->uuid('id')->primary(); // Ensure you are using UUIDs here
+            $table->string('name');
             $table->string('email')->unique();
-            $table->string('contact_number')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password'); // Automatically salted by Laravel
-
-            // Role-Based Access Control
-            $table->enum('role', ['admin', 'doctor', 'pharmacist', 'patient'])->default('patient');
-
+            $table->string('password');
+        
+            // Add Role 
+            $table->enum('role', ['admin', 'doctor', 'pharmacist', 'secretary', 'patient'])->index();
+        
             $table->rememberToken();
             $table->timestamps();
-            $table->softDeletes();
+            $table->softDeletes(); // For safe archiving
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

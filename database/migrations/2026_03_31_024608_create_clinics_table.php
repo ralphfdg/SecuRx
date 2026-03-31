@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('medications', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('dosage_form'); // e.g., 500mg Tablet, 250ml Syrup
+        Schema::create('clinics', function (Blueprint $table) {
+            $table->uuid('id')->primary();
+            $table->string('clinic_name');
+            $table->text('clinic_address');
+            $table->string('contact_number')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('medications');
+        Schema::dropIfExists('clinics');
     }
 };

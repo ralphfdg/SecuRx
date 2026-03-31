@@ -11,15 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('scan_logs', function (Blueprint $table) {
+        Schema::create('specializations', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('prescription_id')->constrained()->onDelete('cascade');
-            $table->foreignUuId('pharmacist_id')->constrained('users');
-
-            $table->timestamp('scanned_at')->useCurrent();
-            $table->boolean('was_dispensed')->default(false);
-
+            $table->string('name')->unique(); // e.g., 'Pediatrics', 'Cardiology'
             $table->timestamps();
         });
     }
@@ -29,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('scan_logs');
+        Schema::dropIfExists('specializations');
     }
 };

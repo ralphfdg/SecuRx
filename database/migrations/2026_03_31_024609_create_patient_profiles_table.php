@@ -12,21 +12,21 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('patient_profiles', function (Blueprint $table) {
-            $table->id();
-            
-            $table->foreignUuid('user_id')->constrained()->onDelete('cascade');
-
-            // Demographics & Biometrics
+            $table->uuid('id')->primary();
+            // Links directly to the core user account. If the user is deleted, this profile deletes too.
+            $table->foreignUuid('user_id')->constrained('users')->cascadeOnDelete();
+        
             $table->date('date_of_birth');
             $table->enum('biological_sex', ['Male', 'Female']);
-            $table->string('blood_type')->nullable();
-
-            // Pediatric & Emergency Support
-            $table->string('guardian_name')->nullable(); // Required if age < 18
-            $table->string('guardian_contact_number')->nullable();
-
+            $table->string('blood_type', 25)->nullable();
+        
+            $table->string('guardian_name')->nullable();
+            $table->string('guardian_contact')->nullable();
             $table->text('address')->nullable();
-
+        
+            // Critical for Data Privacy Act compliance
+            $table->boolean('data_consent')->default(false); 
+        
             $table->timestamps();
             $table->softDeletes();
         });
