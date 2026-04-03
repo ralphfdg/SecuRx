@@ -15,9 +15,10 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('user_id')->constrained('users')->cascadeOnDelete();
         
-            $table->string('prc_license_number')->unique();
             $table->string('pharmacy_name');
-            $table->text('pharmacy_address');
+            $table->string('lto_number')->unique();
+            $table->date('lto_expiration');
+            $table->text('business_address');
         
             // Admin must verify them before they can access the partnered portal
             $table->boolean('is_verified')->default(false);

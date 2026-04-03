@@ -16,13 +16,15 @@ return new class extends Migration
             // Links directly to the core user account. If the user is deleted, this profile deletes too.
             $table->foreignUuid('user_id')->constrained('users')->cascadeOnDelete();
         
-            $table->date('date_of_birth');
-            $table->enum('biological_sex', ['Male', 'Female']);
-            $table->string('blood_type', 25)->nullable();
-        
-            $table->string('guardian_name')->nullable();
-            $table->string('guardian_contact')->nullable();
+            $table->decimal('height', 5, 2)->nullable();
+            $table->decimal('weight', 5, 2)->nullable();
             $table->text('address')->nullable();
+            $table->string('school_work')->nullable();
+        
+            $table->string('mother_name')->nullable();
+            $table->string('mother_contact')->nullable();
+            $table->string('father_name')->nullable();
+            $table->string('father_contact')->nullable();
         
             // Critical for Data Privacy Act compliance
             $table->boolean('data_consent')->default(false); 

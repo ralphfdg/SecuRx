@@ -18,10 +18,11 @@ return new class extends Migration
             // Links the doctor to a specific clinic from Batch 1
             $table->foreignUuid('clinic_id')->nullable()->constrained('clinics')->nullOnDelete();
         
-            $table->string('specialization');
-            $table->string('prc_license_number')->unique();
-            $table->string('ptr_number')->nullable();
-            $table->string('s2_license_number')->nullable(); // For dangerous drugs
+            $table->string('prc_number')->unique();
+            $table->date('prc_expiration');
+            $table->string('ptr_number');
+            $table->string('s2_number')->nullable();
+            $table->date('s2_expiration')->nullable();
         
             // Admin must verify them before they can prescribe
             $table->boolean('is_verified')->default(false);

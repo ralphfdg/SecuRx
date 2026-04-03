@@ -17,18 +17,22 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @var list<string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'first_name',
-        'middle_name',
         'last_name',
-        'suffix',
-        'username',       
+        'middle_name',
+        'qualifier',
+        'name',        // <-- This was missing, causing your error!
+        'username',
         'email',
-        'contact_number', 
+        'dob',         // <-- These were also being silently blocked!
+        'gender',
+        'mobile_num',
+        'role',
+        'status',
         'password',
-        'role',           
     ];
 
     /**
@@ -54,7 +58,7 @@ class User extends Authenticatable
         ];
     }
 
-// ... existing Laravel code ...
+
 
     // For Patients
     public function patientProfile()
@@ -77,5 +81,18 @@ class User extends Authenticatable
     public function authorizedRepresentatives()
     {
         return $this->hasMany(AuthorizedRepresentative::class, 'patient_id')->where('is_active', true);
+    }
+
+    /**
+     * Many-to-Many Relationship: For Doctors only. Links to their medical specializations.
+     */
+    public function specializations()
+    {
+        return $this->belongsToMany(
+            Specialization::class, 
+            'doctor_specialization', // The name of your pivot table
+            'doctor_id',             // The foreign key for this model
+            'specialization_id'      // The foreign key for the related model
+        );
     }
 }

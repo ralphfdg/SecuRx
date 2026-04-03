@@ -12,15 +12,25 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->uuid('id')->primary(); // Ensure you are using UUIDs here
-            $table->string('name');
+            $table->uuid('id')->primary(); // UUID Primary Key
+        
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('middle_name')->nullable();
+            $table->string('qualifier')->nullable();
+            $table->string('name'); 
+            $table->string('username')->unique();
             $table->string('email')->unique();
+        
+            $table->date('dob')->nullable();
+            $table->string('gender')->nullable();
+            $table->string('mobile_num')->nullable();
+        
+            $table->string('role')->default('patient'); // patient, doctor, pharmacist, admin, secretary
+            $table->string('status')->default('active'); // active, pending, suspended
+        
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-        
-            // Add Role 
-            $table->enum('role', ['admin', 'doctor', 'pharmacist', 'secretary', 'patient'])->index();
-        
             $table->rememberToken();
             $table->timestamps();
             $table->softDeletes(); // For safe archiving

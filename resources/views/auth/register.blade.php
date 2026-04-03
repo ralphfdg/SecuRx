@@ -185,12 +185,6 @@
                             </div>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold text-securx-navy mb-1.5">Supervising Pharmacist
-                                *</label>
-                            <input type="text" name="pharmacist_in_charge" class="glass-input w-full py-2 px-3"
-                                required>
-                        </div>
-                        <div>
                             <label class="block text-sm font-bold text-securx-navy mb-1.5">Business Address *</label>
                             <input type="text" name="business_address" class="glass-input w-full py-2 px-3"
                                 required>

@@ -2,76 +2,84 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\PatientProfile;
+use App\Models\DoctorProfile;
+use App\Models\PharmacistProfile;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        // 1. Create the Test Doctor
-        $doctor = User::create([
-            'first_name' => 'Dr. Gregory',
-            'last_name' => 'House',
-            'username' => 'drhouse', // ADDED
-            'email' => 'doctor@securx.test',
-            'contact_number' => '09171234567',
-            'password' => Hash::make('password'),
-            'role' => 'doctor',
-        ]);
-
-        // 2. Create the Test Pharmacist
-        $pharmacist = User::create([
-            'first_name' => 'Sarah',
-            'last_name' => 'Mercury',
-            'username' => 'smercury', // ADDED
-            'email' => 'pharmacy@securx.test',
-            'contact_number' => '09181234567',
-            'password' => Hash::make('password'),
-            'role' => 'pharmacist',
-        ]);
-
-        // 3. Create the Test Patient
+        // 1. Create a Test Patient
         $patient = User::create([
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'username' => 'johndoe', // ADDED
-            'email' => 'patient@securx.test',
-            'contact_number' => '09191234567',
-            'password' => Hash::make('password'),
-            'role' => 'patient',
+            'first_name' => 'Maria',
+            'last_name'  => 'Dela Cruz',
+            'name'       => 'Maria Dela Cruz',
+            'username'   => 'mariapatient',
+            'email'      => 'patient@securx.com',
+            'dob'        => '1990-05-15',
+            'gender'     => 'Female',
+            'mobile_num' => '09171234567',
+            'role'       => 'patient',
+            'status'     => 'active',
+            'password'   => Hash::make('password123'),
         ]);
 
-        $medications = [
-            ['name' => 'Amoxicillin', 'dosage_form' => '500mg Capsule'],
-            ['name' => 'Lisinopril', 'dosage_form' => '10mg Tablet'],
-            ['name' => 'Metformin', 'dosage_form' => '500mg Tablet'],
-            ['name' => 'Ibuprofen', 'dosage_form' => '400mg Tablet'],
-            ['name' => 'Omeprazole', 'dosage_form' => '20mg Capsule'],
-        ];
+        PatientProfile::create([
+            'user_id' => $patient->id,
+            'height'  => 165.5,
+            'weight'  => 60.2,
+            'address' => '123 Sampaguita St, Angeles City',
+        ]);
 
-        foreach ($medications as $med) {
-            \App\Models\Medication::create($med);
-        }
-        
-// 1. Create the Master Admin Account (Bypassing the factory)
-        \App\Models\User::create([
-            'first_name' => 'System',
-            'last_name' => 'Administrator',
-            'username' => 'adminOne',
-            'email' => 'admin@securx.test',
-            'contact_number' => '09191238567',
-            'password' => bcrypt('password'),
-            'role' => 'admin',
+        // 2. Create a Test Doctor (Approved Status)
+        $doctor = User::create([
+            'first_name' => 'Juan',
+            'last_name'  => 'Santos',
+            'name'       => 'Juan Santos',
+            'username'   => 'drjuan',
+            'email'      => 'doctor@securx.com',
+            'dob'        => '1980-08-20',
+            'gender'     => 'Male',
+            'mobile_num' => '09189876543',
+            'role'       => 'doctor',
+            'status'     => 'active', // Set to active so you can test the portal
+            'password'   => Hash::make('password123'),
+        ]);
+
+        DoctorProfile::create([
+            'user_id'            => $doctor->id,
+            'prc_number'         => '0123456',
+            'prc_expiration'     => '2028-08-20',
+            'ptr_number'         => 'PTR-987654',
+            's2_number'          => 'S2-112233',
+            's2_expiration'      => '2027-01-01',
+        ]);
+
+        // 3. Create a Test Pharmacist (Approved Status)
+        $pharmacist = User::create([
+            'first_name' => 'Ana',
+            'last_name'  => 'Reyes',
+            'name'       => 'Ana Reyes',
+            'username'   => 'rxana',
+            'email'      => 'pharmacy@securx.com',
+            'dob'        => '1995-02-10',
+            'gender'     => 'Female',
+            'mobile_num' => '09191122334',
+            'role'       => 'pharmacist',
+            'status'     => 'active',
+            'password'   => Hash::make('password123'),
+        ]);
+
+        PharmacistProfile::create([
+            'user_id'          => $pharmacist->id,
+            'pharmacy_name'    => 'Mercury Drug - Balibago',
+            'lto_number'       => 'LTO-RX-556677',
+            'lto_expiration'   => '2029-12-31',
+            'business_address' => 'MacArthur Highway, Balibago, Angeles City',
         ]);
     }
 }
