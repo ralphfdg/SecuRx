@@ -54,31 +54,28 @@ class User extends Authenticatable
         ];
     }
 
-    // -----------------------------------------------------
-    // PHASE 1 RELATIONSHIPS
-    // -----------------------------------------------------
+// ... existing Laravel code ...
 
-    // A User might have a Patient Profile
+    // For Patients
     public function patientProfile()
     {
-        return $this->hasOne(PatientProfile::class);
+        return $this->hasOne(PatientProfile::class, 'user_id');
     }
 
-    // A User might have a Doctor Profile
+    public function patientAllergies()
+    {
+        return $this->hasMany(PatientAllergy::class, 'patient_id');
+    }
+
+    // For Doctors
     public function doctorProfile()
     {
-        return $this->hasOne(DoctorProfile::class);
+        return $this->hasOne(DoctorProfile::class, 'user_id');
     }
 
-    // If the User is a Doctor, they have many Prescriptions they've written
-    public function prescriptionsWritten()
+    // For the Authorized Representatives dropdown on the dispense page
+    public function authorizedRepresentatives()
     {
-        return $this->hasMany(Prescription::class, 'doctor_id');
-    }
-
-    // If the User is a Patient, they have many Prescriptions given to them
-    public function prescriptionsReceived()
-    {
-        return $this->hasMany(Prescription::class, 'patient_id');
+        return $this->hasMany(AuthorizedRepresentative::class, 'patient_id')->where('is_active', true);
     }
 }

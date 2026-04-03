@@ -4,8 +4,27 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\PharmacistController;
+use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+
+
+// The Public Guest Pharmacist Portal Routes
+Route::prefix('verify')->group(function () {
+    
+    // 1. The Idle Terminal / Fallback Scanner Page (verify.blade.php)
+    Route::get('/', [GuestVerificationController::class, 'index'])->name('verify.index');
+    
+    // 2. The Direct URL Scan / Gatekeeper (gatekeeper.blade.php)
+    Route::get('/{qr_uuid}', [GuestVerificationController::class, 'gatekeeper'])->name('verify.gatekeeper');
+    
+    // 3. The Decryption Action (POST)
+    Route::post('/decrypt', [GuestVerificationController::class, 'decrypt'])->name('verify.decrypt');
+    
+    // 4. The Final Dispense Action (POST)
+    Route::post('/dispense', [GuestVerificationController::class, 'dispense'])->name('verify.dispense');
+
+});
 
 // --------------------------------------------------------------------------
 // PUBLIC & INFORMATIONAL PAGES
