@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
 
 class PatientAllergy extends Model
 {
@@ -16,9 +16,8 @@ class PatientAllergy extends Model
         return $this->belongsTo(User::class, 'patient_id');
     }
 
-    // If it is a known drug allergy, this links to the medication
     public function medication()
     {
-        return $this->belongsTo(Medication::class, 'medication_id');
-    }
+        return $this->belongsTo(Medication::class);
+    } // Can be null if it's a non-drug allergy
 }

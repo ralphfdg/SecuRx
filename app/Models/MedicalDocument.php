@@ -2,19 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
 
-class AuthorizedRepresentative extends Model
+class MedicalDocument extends Model
 {
     use HasUuids;
 
     protected $guarded = [];
-
-    // Add this to convert tinyint to true/false automatically!
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
 
     public function patient()
     {

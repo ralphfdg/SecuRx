@@ -4,19 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PharmacistProfile extends Model
 {
-    use HasUuids;
-    
-    // This allows the controller to save all the LTO and Pharmacy data at once
+    use HasUuids, SoftDeletes;
     protected $guarded = [];
 
-    /**
-     * Inverse Relationship: Links back to the main User account (Email/Password)
-     */
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
+    protected $casts = [
+        'is_verified' => 'boolean',
+        'lto_expiration' => 'date',
+    ];
+
+    public function user() { return $this->belongsTo(User::class, 'user_id'); }
 }

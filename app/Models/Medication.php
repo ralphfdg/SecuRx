@@ -2,21 +2,20 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Medication extends Model
 {
-    //
-    use HasFactory;
+    // NO HasUuids trait here because your SQL dump shows this table uses bigint(20)
+    protected $guarded = [];
 
-    protected $fillable = [
-        'name',
-        'dosage_form',
-    ];
-
-    public function prescriptions()
+    public function prescriptionItems()
     {
-        return $this->hasMany(Prescription::class);
+        return $this->hasMany(PrescriptionItem::class);
+    }
+
+    public function patientAllergies()
+    {
+        return $this->hasMany(PatientAllergy::class);
     }
 }

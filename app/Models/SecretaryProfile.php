@@ -4,19 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
-class DoctorProfile extends Model
+class SecretaryProfile extends Model
 {
-    use HasUuids, SoftDeletes;
+    use HasUuids;
 
     protected $guarded = [];
-
-    protected $casts = [
-        'is_verified' => 'boolean',
-        'prc_expiration' => 'date',
-        's2_expiration' => 'date',
-    ];
 
     public function user()
     {
