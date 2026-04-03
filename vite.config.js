@@ -11,6 +11,7 @@ export default defineConfig({
                 "resources/js/calendar.js",
                 "resources/js/analytics.js",
                 "resources/js/dictation.js",
+                'resources/js/appointments.js',
             ],
             refresh: true,
         }),

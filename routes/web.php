@@ -2,25 +2,23 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DoctorController;
-use App\Http\Controllers\PatientController;
-use App\Http\Controllers\PharmacistController;
 use App\Http\Controllers\GuestVerificationController;
+use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-
 // The Public Guest Pharmacist Portal Routes
 Route::prefix('verify')->group(function () {
-    
+
     // 1. The Idle Terminal / Fallback Scanner Page (verify.blade.php)
     Route::get('/', [GuestVerificationController::class, 'index'])->name('verify.index');
-    
+
     // 2. The Direct URL Scan / Gatekeeper (gatekeeper.blade.php)
     Route::get('/{qr_uuid}', [GuestVerificationController::class, 'gatekeeper'])->name('verify.gatekeeper');
-    
+
     // 3. The Decryption Action (POST)
     Route::post('/decrypt', [GuestVerificationController::class, 'decrypt'])->name('verify.decrypt');
-    
+
     // 4. The Final Dispense Action (POST)
     Route::post('/dispense', [GuestVerificationController::class, 'dispense'])->name('verify.dispense');
 
@@ -61,18 +59,19 @@ Route::get('/accessibility', function () {
 |--------------------------------------------------------------------------
 | CUSTOM ONBOARDING & SECURITY PAGES (Auth overrides)
 |--------------------------------------------------------------------------
-|
 */
 Route::middleware('auth')->group(function () {
     Route::get('/pending-approval', function () {
         return view('auth.pending-approval');
-    })->name('approval.pending');
+    })->name('pending.approval');
+
+    // The Demo Onboarding Flow
+    Route::get('/onboarding/verify-email', function () {
+        return view('auth.static-verify-email');
+    })->name('onboarding.verify-email');
     Route::get('/2fa/setup', function () {
         return view('auth.2fa-setup');
     })->name('2fa.setup');
-    Route::get('/2fa/challenge', function () {
-        return view('auth.2fa-challenge');
-    })->name('2fa.challenge');
 });
 
 // --------------------------------------------------------------------------
@@ -149,44 +148,32 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     Route::get('/settings', function () {
         return view('doctor.settings');
     })->name('settings');
-
-    // ---------------------------------------------------------
-    // FUTURE BACKEND ROUTES (For when you connect the database)
-    // ---------------------------------------------------------
-    // Route::post('/prescribe', [DoctorController::class, 'storePrescription'])->name('prescribe.store');
-    // Route::post('/revoke/{uuid}', [DoctorController::class, 'revokePrescription'])->name('revoke');
-    // Route::post('/settings', [DoctorController::class, 'updateSettings'])->name('settings.update');
 });
 
-/*
-|--------------------------------------------------------------------------
-| PHARMACIST PORTAL ROUTES
-|--------------------------------------------------------------------------
-*/
 /*
 |--------------------------------------------------------------------------
 | 6. PHARMACIST PORTAL ROUTES
 |--------------------------------------------------------------------------
 */
 Route::prefix('pharmacist')->name('pharmacist.')->group(function () {
-    Route::get('/dashboard', function () { 
-        return view('pharmacist.dashboard'); 
+    Route::get('/dashboard', function () {
+        return view('pharmacist.dashboard');
     })->name('dashboard');
-    
-    Route::get('/scanner', function () { 
-        return view('pharmacist.scanner'); 
+
+    Route::get('/scanner', function () {
+        return view('pharmacist.scanner');
     })->name('scanner');
-    
-    Route::get('/dispense', function () { 
-        return view('pharmacist.dispense'); 
+
+    Route::get('/dispense', function () {
+        return view('pharmacist.dispense');
     })->name('dispense');
-    
-    Route::get('/logs', function () { 
-        return view('pharmacist.logs'); 
+
+    Route::get('/logs', function () {
+        return view('pharmacist.logs');
     })->name('logs');
-    
-    Route::get('/settings', function () { 
-        return view('pharmacist.settings'); 
+
+    Route::get('/settings', function () {
+        return view('pharmacist.settings');
     })->name('settings');
 });
 
@@ -196,16 +183,23 @@ Route::prefix('pharmacist')->name('pharmacist.')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')->group(function () {
+    // We are routing these to the PatientController now so we can pass backend data!
     Route::get('/dashboard', [PatientController::class, 'index'])->name('dashboard');
+
+    Route::get('/appointments', [PatientController::class, 'appointments'])->name('appointments');
+    // NEW: The missing routes from your demo flow
+    Route::get('/appointments/book', [PatientController::class, 'bookAppointment'])->name('appointments.book');
+    Route::post('/appointments', [PatientController::class, 'storeAppointment'])->name('appointments.store');
+    Route::patch('/appointments/{id}/cancel', [PatientController::class, 'cancelAppointment'])->name('appointments.cancel');
+    Route::get('/prescriptions', [PatientController::class, 'prescriptions'])->name('prescriptions');
+
     Route::get('/qr-live', function () {
         return view('patient.qr-live');
     })->name('qr-live');
     Route::get('/qr-print', function () {
         return view('patient.qr-print');
     })->name('qr-print');
-    Route::get('/medical-profile', function () {
-        return view('patient.medical-profile');
-    })->name('profile.medical');
+    Route::get('/medical-profile', [PatientController::class, 'medicalProfile'])->name('profile.medical');
     Route::get('/data-consent', function () {
         return view('patient.data-consent');
     })->name('consent');

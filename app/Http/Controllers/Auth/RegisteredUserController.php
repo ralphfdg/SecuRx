@@ -129,10 +129,11 @@ class RegisteredUserController extends Controller
 
         event(new Registered($user));
 
-        // 4. The Capstone Logic: Only log in Patients automatically.
+        // 4. Patient Onboarding Flow
         if ($user->role === 'patient') {
             Auth::login($user);
-            return redirect()->route('dashboard'); // Forward to Patient portal
+            // Redirect to the static email verification page for the demo
+            return redirect()->route('onboarding.verify-email'); 
         }
 
         // 5. Doctors and Pharmacists get sent to the "Pending Approval" page instead

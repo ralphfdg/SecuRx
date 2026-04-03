@@ -81,5 +81,18 @@ class DatabaseSeeder extends Seeder
             'lto_expiration'   => '2029-12-31',
             'business_address' => 'MacArthur Highway, Balibago, Angeles City',
         ]);
+
+        // Give Dr. Santos a standard Monday-Friday, 9 AM to 5 PM schedule
+        $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+        
+        foreach ($days as $day) {
+            \App\Models\DoctorSchedule::create([
+                'doctor_id'    => $doctor->id,
+                'day_of_week'  => $day,
+                'start_time'   => '09:00:00',
+                'end_time'     => '17:00:00',
+                'is_available' => true,
+            ]);
+        }
     }
 }
