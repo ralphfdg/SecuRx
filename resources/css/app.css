@@ -7,7 +7,7 @@
     .glass-panel {
         @apply bg-white/70 backdrop-blur-md border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-xl;
     }
-    
+
     /* Primary buttons (Cyan) */
     .glass-btn-primary {
         @apply bg-securx-cyan/90 hover:bg-securx-cyan text-white font-bold py-3 px-6 rounded-lg shadow-[0_4px_14px_0_rgba(28,181,209,0.39)] hover:shadow-[0_6px_20px_rgba(28,181,209,0.23)] hover:-translate-y-0.5 transition-all duration-300;
@@ -21,5 +21,14 @@
     /* Clean, light inputs */
     .glass-input {
         @apply bg-white/60 border border-gray-200 text-gray-800 focus:ring-securx-cyan focus:border-securx-cyan rounded-md shadow-sm backdrop-blur-sm transition-all;
+    }
+
+    /* Hide scrollbar for tab navigation */
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
     }
 }

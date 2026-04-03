@@ -12,6 +12,7 @@ export default defineConfig({
                 "resources/js/analytics.js",
                 "resources/js/dictation.js",
                 'resources/js/appointments.js',
+                'resources/js/medical-profile.js',
             ],
             refresh: true,
         }),

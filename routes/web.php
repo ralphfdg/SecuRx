@@ -193,19 +193,17 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
     Route::patch('/appointments/{id}/cancel', [PatientController::class, 'cancelAppointment'])->name('appointments.cancel');
     Route::get('/prescriptions', [PatientController::class, 'prescriptions'])->name('prescriptions');
 
-    Route::get('/qr-live', function () {
-        return view('patient.qr-live');
-    })->name('qr-live');
-    Route::get('/qr-print', function () {
-        return view('patient.qr-print');
-    })->name('qr-print');
+    Route::get('/prescriptions/{id}/qr', [PatientController::class, 'showQr'])->name('qr-live');
+
     Route::get('/medical-profile', [PatientController::class, 'medicalProfile'])->name('profile.medical');
-    Route::get('/data-consent', function () {
-        return view('patient.data-consent');
-    })->name('consent');
-    Route::get('/settings', function () {
-        return view('patient.settings');
-    })->name('settings');
+    Route::post('/documents/upload', [PatientController::class, 'storeDocument'])->name('documents.store');
+
+    // Update the GET route to point to the controller instead of a closure
+    Route::get('/data-consent', [PatientController::class, 'consent'])->name('consent');
+    // Add the POST route to handle the save
+    Route::post('/data-consent', [PatientController::class, 'updateConsent'])->name('consent.update');
+
+    Route::get('/settings', [PatientController::class, 'settings'])->name('settings');
 });
 
 /*

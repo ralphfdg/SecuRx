@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Appointment;
+use App\Models\MedicalDocument;
+use App\Models\Prescription;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Appointment;
-use App\Models\User;
 
 class PatientController extends Controller
 {
@@ -15,18 +17,25 @@ class PatientController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
-        // Count only the prescriptions that haven't been fully dispensed or revoked
+
         $activePrescriptionsCount = $user->patientPrescriptions()->where('status', 'active')->count();
-        
-        // Fetch the 5 most recent prescriptions for the dashboard table
+
         $recentPrescriptions = $user->patientPrescriptions()
-            ->with(['doctor', 'items']) // Eager load the doctor and medication items
+            ->with(['doctor', 'items'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
-        return view('patient.dashboard', compact('user', 'activePrescriptionsCount', 'recentPrescriptions'));
+        // NEW: Fetch the single next upcoming appointment
+        $nextAppointment = $user->patientAppointments()
+            ->where('appointment_date', '>=', now())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->with(['doctor.doctorProfile.clinic'])
+            ->orderBy('appointment_date', 'asc')
+            ->first();
+
+        // Pass the new variable to the view
+        return view('patient.dashboard', compact('user', 'activePrescriptionsCount', 'recentPrescriptions', 'nextAppointment'));
     }
 
     /**
@@ -35,7 +44,7 @@ class PatientController extends Controller
     public function appointments()
     {
         $user = Auth::user();
-        
+
         // Get upcoming appointments
         $appointments = $user->patientAppointments()
             ->with('doctor')
@@ -51,11 +60,11 @@ class PatientController extends Controller
     public function prescriptions()
     {
         $user = Auth::user();
-        
+
         $prescriptions = $user->patientPrescriptions()
             ->with(['doctor', 'items.medication'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return view('patient.prescriptions', compact('user', 'prescriptions'));
     }
@@ -66,9 +75,16 @@ class PatientController extends Controller
     public function medicalProfile()
     {
         $user = Auth::user();
-        
-        // Load the user with all their medical history
-        $user->load(['patientProfile', 'allergies.medication', 'immunizations', 'labResults']);
+
+        // Eager load ALL medical history relationships to prevent N+1 queries
+        $user->load([
+            'patientProfile',
+            'allergies.medication',
+            'immunizations',
+            'labResults',
+            'medicalDocuments',
+            'patientEncounters.doctor', // Eager load the doctor for each encounter
+        ]);
 
         return view('patient.medical-profile', compact('user'));
     }
@@ -79,11 +95,11 @@ class PatientController extends Controller
     public function bookAppointment()
     {
         $user = Auth::user();
-        
+
         // Fetch only verified, active doctors for the dropdown
         $doctors = User::where('role', 'doctor')
             ->where('status', 'active')
-            ->whereHas('doctorProfile', function($query) {
+            ->whereHas('doctorProfile', function ($query) {
                 $query->where('is_verified', true);
             })->with('doctorProfile.clinic', 'schedules')
             ->get();
@@ -106,7 +122,7 @@ class PatientController extends Controller
             'doctor_id' => $request->doctor_id,
             // Assuming the secretary will be assigned later by the clinic
             'appointment_date' => $request->appointment_date,
-            'status' => 'pending', 
+            'status' => 'pending',
         ]);
 
         // Redirect back to the appointments list with a success message
@@ -124,9 +140,98 @@ class PatientController extends Controller
             ->firstOrFail();
 
         $appointment->update([
-            'status' => 'cancelled'
+            'status' => 'cancelled',
         ]);
 
         return redirect()->back()->with('success', 'Appointment has been cancelled.');
+    }
+
+    /**
+     * Display the Live QR Code for a specific prescription
+     */
+    public function showQr($id)
+    {
+        $user = Auth::user();
+
+        // Fetch the specific prescription, ensuring it actually belongs to the logged-in patient!
+        $prescription = Prescription::where('id', $id)
+            ->where('patient_id', $user->id)
+            ->with(['doctor', 'items.medication'])
+            ->firstOrFail();
+
+        return view('patient.qr-live', compact('user', 'prescription'));
+    }
+
+    /**
+     * Store a patient-uploaded medical document
+     */
+    public function storeDocument(Request $request)
+    {
+        $request->validate([
+            'document_file' => 'required|mimes:pdf,jpg,jpeg,png|max:5120', // Max 5MB
+            'document_name' => 'required|string|max:255',
+        ]);
+
+        if ($request->hasFile('document_file')) {
+            $file = $request->file('document_file');
+            // Generate a secure, unique filename
+            $filename = time().'_'.Auth::id().'.'.$file->getClientOriginalExtension();
+
+            // Save to storage/app/public/medical_documents
+            $path = $file->storeAs('medical_documents', $filename, 'public');
+
+            // Save to database
+            MedicalDocument::create([
+                'patient_id' => Auth::id(),
+                'document_name' => $request->document_name,
+                'document_type' => $file->getClientOriginalExtension(), // PDF, JPG, etc.
+                'file_path' => $path,
+                'is_verified' => false, // STRICT COMPLIANCE: Defaults to unverified PGHD
+            ]);
+
+            return redirect()->back()->with('success', 'Document uploaded successfully. It is now pending physician review.');
+        }
+
+        return redirect()->back()->with('error', 'File upload failed. Please try again.');
+    }
+
+    /**
+     * Display the Data Consent & Privacy Settings Page
+     */
+    public function consent()
+    {
+        $user = Auth::user();
+        $profile = $user->patientProfile;
+
+        return view('patient.data-consent', compact('user', 'profile'));
+    }
+
+    /**
+     * Update the patient's Data Consent Settings
+     */
+    public function updateConsent(Request $request)
+    {
+        $user = Auth::user();
+
+        // Checkboxes in HTML only send data if they are checked.
+        // We use $request->has() to convert that to a boolean true/false.
+        $user->patientProfile()->update([
+            'data_consent' => $request->has('allow_pharmacist'), // This is your main database column
+            // Note: If you add 'allow_doctor' or 'allow_research' to your database later,
+            // you would update those here as well.
+        ]);
+
+        return redirect()->back()->with('success', 'Your privacy settings have been securely updated.');
+    }
+
+    /**
+     * Display the Patient Settings Page
+     */
+    public function settings()
+    {
+        // Eager load the profile so we don't hit the database twice
+        $user = Auth::user()->load('patientProfile');
+        
+        return view('patient.settings', compact('user'));
     }
 }
