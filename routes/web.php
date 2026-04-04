@@ -103,7 +103,9 @@ Route::get('/dashboard', function () {
 // --------------------------------------------------------------------------
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    Route::post('/medications', [AdminController::class, 'storeMedication'])->name('medications.store');
+    
+    // NEW: Dataset Import Engine Route (replaces manual medication entry)
+    Route::post('/dataset/import', [AdminController::class, 'importDataset'])->name('dataset.import');
 });
 
 /*

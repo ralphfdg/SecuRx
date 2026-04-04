@@ -13,6 +13,7 @@ export default defineConfig({
                 "resources/js/dictation.js",
                 'resources/js/appointments.js',
                 'resources/js/medical-profile.js',
+                'resources/js/admin.js',
             ],
             refresh: true,
         }),

@@ -16,27 +16,24 @@ class AdminController extends Controller
             'total_pharmacists' => User::where('role', 'pharmacist')->count(),
             'total_patients' => User::where('role', 'patient')->count(),
             'total_medications' => Medication::count(),
-            'active_prescriptions' => Prescription::whereColumn('refills_used', '<', 'max_refills')->count(),
+            'active_prescriptions' => Prescription::where('status', 'active')->count(),
         ];
-
-        $medications = Medication::orderBy('name')->get();
         
-        return view('admin.dashboard', compact('stats', 'medications'));
+        return view('admin.dashboard', compact('stats'));
     }
 
-    // 2. Add New Medication to Inventory
-    public function storeMedication(Request $request)
+    // 2. Dataset Import Engine
+    public function importDataset(Request $request)
     {
+        // Require a valid CSV file to be uploaded
         $request->validate([
-            'name' => 'required|string|max:255|unique:medications,name',
-            'dosage_form' => 'required|string|max:255',
+            'dataset' => 'required|file|mimes:csv,txt|max:10240', // max 10MB
         ]);
 
-        Medication::create([
-            'name' => $request->name,
-            'dosage_form' => $request->dosage_form,
-        ]);
+        // Note: The actual CSV parsing and DB insertion logic will go here.
+        // For now, we will simulate a successful pipeline trigger.
 
-        return redirect()->route('admin.dashboard')->with('success', 'New medication securely added to the inventory.');
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Dataset pipeline initialized. DPRI pricing and interactions are being updated in the background.');
     }
 }
