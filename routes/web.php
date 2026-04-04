@@ -5,6 +5,7 @@ use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SecretaryController;
 use Illuminate\Support\Facades\Route;
 
 // The Public Guest Pharmacist Portal Routes
@@ -93,6 +94,8 @@ Route::get('/dashboard', function () {
         return redirect()->route('doctor.dashboard');
     } elseif ($role === 'pharmacist') {
         return redirect()->route('pharmacist.dashboard');
+    } elseif ($role === 'secretary') {
+        return redirect()->route('secretary.dashboard');
     } else {
         return redirect()->route('patient.dashboard');
     }
@@ -204,6 +207,34 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
     Route::post('/data-consent', [PatientController::class, 'updateConsent'])->name('consent.update');
 
     Route::get('/settings', [PatientController::class, 'settings'])->name('settings');
+});
+
+// ==========================================
+// SECRETARY PORTAL ROUTES
+// ==========================================
+Route::middleware(['auth', 'role:secretary'])->prefix('secretary')->name('secretary.')->group(function () {
+    
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\SecretaryController::class, 'dashboard'])->name('dashboard');
+    
+    // Calendar
+    Route::get('/calendar', [\App\Http\Controllers\SecretaryController::class, 'calendar'])->name('calendar');
+    Route::get('/api/appointments', [\App\Http\Controllers\SecretaryController::class, 'getAppointments'])->name('api.appointments');
+    
+    // Appointment Management
+    Route::get('/appointments/create', [SecretaryController::class, 'createAppointment'])->name('appointments.create');
+    Route::post('/appointments', [SecretaryController::class, 'storeAppointment'])->name('appointments.store');
+    // Appointment Actions
+    Route::post('/appointments/no-show', [SecretaryController::class, 'markNoShow'])->name('appointments.no-show');
+
+    // Triage & Queue Console
+    Route::get('/triage', [SecretaryController::class, 'triage'])->name('triage');
+    Route::post('/triage/store', [SecretaryController::class, 'storeTriage'])->name('triage.store');
+    
+    // Patient Directory
+    Route::get('/patients', [SecretaryController::class, 'patients'])->name('patients');
+    Route::post('/patients', [SecretaryController::class, 'storePatient'])->name('patients.store');
+    Route::put('/patients/{id}', [SecretaryController::class, 'updatePatient'])->name('patients.update');
 });
 
 /*
