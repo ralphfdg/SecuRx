@@ -101,13 +101,37 @@ Route::get('/dashboard', function () {
 // --------------------------------------------------------------------------
 // ADMIN ROUTES
 // --------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+// ADMIN ROUTES
+// --------------------------------------------------------------------------
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // 1. Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
     
-    // NEW: Dataset Import Engine Route (replaces manual medication entry)
+    // 2. Dataset Import Engine
+    Route::get('/dataset', [AdminController::class, 'datasetView'])->name('dataset');
     Route::post('/dataset/import', [AdminController::class, 'importDataset'])->name('dataset.import');
-});
+    
+    // 3. Professional User Management
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::patch('/users/{id}/approve', [AdminController::class, 'approveUser'])->name('users.approve');
+    Route::patch('/users/{id}/reject', [AdminController::class, 'rejectUser'])->name('users.reject');
+    
+    // 4. Immutable Audit Logs
+    Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
+    
+    // 5. System Backup & Export
+    Route::get('/backup', [AdminController::class, 'backupView'])->name('backup');
+    Route::post('/backup/export', [AdminController::class, 'exportBackup'])->name('backup.export');
+    
+    // 6. Global Platform Settings
+    Route::get('/settings', [AdminController::class, 'settingsView'])->name('settings');
+    Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
 
+    // 7. Admin Profile Settings
+    Route::get('/profile', [AdminController::class, 'profile'])->name('profile');
+    Route::patch('/profile', [AdminController::class, 'updateProfile'])->name('profile.update');
+});
 /*
 |--------------------------------------------------------------------------
 | DOCTOR PORTAL ROUTES(Secure)
