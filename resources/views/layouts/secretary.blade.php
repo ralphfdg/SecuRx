@@ -81,7 +81,7 @@
 
         <div class="p-4 border-t border-gray-200/50">
             @php $user = auth()->user(); @endphp
-            <a href="#"
+            <a href="{{ route('secretary.settings') }}"
                 class="flex items-center gap-3 p-2 -mx-2 rounded-lg transition-all duration-200 group cursor-pointer hover:bg-white/60">
 
                 <div

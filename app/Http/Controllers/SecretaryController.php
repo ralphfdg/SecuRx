@@ -229,7 +229,7 @@ class SecretaryController extends Controller
     }
 
     /**
-     * Store a New Patient (Fully Expanded)
+     * Store a New Patient (Perfectly Mapped)
      */
     public function storePatient(Request $request)
     {
@@ -250,6 +250,8 @@ class SecretaryController extends Controller
             'mother_contact' => 'nullable|string',
             'father_name' => 'nullable|string',
             'father_contact' => 'nullable|string',
+            'username' => 'required|string|unique:users,username',
+            'password' => 'required|string|min:8|confirmed',
         ]);
 
         $userId = (string) Str::uuid();
@@ -258,12 +260,13 @@ class SecretaryController extends Controller
         DB::table('users')->insert([
             'id' => $userId,
             'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
             'last_name' => $request->last_name,
-            // Assuming your schema handles the full name combination
+            'qualifier' => $request->qualifier,
             'name' => trim($request->first_name.' '.$request->middle_name.' '.$request->last_name.' '.$request->qualifier),
-            'username' => strtolower($request->first_name).rand(1000, 9999),
+            'username' => $request->username,
             'email' => $request->email,
-            'password' => Hash::make('SecuRx'.date('Y')),
+            'password' => Hash::make($request->password),
             'dob' => $request->dob,
             'gender' => $request->gender,
             'mobile_num' => $request->mobile_num,
@@ -273,12 +276,10 @@ class SecretaryController extends Controller
             'updated_at' => now(),
         ]);
 
-        // 2. Create Full Patient Profile with all extended demographics
+        // 2. Create Patient Profile
         DB::table('patient_profiles')->insert([
             'id' => (string) Str::uuid(),
             'user_id' => $userId,
-            'middle_name' => $request->middle_name,
-            'qualifier' => $request->qualifier,
             'height' => $request->height,
             'weight' => $request->weight,
             'address' => $request->address,
@@ -296,7 +297,7 @@ class SecretaryController extends Controller
     }
 
     /**
-     * Update an Existing Patient (Fully Expanded)
+     * Update an Existing Patient (Perfectly Mapped)
      */
     public function updatePatient(Request $request, $id)
     {
@@ -319,9 +320,12 @@ class SecretaryController extends Controller
             'father_contact' => 'nullable|string',
         ]);
 
+        // 1. Update Core User Details
         DB::table('users')->where('id', $id)->update([
             'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
             'last_name' => $request->last_name,
+            'qualifier' => $request->qualifier,
             'name' => trim($request->first_name.' '.$request->middle_name.' '.$request->last_name.' '.$request->qualifier),
             'email' => $request->email,
             'dob' => $request->dob,
@@ -330,9 +334,8 @@ class SecretaryController extends Controller
             'updated_at' => now(),
         ]);
 
+        // 2. Update Medical Demographics
         DB::table('patient_profiles')->where('user_id', $id)->update([
-            'middle_name' => $request->middle_name,
-            'qualifier' => $request->qualifier,
             'height' => $request->height,
             'weight' => $request->weight,
             'address' => $request->address,
@@ -345,5 +348,64 @@ class SecretaryController extends Controller
         ]);
 
         return back()->with('success', 'Patient profile updated successfully.');
+    }
+
+    /**
+     * Display the Secretary Account Settings Page
+     */
+    public function settings()
+    {
+        $user = Auth::user();
+
+        return view('secretary.settings', compact('user'));
+    }
+
+    /**
+     * Update the Secretary's Credentials and Information
+     */
+    public function updateSettings(Request $request)
+    {
+        $user = Auth::user();
+
+        // 1. Validate the incoming request
+        $request->validate([
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'qualifier' => 'nullable|string|max:10',
+            'mobile_num' => 'required|string|max:20',
+
+            // Ensure email and username are unique, EXCEPT for the current user's ID
+            'email' => 'required|email|unique:users,email,'.$user->id,
+            'username' => 'required|string|unique:users,username,'.$user->id,
+
+            // Password is optional, but if provided, must match confirmation
+            'password' => 'nullable|string|min:8|confirmed',
+        ]);
+
+        // 2. Prepare the data array for the 'users' table
+        $userData = [
+            'first_name' => $request->first_name,
+            'middle_name' => $request->middle_name,
+            'last_name' => $request->last_name,
+            'qualifier' => $request->qualifier,
+            // Rebuild the full name string just in case pieces changed
+            'name' => trim($request->first_name.' '.$request->middle_name.' '.$request->last_name.' '.$request->qualifier),
+            'email' => $request->email,
+            'username' => $request->username,
+            'mobile_num' => $request->mobile_num,
+            'updated_at' => now(),
+        ];
+
+        // 3. Only update the password if the user actually typed a new one
+        if ($request->filled('password')) {
+            $userData['password'] = Hash::make($request->password);
+        }
+
+        // 4. Execute the update
+        DB::table('users')->where('id', $user->id)->update($userData);
+
+        // 5. Redirect back with the success pulse banner
+        return back()->with('success', 'Account credentials successfully updated.');
     }
 }

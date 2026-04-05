@@ -235,6 +235,10 @@ Route::middleware(['auth', 'role:secretary'])->prefix('secretary')->name('secret
     Route::get('/patients', [SecretaryController::class, 'patients'])->name('patients');
     Route::post('/patients', [SecretaryController::class, 'storePatient'])->name('patients.store');
     Route::put('/patients/{id}', [SecretaryController::class, 'updatePatient'])->name('patients.update');
+
+    // Account Settings
+    Route::get('/settings', [SecretaryController::class, 'settings'])->name('settings');
+    Route::put('/settings', [SecretaryController::class, 'updateSettings'])->name('settings.update');
 });
 
 /*
