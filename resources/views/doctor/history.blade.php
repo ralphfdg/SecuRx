@@ -1,231 +1,289 @@
 @extends('layouts.doctor')
 
-@section('page_title', 'Rx History & Revocation')
+@section('page_title', 'Consultation History & Revocation')
 
 @section('content')
-<div class="max-w-6xl mx-auto space-y-6 relative">
+    <div x-data="{ showRevokeModal: false, activeRx: '' }" class="max-w-7xl mx-auto space-y-6 pb-12 relative">
 
-    <div class="glass-panel p-6 bg-white/80 flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-            <h2 class="text-2xl font-extrabold text-securx-navy">Prescription Ledger</h2>
-            <p class="text-sm text-gray-500 mt-1">Monitor dispensing status and cryptographically revoke active prescriptions if an error was made.</p>
-        </div>
-        
-        <div class="flex items-center gap-3 w-full md:w-auto">
-            <div class="relative w-full md:w-64">
-                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-gray-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <input type="text" placeholder="Search by patient or UUID..." class="glass-input w-full py-2 pl-10 pr-4">
+        <div
+            class="bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl p-5 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-extrabold text-securx-navy">Consultation History</h2>
+                <p class="text-sm text-gray-500 mt-1">Review past encounters and manage active prescriptions.</p>
             </div>
-            <button class="glass-btn-secondary py-2 px-4 flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
-                Filter
-            </button>
-        </div>
-    </div>
 
-    <div class="glass-panel overflow-hidden bg-white/90">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-securx-navy text-xs text-white uppercase tracking-wider">
-                        <th class="p-4 font-bold rounded-tl-lg">Date Issued</th>
-                        <th class="p-4 font-bold">Patient Details</th>
-                        <th class="p-4 font-bold">Medication & Sig</th>
-                        <th class="p-4 font-bold">Cryptographic UUID</th>
-                        <th class="p-4 font-bold text-center">Status</th>
-                        <th class="p-4 font-bold text-right rounded-tr-lg">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="text-sm text-gray-700 divide-y divide-gray-200/60">
-                    
-                    <tr class="hover:bg-blue-50/50 transition" id="row-8F92A">
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-securx-navy">Today</p>
-                            <p class="text-xs text-gray-500">09:15 AM</p>
-                        </td>
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-securx-navy">Ralph De Guzman</p>
-                            <p class="text-xs text-gray-500">DOB: Jan 15, 2005</p>
-                        </td>
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-securx-navy">Amoxicillin 500mg</p>
-                            <p class="text-xs text-gray-600">Take 1 cap 3x a day for 7 days</p>
-                            <p class="text-xs text-gray-400 mt-1">Qty: 21 | Refills: 0</p>
-                        </td>
-                        <td class="p-4 align-top font-mono font-bold text-gray-600">
-                            8F92A-4B7C1
-                        </td>
-                        <td class="p-4 align-top text-center">
-                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-cyan-100 text-cyan-700 border border-cyan-200" id="status-8F92A">
-                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-500 animate-pulse"></span> Active
-                            </span>
-                        </td>
-                        <td class="p-4 align-top text-right">
-                            <button onclick="openRevokeModal('8F92A-4B7C1', 'Ralph De Guzman', 'Amoxicillin 500mg')" id="btn-8F92A" class="text-xs font-bold bg-white text-red-600 border border-red-200 shadow-sm py-2 px-4 rounded-md hover:bg-red-50 hover:border-red-300 transition-colors flex items-center gap-2 ml-auto">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                                Revoke Key
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr class="bg-gray-50/50">
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-gray-600">Oct 24, 2026</p>
-                            <p class="text-xs text-gray-400">14:30 PM</p>
-                        </td>
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-gray-600">Maria Clara</p>
-                            <p class="text-xs text-gray-400">DOB: Oct 02, 1990</p>
-                        </td>
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-gray-600">Lisinopril 10mg</p>
-                            <p class="text-xs text-gray-500">Take 1 tab daily</p>
-                            <p class="text-xs text-gray-400 mt-1">Qty: 30 | Refills: 2</p>
-                        </td>
-                        <td class="p-4 align-top font-mono text-gray-500">
-                            2C44F-9A1B2
-                        </td>
-                        <td class="p-4 align-top text-center">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
-                                Dispensed
-                            </span>
-                        </td>
-                        <td class="p-4 align-top text-right">
-                            <button class="text-xs font-bold text-gray-400 bg-gray-100 border border-gray-200 py-2 px-4 rounded-md cursor-not-allowed ml-auto">
-                                Locked
-                            </button>
-                        </td>
-                    </tr>
-
-                    <tr class="bg-red-50/30">
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-gray-600">Oct 20, 2026</p>
-                            <p class="text-xs text-gray-400">08:10 AM</p>
-                        </td>
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-gray-600">Juan Dela Cruz</p>
-                            <p class="text-xs text-gray-400">DOB: Mar 12, 1985</p>
-                        </td>
-                        <td class="p-4 align-top">
-                            <p class="font-bold text-gray-600 line-through decoration-red-400">Ibuprofen 800mg</p>
-                            <p class="text-xs text-gray-500">Take 1 tab every 6 hours</p>
-                        </td>
-                        <td class="p-4 align-top font-mono text-gray-500">
-                            9X77D-3P2M1
-                        </td>
-                        <td class="p-4 align-top text-center">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200">
-                                Revoked
-                            </span>
-                        </td>
-                        <td class="p-4 align-top text-right">
-                            <p class="text-xs text-red-500 font-medium italic mt-2">Invalidated</p>
-                        </td>
-                    </tr>
-
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <div id="revoke-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeRevokeModal()"></div>
-        
-        <div class="bg-white rounded-2xl shadow-2xl z-10 w-full max-w-md mx-4 overflow-hidden transform scale-95 transition-transform duration-300" id="revoke-modal-panel">
-            <div class="bg-red-50 border-b border-red-100 p-6 flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-4 border-4 border-white shadow-sm">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                </div>
-                <h3 class="text-xl font-extrabold text-red-700">Revoke Prescription?</h3>
-                <p class="text-sm text-red-500 font-medium mt-1">This action is permanent and immediate.</p>
-            </div>
-            
-            <div class="p-6 bg-white">
-                <p class="text-sm text-gray-600 mb-4 text-center">You are about to cryptographically invalidate the following prescription UUID. The patient will no longer be able to claim this medication.</p>
-                
-                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm mb-6">
-                    <div class="flex justify-between mb-2">
-                        <span class="text-gray-500 font-bold">Patient:</span>
-                        <span class="text-securx-navy font-bold" id="modal-patient"></span>
-                    </div>
-                    <div class="flex justify-between mb-2">
-                        <span class="text-gray-500 font-bold">Drug:</span>
-                        <span class="text-securx-navy font-bold" id="modal-drug"></span>
-                    </div>
-                    <div class="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                        <span class="text-gray-500 font-bold">UUID:</span>
-                        <span class="text-red-600 font-mono font-bold" id="modal-uuid"></span>
-                    </div>
-                </div>
-
-                <div class="flex gap-3">
-                    <button onclick="closeRevokeModal()" class="w-1/2 py-2.5 px-4 bg-white border border-gray-300 rounded-lg text-gray-700 font-bold hover:bg-gray-50 transition">Cancel</button>
-                    <button onclick="executeRevocation()" class="w-1/2 py-2.5 px-4 bg-red-600 border border-red-600 rounded-lg text-white font-bold hover:bg-red-700 shadow-md shadow-red-500/30 transition">Yes, Revoke Key</button>
-                </div>
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <button
+                    class="bg-white border border-gray-300 text-gray-600 hover:text-blue-600 hover:border-blue-300 font-bold py-2.5 px-4 rounded-xl transition shadow-sm flex items-center gap-2 text-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export CSV
+                </button>
             </div>
         </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="md:col-span-2 relative">
+                <input type="text"
+                    class="w-full bg-white border border-gray-200 text-sm rounded-xl p-3.5 pl-11 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition"
+                    placeholder="Search by patient name, ID, or diagnosis...">
+                <svg class="w-5 h-5 text-gray-400 absolute left-4 top-3.5" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </div>
+            <div>
+                <select
+                    class="w-full bg-white border border-gray-200 text-sm rounded-xl p-3.5 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition text-gray-600 font-medium">
+                    <option>Filter by Status: All</option>
+                    <option>Status: Active (Unscanned)</option>
+                    <option>Status: Dispensed</option>
+                    <option>Status: Revoked</option>
+                </select>
+            </div>
+            <div>
+                <input type="date"
+                    class="w-full bg-white border border-gray-200 text-sm rounded-xl p-3.5 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition text-gray-600 font-medium">
+            </div>
+        </div>
+
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead>
+                        <tr
+                            class="bg-slate-50 border-b border-gray-200 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            <th class="p-4 pl-6">Date & Time</th>
+                            <th class="p-4">Patient Information</th>
+                            <th class="p-4">Diagnosis / Notes</th>
+                            <th class="p-4 text-center">Rx Status</th>
+                            <th class="p-4 pr-6 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm">
+
+                        <tr class="hover:bg-slate-50 transition group">
+                            <td class="p-4 pl-6 align-top">
+                                <p class="font-bold text-securx-navy">Today</p>
+                                <p class="text-xs text-gray-500 mt-0.5">10:45 AM</p>
+                            </td>
+                            <td class="p-4 align-top">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                        MC</div>
+                                    <div>
+                                        <p class="font-bold text-securx-navy">Reyes, Maria Clara</p>
+                                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">ID: 019D57-X</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 align-top max-w-[250px] truncate">
+                                <p class="font-bold text-securx-navy truncate">Uncomplicated viral URI</p>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Advised rest and hydration...</p>
+                            </td>
+                            <td class="p-4 align-top text-center">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black bg-blue-50 text-blue-600 uppercase tracking-widest border border-blue-100">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                    Active
+                                </span>
+                            </td>
+                            <td class="p-4 pr-6 align-top text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ route('doctor.history.show', ['id' => 'ENCTR-0992X']) }}"
+                                        class="px-3 py-1.5 bg-white border border-gray-200 text-xs font-bold text-gray-600 rounded-lg hover:border-blue-300 hover:text-blue-600 transition shadow-sm inline-block">
+                                        View
+                                    </a>
+                                    <button @click="showRevokeModal = true; activeRx = 'ENCTR-0992X'"
+                                        class="px-3 py-1.5 bg-red-50 border border-red-100 text-xs font-bold text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition shadow-sm flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                            </path>
+                                        </svg>
+                                        Revoke
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr class="hover:bg-slate-50 transition group">
+                            <td class="p-4 pl-6 align-top">
+                                <p class="font-bold text-securx-navy">Apr 04, 2026</p>
+                                <p class="text-xs text-gray-500 mt-0.5">02:15 PM</p>
+                            </td>
+                            <td class="p-4 align-top">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-slate-100 text-gray-500 flex items-center justify-center font-bold text-xs shrink-0">
+                                        JD</div>
+                                    <div>
+                                        <p class="font-bold text-securx-navy">Dela Cruz, Juan</p>
+                                        <p class="text-[11px] text-gray-500 font-mono mt-0.5">ID: 882X-P</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 align-top max-w-[250px] truncate">
+                                <p class="font-bold text-securx-navy truncate">Essential Hypertension</p>
+                                <p class="text-xs text-gray-500 mt-0.5 truncate">Refill for Losartan 50mg...</p>
+                            </td>
+                            <td class="p-4 align-top text-center">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black bg-emerald-50 text-emerald-600 uppercase tracking-widest border border-emerald-100">
+                                    Dispensed
+                                </span>
+                            </td>
+                            <td class="p-4 pr-6 align-top text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ route('doctor.history.show', ['id' => 'ENCTR-882XP']) }}"
+                                        class="px-3 py-1.5 bg-white border border-gray-200 text-xs font-bold text-gray-600 rounded-lg hover:border-blue-300 hover:text-blue-600 transition shadow-sm inline-block">
+                                        View
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <tr class="bg-red-50/30 hover:bg-red-50/50 transition group">
+                            <td class="p-4 pl-6 align-top">
+                                <p class="font-bold text-red-800">Mar 28, 2026</p>
+                                <p class="text-xs text-red-400 mt-0.5">09:30 AM</p>
+                            </td>
+                            <td class="p-4 align-top">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-8 h-8 rounded-full bg-red-100 text-red-600 flex items-center justify-center font-bold text-xs shrink-0">
+                                        AS</div>
+                                    <div>
+                                        <p class="font-bold text-red-800">Santos, Arlene</p>
+                                        <p class="text-[11px] text-red-400 font-mono mt-0.5">ID: 334Q-T</p>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="p-4 align-top max-w-[250px] truncate">
+                                <p class="font-bold text-red-800 truncate line-through opacity-70">Acute Bronchitis</p>
+                                <p class="text-xs text-red-500 mt-0.5 font-bold flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                        </path>
+                                    </svg>
+                                    Rx Cancelled
+                                </p>
+                            </td>
+                            <td class="p-4 align-top text-center">
+                                <span
+                                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black bg-red-100 text-red-700 uppercase tracking-widest border border-red-200">
+                                    Revoked
+                                </span>
+                            </td>
+                            <td class="p-4 pr-6 align-top text-right">
+                                <div class="flex justify-end gap-2">
+                                    <a href="{{ route('doctor.history.show', ['id' => 'ENCTR-334QT']) }}"
+                                        class="px-3 py-1.5 bg-white border border-gray-200 text-xs font-bold text-gray-600 rounded-lg hover:border-red-300 hover:text-red-600 transition shadow-sm inline-block">
+                                        View
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+
+            <div
+                class="p-4 border-t border-gray-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-xs text-gray-500 font-medium">Showing <span class="font-bold text-securx-navy">1</span> to
+                    <span class="font-bold text-securx-navy">3</span> of <span
+                        class="font-bold text-securx-navy">156</span> encounters</p>
+                <div class="flex items-center gap-1">
+                    <button disabled
+                        class="px-3 py-1 text-xs font-bold text-gray-400 bg-white border border-gray-200 rounded-lg cursor-not-allowed">Prev</button>
+                    <button class="px-3 py-1 text-xs font-bold text-white bg-blue-600 rounded-lg">1</button>
+                    <button
+                        class="px-3 py-1 text-xs font-bold text-gray-600 hover:bg-blue-50 transition rounded-lg">2</button>
+                    <button
+                        class="px-3 py-1 text-xs font-bold text-gray-600 hover:bg-white border border-gray-200 transition rounded-lg">Next</button>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="showRevokeModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
+            <div x-show="showRevokeModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200"
+                x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
+                class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+                @click="showRevokeModal = false"></div>
+
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div x-show="showRevokeModal" x-transition:enter="ease-out duration-300"
+                    x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave="ease-in duration-200"
+                    x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
+                    x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                    class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-red-100">
+
+                    <div class="bg-red-50/50 px-4 pb-4 pt-5 sm:p-6 sm:pb-4 border-b border-red-100">
+                        <div class="sm:flex sm:items-start">
+                            <div
+                                class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                                <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                    stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
+                                <h3 class="text-lg font-black leading-6 text-red-800">Revoke Prescription</h3>
+                                <div class="mt-2">
+                                    <p class="text-sm text-red-700 font-medium">You are about to permanently invalidate the
+                                        QR code for prescription <span class="font-bold text-red-900"
+                                            x-text="activeRx"></span>. If the patient presents this at a pharmacy, it will
+                                        immediately flag as revoked.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="px-4 py-5 sm:p-6 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Reason for
+                                Revocation (Required)</label>
+                            <select
+                                class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:ring-red-500 focus:border-red-500 font-medium text-gray-700">
+                                <option>Select a clinical reason...</option>
+                                <option>Clinical Error / Incorrect Dosage</option>
+                                <option>Patient reported adverse reaction</option>
+                                <option>Therapy changed before dispensing</option>
+                                <option>Suspected fraud or loss</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-2">Security
+                                Authorization</label>
+                            <input type="password"
+                                class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:ring-red-500 focus:border-red-500"
+                                placeholder="Enter your account password to confirm">
+                        </div>
+                    </div>
+
+                    <div class="bg-gray-50 px-4 py-4 sm:flex sm:flex-row-reverse sm:px-6 border-t border-gray-200">
+                        <button type="button"
+                            class="inline-flex w-full justify-center rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-red-500 sm:ml-3 sm:w-auto transition-colors">
+                            Confirm Revocation
+                        </button>
+                        <button @click="showRevokeModal = false" type="button"
+                            class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto transition-colors">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
-
-</div>
-
-<script>
-    let currentUUID = '';
-
-    function openRevokeModal(uuid, patient, drug) {
-        currentUUID = uuid;
-        document.getElementById('modal-uuid').innerText = uuid;
-        document.getElementById('modal-patient').innerText = patient;
-        document.getElementById('modal-drug').innerText = drug;
-        
-        const modal = document.getElementById('revoke-modal');
-        const panel = document.getElementById('revoke-modal-panel');
-        
-        modal.classList.remove('hidden');
-        // Slight delay to allow display:block to apply before animating opacity
-        setTimeout(() => {
-            modal.classList.remove('opacity-0');
-            panel.classList.remove('scale-95');
-            panel.classList.add('scale-100');
-        }, 10);
-    }
-
-    function closeRevokeModal() {
-        const modal = document.getElementById('revoke-modal');
-        const panel = document.getElementById('revoke-modal-panel');
-        
-        modal.classList.add('opacity-0');
-        panel.classList.remove('scale-100');
-        panel.classList.add('scale-95');
-        
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 300);
-    }
-
-    function executeRevocation() {
-        closeRevokeModal();
-        
-        // Target the specific row we are revoking (in this mock, the top row)
-        const rowIdBase = currentUUID.split('-')[0]; // Grabs '8F92A'
-        
-        const statusBadge = document.getElementById('status-' + rowIdBase);
-        const actionBtn = document.getElementById('btn-' + rowIdBase);
-        const tableRow = document.getElementById('row-' + rowIdBase);
-
-        if(statusBadge && actionBtn) {
-            // Change Status Badge to Revoked
-            statusBadge.className = "inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 border border-red-200";
-            statusBadge.innerHTML = "Revoked";
-
-            // Remove the Revoke Button and replace with text
-            actionBtn.outerHTML = `<p class="text-xs text-red-500 font-medium italic mt-2">Invalidated Just Now</p>`;
-            
-            // Change Row Background to indicate it is dead
-            tableRow.classList.remove('hover:bg-blue-50/50');
-            tableRow.classList.add('bg-red-50/30');
-        }
-    }
-</script>
 @endsection

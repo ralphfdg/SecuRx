@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
@@ -111,7 +110,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
 /*
 |--------------------------------------------------------------------------
-| DOCTOR PORTAL ROUTES(Secure)
+| DOCTOR PORTAL ROUTES (Secure)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->group(function () {
@@ -121,33 +120,48 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
         return view('doctor.setup');
     })->name('setup');
 
-    // 2. The Main Dashboard
-    // Note: If you already have database logic in DoctorController, change this back to [DoctorController::class, 'index']
+    // 2. The Main Command Center (Integrated Analytics)
     Route::get('/dashboard', function () {
         return view('doctor.dashboard');
     })->name('dashboard');
 
-    // 3. Create Prescription (The QR Generator)
+    // 3. Clinic Queue & Live Triage
+    Route::get('/queue', function () {
+        return view('doctor.queue');
+    })->name('queue');
+
+    // 4. Voice-Assisted Consultation Console
     Route::get('/prescribe', function () {
-        return view('doctor.create-prescription');
+        return view('doctor.prescribe');
     })->name('prescribe');
 
-    // 4. Prescription History & Revocation Table
+    // 5. Consultation & Prescription History
     Route::get('/history', function () {
         return view('doctor.history');
     })->name('history');
 
-    // 5. Patient Directory
+    // NEW: View Specific History Record
+    Route::get('/history/{id}', function ($id) {
+        // In the future, you'll fetch the actual record using the $id
+        return view('doctor.view-history', ['id' => $id]);
+    })->name('history.show');
+
+    // 6. Patient Directory & Longitudinal Analytics
     Route::get('/directory', function () {
         return view('doctor.directory');
     })->name('directory');
 
-    // 6. Prescribing Analytics
-    Route::get('/analytics', function () {
-        return view('doctor.analytics');
-    })->name('analytics');
+    // 7. SOAP Templates (Clinical Macros)
+    Route::get('/templates', function () {
+        return view('doctor.templates');
+    })->name('templates');
 
-    // 7. Profile & Settings
+    // 8. Staff Management (Secretary Accounts)
+    Route::get('/staff', function () {
+        return view('doctor.staff');
+    })->name('staff');
+
+    // 9. Profile & Settings (Digital Signature, Clinic Info)
     Route::get('/settings', function () {
         return view('doctor.settings');
     })->name('settings');
@@ -213,14 +227,14 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
 // SECRETARY PORTAL ROUTES
 // ==========================================
 Route::middleware(['auth', 'role:secretary'])->prefix('secretary')->name('secretary.')->group(function () {
-    
+
     // Dashboard
-    Route::get('/dashboard', [\App\Http\Controllers\SecretaryController::class, 'dashboard'])->name('dashboard');
-    
+    Route::get('/dashboard', [SecretaryController::class, 'dashboard'])->name('dashboard');
+
     // Calendar
-    Route::get('/calendar', [\App\Http\Controllers\SecretaryController::class, 'calendar'])->name('calendar');
-    Route::get('/api/appointments', [\App\Http\Controllers\SecretaryController::class, 'getAppointments'])->name('api.appointments');
-    
+    Route::get('/calendar', [SecretaryController::class, 'calendar'])->name('calendar');
+    Route::get('/api/appointments', [SecretaryController::class, 'getAppointments'])->name('api.appointments');
+
     // Appointment Management
     Route::get('/appointments/create', [SecretaryController::class, 'createAppointment'])->name('appointments.create');
     Route::post('/appointments', [SecretaryController::class, 'storeAppointment'])->name('appointments.store');
@@ -230,7 +244,7 @@ Route::middleware(['auth', 'role:secretary'])->prefix('secretary')->name('secret
     // Triage & Queue Console
     Route::get('/triage', [SecretaryController::class, 'triage'])->name('triage');
     Route::post('/triage/store', [SecretaryController::class, 'storeTriage'])->name('triage.store');
-    
+
     // Patient Directory
     Route::get('/patients', [SecretaryController::class, 'patients'])->name('patients');
     Route::post('/patients', [SecretaryController::class, 'storePatient'])->name('patients.store');
