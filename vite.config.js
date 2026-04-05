@@ -9,6 +9,7 @@ export default defineConfig({
                 "resources/js/app.js",
                 'resources/js/appointments.js',
                 'resources/js/medical-profile.js',
+                'resources/js/admin.js',
                 'resources/js/secretary-calendar.js',
                 'resources/js/secretary-triage.js',
                 'resources/js/secretary-patients.js',

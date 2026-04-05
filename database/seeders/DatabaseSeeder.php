@@ -13,6 +13,33 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // 0. Create the Master System Administrator Account
+        User::create([
+            'first_name' => 'System',
+            'last_name'  => 'Admin',
+            'name'       => 'System Admin',
+            'username'   => 'admin',
+            'email'      => 'admin@securx.com',
+            'role'       => 'admin',
+            'status'     => 'active',
+            'email_verified_at' => now(), 
+            'password'   => Hash::make('password123'),
+        ]);
+
+        // 1. Create a Test Patient
+        $patient = User::create([
+            'first_name' => 'Maria',
+            'last_name'  => 'Dela Cruz',
+            'name'       => 'Maria Dela Cruz',
+            'username'   => 'mariapatient',
+            'email'      => 'patient@securx.com',
+            'dob'        => '1990-05-15',
+            'gender'     => 'Female',
+            'mobile_num' => '09171234567',
+            'role'       => 'patient',
+            'status'     => 'active',
+            'password'   => Hash::make('password123'),
+        ]);
         $this->command->info('Starting Master Seeder for UI Testing (Congested Schedule)...');
 
         // ==========================================
