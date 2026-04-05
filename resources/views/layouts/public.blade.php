@@ -88,7 +88,7 @@
                     <ul class="space-y-2 text-sm text-gray-500">
                         <li><a href="#" class="hover:text-securx-cyan transition">Help Center</a></li>
                         <li><a href="{{ route('contact') }}" class="hover:text-securx-cyan transition">Contact Us</a></li>
-                        <li><a href="#" class="hover:text-securx-cyan transition">API Documentation</a></li>
+                        <li><a href="#" class="hover:text-securx-cyan transition">FAQs</a></li>
                     </ul>
                 </div>
                 <div>
