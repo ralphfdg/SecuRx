@@ -345,16 +345,11 @@
 
                         <div class="text-center border-b-2 border-gray-800 pb-4 mb-4 flex flex-col items-center">
                             <div class="flex items-center justify-center gap-2">
-                                <svg class="w-8 h-8 text-securx-navy" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z">
-                                    </path>
-                                </svg>
-                                <h1 class="text-2xl font-black text-securx-navy tracking-widest uppercase">SecuRx</h1>
+                                <a class="relative inline-block group pt-2 pb-1">
+                                    <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo"
+                                        class="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105">
+                                </a>
                             </div>
-                            <p class="text-[9px] text-gray-500 font-sans font-bold tracking-widest uppercase mt-1">Verified
-                                Digital Prescription</p>
                         </div>
 
                         <div
