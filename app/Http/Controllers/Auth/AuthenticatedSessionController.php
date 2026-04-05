@@ -37,6 +37,7 @@ class AuthenticatedSessionController extends Controller
             'doctor' => redirect()->intended(route('doctor.dashboard')),
             'pharmacist' => redirect()->intended(route('pharmacist.dashboard')),
             'patient' => redirect()->intended(route('patient.dashboard')),
+            'secretary' => redirect()->intended(route('secretary.dashboard')),
             default => redirect()->route('home'),
         };
     }
