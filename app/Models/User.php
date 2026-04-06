@@ -30,7 +30,7 @@ class User extends Authenticatable
         'dob',
         'gender',
         'mobile_num',
-        'account_type',
+        'role',
         'status',
         'password',
     ];

@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             'name'       => 'System Admin',
             'username'   => 'admin',
             'email'      => 'admin@securx.com',
-            'account_type'=> 'admin', // <-- Updated
+            'role'       => 'admin',
             'status'     => 'active',
             'email_verified_at' => now(), 
             'password'   => Hash::make('password123'),
@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
             'dob'        => '1990-05-15',
             'gender'     => 'Female',
             'mobile_num' => '09171234567',
-            'account_type'=> 'patient', // <-- Updated
+            'role'       => 'patient',
             'status'     => 'active',
             'password'   => Hash::make('password123'),
         ]);
@@ -65,14 +65,12 @@ class DatabaseSeeder extends Seeder
 
         $doctor = User::updateOrCreate(
             ['email' => 'doctor@securx.com'],
-            // Updated 'role' to 'account_type' below
-            ['name' => 'Juan Santos', 'first_name' => 'Juan', 'last_name' => 'Santos', 'username' => 'drjuan', 'password' => $defaultPassword, 'account_type' => 'doctor', 'status' => 'active']
+            ['name' => 'Juan Santos', 'first_name' => 'Juan', 'last_name' => 'Santos', 'username' => 'drjuan', 'password' => $defaultPassword, 'role' => 'doctor', 'status' => 'active']
         );
 
         $secretary = User::updateOrCreate(
             ['email' => 'secretary@securx.com'],
-            // Updated 'role' to 'account_type' below
-            ['name' => 'Clara Bautista', 'first_name' => 'Clara', 'last_name' => 'Bautista', 'username' => 'admin_clara', 'password' => $defaultPassword, 'account_type' => 'secretary', 'status' => 'active']
+            ['name' => 'Clara Bautista', 'first_name' => 'Clara', 'last_name' => 'Bautista', 'username' => 'admin_clara', 'password' => $defaultPassword, 'role' => 'secretary', 'status' => 'active']
         );
 
         DB::table('doctor_profiles')->updateOrInsert(
@@ -108,7 +106,7 @@ class DatabaseSeeder extends Seeder
                     'last_name' => $p['last'],
                     'username' => strtolower($p['first']) . '_patient',
                     'password' => $defaultPassword,
-                    'account_type' => 'patient', // <-- Updated
+                    'role' => 'patient',
                     'status' => 'active',
                 ]
             );
