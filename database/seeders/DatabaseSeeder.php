@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
             'name'       => 'System Admin',
             'username'   => 'admin',
             'email'      => 'admin@securx.com',
-            'role'       => 'admin',
+            'account_type'=> 'admin', // <-- Updated
             'status'     => 'active',
             'email_verified_at' => now(), 
             'password'   => Hash::make('password123'),
@@ -36,7 +36,7 @@ class DatabaseSeeder extends Seeder
             'dob'        => '1990-05-15',
             'gender'     => 'Female',
             'mobile_num' => '09171234567',
-            'role'       => 'patient',
+            'account_type'=> 'patient', // <-- Updated
             'status'     => 'active',
             'password'   => Hash::make('password123'),
         ]);
@@ -65,12 +65,14 @@ class DatabaseSeeder extends Seeder
 
         $doctor = User::updateOrCreate(
             ['email' => 'doctor@securx.com'],
-            ['name' => 'Juan Santos', 'first_name' => 'Juan', 'last_name' => 'Santos', 'username' => 'drjuan', 'password' => $defaultPassword, 'role' => 'doctor', 'status' => 'active']
+            // Updated 'role' to 'account_type' below
+            ['name' => 'Juan Santos', 'first_name' => 'Juan', 'last_name' => 'Santos', 'username' => 'drjuan', 'password' => $defaultPassword, 'account_type' => 'doctor', 'status' => 'active']
         );
 
         $secretary = User::updateOrCreate(
             ['email' => 'secretary@securx.com'],
-            ['name' => 'Clara Bautista', 'first_name' => 'Clara', 'last_name' => 'Bautista', 'username' => 'admin_clara', 'password' => $defaultPassword, 'role' => 'secretary', 'status' => 'active']
+            // Updated 'role' to 'account_type' below
+            ['name' => 'Clara Bautista', 'first_name' => 'Clara', 'last_name' => 'Bautista', 'username' => 'admin_clara', 'password' => $defaultPassword, 'account_type' => 'secretary', 'status' => 'active']
         );
 
         DB::table('doctor_profiles')->updateOrInsert(
@@ -106,7 +108,7 @@ class DatabaseSeeder extends Seeder
                     'last_name' => $p['last'],
                     'username' => strtolower($p['first']) . '_patient',
                     'password' => $defaultPassword,
-                    'role' => 'patient',
+                    'account_type' => 'patient', // <-- Updated
                     'status' => 'active',
                 ]
             );
@@ -160,6 +162,10 @@ class DatabaseSeeder extends Seeder
                 'id' => (string) Str::uuid(), 'patient_id' => $patientIds[1], 'doctor_id' => $doctor->id, 'secretary_id' => $secretary->id,
                 'appointment_date' => Carbon::tomorrow()->setTime(14, 0, 0), 'status' => 'pending', 'created_at' => now(), 'updated_at' => now()
             ]
+        ]);
+
+        $this->call([
+            PharmacistSeeder::class,
         ]);
 
         $this->command->info('Success! Schedule is now congested. Check your Secretary Calendar.');
