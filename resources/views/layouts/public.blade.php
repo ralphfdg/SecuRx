@@ -86,7 +86,8 @@
                 <div>
                     <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Support</h3>
                     <ul class="space-y-2 text-sm text-gray-500">
-                        <li><a href="{{ route('help') }}" class="hover:text-securx-cyan transition">Help Center</a></li>                        <li><a href="{{ route('contact') }}" class="hover:text-securx-cyan transition">Contact Us</a></li>
+                        <li><a href="{{ route('help') }}" class="hover:text-securx-cyan transition">Help Center</a></li>                        
+                        <li><a href="{{ route('contact') }}" class="hover:text-securx-cyan transition">Contact Us</a></li>
                         <li><a href="{{ route('help') }}" class="hover:text-securx-cyan transition">FAQs</a></li>
                     </ul>
                 </div>
