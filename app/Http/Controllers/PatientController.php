@@ -6,8 +6,10 @@ use App\Models\Appointment;
 use App\Models\MedicalDocument;
 use App\Models\Prescription;
 use App\Models\User;
+use App\Rules\ValidAppointmentTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class PatientController extends Controller
 {
@@ -62,7 +64,7 @@ class PatientController extends Controller
         $user = Auth::user();
 
         $prescriptions = $user->patientPrescriptions()
-            ->with(['doctor', 'items.medication'])
+            ->with(['doctor.doctorProfile', 'items.medication'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
@@ -102,9 +104,21 @@ class PatientController extends Controller
             ->whereHas('doctorProfile', function ($query) {
                 $query->where('is_verified', true);
             })->with('doctorProfile.clinic', 'schedules')
+            ->orderBy('last_name')
             ->get();
 
-        return view('patient.book-appointment', compact('user', 'doctors'));
+        // Fetch all upcoming appointments to check for conflicts on the frontend
+        $upcomingAppointments = Appointment::where('appointment_date', '>=', now())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->get()
+            ->groupBy('doctor_id')
+            ->map(function ($appointments) {
+                return $appointments->pluck('appointment_date')->map(function ($date) {
+                    return Carbon::parse($date)->toDateTimeString();
+                });
+            });
+
+        return view('patient.book-appointment', compact('user', 'doctors', 'upcomingAppointments'));
     }
 
     /**
@@ -114,7 +128,12 @@ class PatientController extends Controller
     {
         $request->validate([
             'doctor_id' => ['required', 'exists:users,id'],
-            'appointment_date' => ['required', 'date', 'after:now'],
+            'appointment_date' => [
+                'required',
+                'date',
+                'after:now',
+                new ValidAppointmentTime($request->doctor_id),
+            ],
         ]);
 
         Appointment::create([
@@ -156,7 +175,7 @@ class PatientController extends Controller
         // Fetch the specific prescription, ensuring it actually belongs to the logged-in patient!
         $prescription = Prescription::where('id', $id)
             ->where('patient_id', $user->id)
-            ->with(['doctor', 'items.medication'])
+            ->with(['doctor.doctorProfile', 'items.medication', 'encounter'])
             ->firstOrFail();
 
         return view('patient.qr-live', compact('user', 'prescription'));

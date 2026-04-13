@@ -5,23 +5,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let fpInstance = null;
 
+    // Helper to convert 'HH:mm:ss' to a Date object for today to compare times
+    const timeToDate = (timeStr) => {
+        const [hours, minutes, seconds] = timeStr.split(':');
+        const date = new Date();
+        date.setHours(hours, minutes, seconds, 0);
+        return date;
+    };
+
     // 1. Initialize Flatpickr in a "Locked" default state
     if (dateInput) {
         fpInstance = flatpickr(dateInput, {
             inline: true,
             enableTime: true,
             dateFormat: "Y-m-d H:i",
-            minDate: "today", 
+            minDate: "today",
             minuteIncrement: 30,
             theme: "airbnb",
-            // By default, disable EVERYTHING until a doctor is selected
             disable: [
-                function(date) { return true; }
+                function(date) { return true; } // Initially, disable everything
             ]
         });
     }
 
-    // 2. Initialize Tom Select and listen for changes
+    // 2. Initialize Tom Select
     if (doctorSelect) {
         const tsInstance = new TomSelect(doctorSelect, {
             create: false,
@@ -32,50 +39,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 3. The Dynamic Engine: Triggered when a doctor is selected
         tsInstance.on('change', function(doctorId) {
-            if (!doctorId || !fpInstance) return;
+            fpInstance.clear(); // Clear previous selection
+
+            if (!doctorId || !fpInstance) {
+                fpInstance.set('disable', [function(date) { return true; }]); // Lock if no doctor
+                return;
+            }
             
-            // Fetch the schedules we injected from Laravel Blade
-            const schedules = window.doctorSchedules[doctorId];
-            
-            // If the doctor has no schedule, lock the calendar
-            if (!schedules || schedules.length === 0) {
-                fpInstance.set('disable', [function(date) { return true; }]);
-                // Optional: You could show an alert here using Toastify!
+            // Fetch schedules and existing appointments for the selected doctor from the global window object
+            const schedules = window.doctorSchedules ? (window.doctorSchedules[doctorId] || []) : [];
+            const existingAppointments = window.upcomingAppointments ? (window.upcomingAppointments[doctorId] || []).map(d => new Date(d).getTime()) : [];
+
+            if (schedules.length === 0) {
+                fpInstance.set('disable', [function(date) { return true; }]); // Lock if no schedule
                 return;
             }
 
             // Map standard day names to JavaScript getDay() integers (Sunday = 0)
             const dayMap = { 'Sunday':0, 'Monday':1, 'Tuesday':2, 'Wednesday':3, 'Thursday':4, 'Friday':5, 'Saturday':6 };
             
-            // Extract the days this specific doctor is available
-            const availableDays = schedules.filter(s => s.is_available).map(s => dayMap[s.day_of_week]);
-
-            // Find the earliest start time and latest end time for this doctor
-            let earliestStart = "23:59:59";
-            let latestEnd = "00:00:00";
-            
-            schedules.forEach(s => {
-                if (s.start_time < earliestStart) earliestStart = s.start_time;
-                if (s.end_time > latestEnd) latestEnd = s.end_time;
-            });
-
-            // Format times to HH:MM for Flatpickr
-            earliestStart = earliestStart.substring(0, 5);
-            latestEnd = latestEnd.substring(0, 5);
-
-            // Update Flatpickr dynamically!
-            fpInstance.set('disable', [
-                function(date) {
-                    // Disable the date if its day of the week is NOT in the availableDays array
-                    return !availableDays.includes(date.getDay());
+            // This is our new, powerful disable function
+            const disableFunction = function(date) {
+                const dayOfWeek = date.getDay();
+                
+                // Check for existing appointments at this exact time slot
+                if (existingAppointments.includes(date.getTime())) {
+                    return true;
                 }
-            ]);
-            
-            fpInstance.set('minTime', earliestStart);
-            fpInstance.set('maxTime', latestEnd);
-            
-            // Clear any previously selected date to force them to pick a valid one
-            fpInstance.clear(); 
+
+                // Find available schedules for this day of the week
+                const availableSchedulesForDay = schedules.filter(s => s.is_available && dayMap[s.day_of_week] === dayOfWeek);
+
+                if (availableSchedulesForDay.length === 0) {
+                    return true; // Disable if doctor doesn't work on this day
+                }
+
+                // Check if the selected time falls within any of the time slots for that day
+                let isTimeAvailable = false;
+                for (const slot of availableSchedulesForDay) {
+                    const startTime = timeToDate(slot.start_time);
+                    const endTime = timeToDate(slot.end_time);
+                    
+                    const selectedTime = new Date(date);
+                    selectedTime.setFullYear(startTime.getFullYear(), startTime.getMonth(), startTime.getDate());
+
+                    if (selectedTime >= startTime && selectedTime < endTime) {
+                        isTimeAvailable = true;
+                        break;
+                    }
+                }
+
+                return !isTimeAvailable; // Disable the slot if it's not in any available range
+            };
+
+            // Update Flatpickr with the new rules, removing the old global time limits
+            fpInstance.set('disable', [disableFunction]);
+            fpInstance.set('minTime', null);
+            fpInstance.set('maxTime', null);
         });
     }
 });

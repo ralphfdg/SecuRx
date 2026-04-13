@@ -244,15 +244,15 @@
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-bold text-securx-navy mb-1.5">Height (cm) *</label>
+                                    <label class="block text-sm font-bold text-securx-navy mb-1.5">Height (cm)</label>
                                     <input type="number" step="0.1" name="height" id="inp_height"
-                                        placeholder="e.g. 170" required
+                                        placeholder="e.g. 170"
                                         class="w-full rounded-xl border-gray-300 shadow-sm focus:border-securx-cyan focus:ring-securx-cyan/20 bg-slate-50 py-2.5 px-3">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-bold text-securx-navy mb-1.5">Weight (kg) *</label>
+                                    <label class="block text-sm font-bold text-securx-navy mb-1.5">Weight (kg)</label>
                                     <input type="number" step="0.1" name="weight" id="inp_weight"
-                                        placeholder="e.g. 65" required
+                                        placeholder="e.g. 65"
                                         class="w-full rounded-xl border-gray-300 shadow-sm focus:border-securx-cyan focus:ring-securx-cyan/20 bg-slate-50 py-2.5 px-3">
                                 </div>
                             </div>

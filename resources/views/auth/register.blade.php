@@ -192,14 +192,14 @@
                     @else
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-bold text-securx-navy mb-1.5">Height (cm) *</label>
+                                <label class="block text-sm font-bold text-securx-navy mb-1.5">Height (cm)</label>
                                 <input type="number" name="height" placeholder="e.g. 170"
-                                    class="glass-input w-full py-2 px-3" required>
+                                    class="glass-input w-full py-2 px-3">
                             </div>
                             <div>
-                                <label class="block text-sm font-bold text-securx-navy mb-1.5">Weight (kg) *</label>
+                                <label class="block text-sm font-bold text-securx-navy mb-1.5">Weight (kg)</label>
                                 <input type="number" name="weight" placeholder="e.g. 65"
-                                    class="glass-input w-full py-2 px-3" required>
+                                    class="glass-input w-full py-2 px-3">
                             </div>
                         </div>
                         <div>
