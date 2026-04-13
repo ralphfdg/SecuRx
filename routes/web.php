@@ -247,6 +247,12 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
     Route::post('/data-consent', [PatientController::class, 'updateConsent'])->name('consent.update');
 
     Route::get('/settings', [PatientController::class, 'settings'])->name('settings');
+
+    // Authorized Representatives
+    Route::get('/representatives', [PatientController::class, 'representatives'])->name('representatives');
+    Route::post('/representatives', [PatientController::class, 'storeRepresentative'])->name('representatives.store');
+    Route::patch('/representatives/{id}/toggle', [PatientController::class, 'toggleRepresentative'])->name('representatives.toggle');
+    Route::delete('/representatives/{id}', [PatientController::class, 'destroyRepresentative'])->name('representatives.destroy');
 });
 
 // ==========================================

@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\MedicalDocument;
 use App\Models\Prescription;
 use App\Models\User;
+use App\Models\AuthorizedRepresentative;
 use App\Rules\ValidAppointmentTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -252,5 +253,72 @@ class PatientController extends Controller
         $user = Auth::user()->load('patientProfile');
         
         return view('patient.settings', compact('user'));
+    }
+
+    /**
+     * Display the Authorized Representatives Page
+     */
+    public function representatives()
+    {
+        $user = Auth::user();
+        
+        // Fetch the user's representatives
+        $representatives = AuthorizedRepresentative::where('patient_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('patient.representatives', compact('user', 'representatives'));
+    }
+
+    /**
+     * Store a new Authorized Representative
+     */
+    public function storeRepresentative(Request $request)
+    {
+        $request->validate([
+            'full_name' => 'required|string|max:255',
+            'relationship' => 'required|string|max:100',
+        ]);
+
+        AuthorizedRepresentative::create([
+            'patient_id' => Auth::id(),
+            'full_name' => $request->full_name,
+            'relationship' => $request->relationship,
+            'is_active' => true,
+        ]);
+
+        return redirect()->back()->with('success', 'Authorized representative added successfully.');
+    }
+
+    /**
+     * Toggle the active status of a representative
+     */
+    public function toggleRepresentative($id)
+    {
+        // Ensure the rep exists AND belongs to the logged-in patient
+        $rep = AuthorizedRepresentative::where('id', $id)
+            ->where('patient_id', Auth::id())
+            ->firstOrFail();
+
+        $rep->update([
+            'is_active' => !$rep->is_active
+        ]);
+
+        $status = $rep->is_active ? 'activated' : 'temporarily revoked';
+        return redirect()->back()->with('success', "Representative access has been {$status}.");
+    }
+
+    /**
+     * Delete a representative permanently
+     */
+    public function destroyRepresentative($id)
+    {
+        $rep = AuthorizedRepresentative::where('id', $id)
+            ->where('patient_id', Auth::id())
+            ->firstOrFail();
+
+        $rep->delete();
+
+        return redirect()->back()->with('success', 'Representative removed permanently.');
     }
 }
