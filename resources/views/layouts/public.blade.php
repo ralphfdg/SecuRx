@@ -86,17 +86,17 @@
                 <div>
                     <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Support</h3>
                     <ul class="space-y-2 text-sm text-gray-500">
-                        <li><a href="#" class="hover:text-securx-cyan transition">Help Center</a></li>
+                        <li><a href="{{ route('help') }}" class="hover:text-securx-cyan transition">Help Center</a></li>                        
                         <li><a href="{{ route('contact') }}" class="hover:text-securx-cyan transition">Contact Us</a></li>
-                        <li><a href="#" class="hover:text-securx-cyan transition">FAQs</a></li>
+                        <li><a href="{{ route('help') }}" class="hover:text-securx-cyan transition">FAQs</a></li>
                     </ul>
                 </div>
                 <div>
                     <h3 class="text-sm font-bold text-gray-800 uppercase tracking-wider mb-4">Legal</h3>
                     <ul class="space-y-2 text-sm text-gray-500">
-                        <li><a href="#" class="hover:text-securx-cyan transition">Privacy Policy</a></li>
-                        <li><a href="#" class="hover:text-securx-cyan transition">Terms of Service</a></li>
-                        <li><a href="#" class="hover:text-securx-cyan transition">Accessibility</a></li>
+                        <li><a href="{{ route('privacy') }}" class="hover:text-securx-cyan transition">Privacy Policy</a></li>
+                        <li><a href="{{ route('terms') }}" class="hover:text-securx-cyan transition">Terms of Service</a></li>
+                        <li><a href="{{ route('accessibility') }}" class="hover:text-securx-cyan transition">Accessibility</a></li>
                     </ul>
                 </div>
             </div>
