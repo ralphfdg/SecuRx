@@ -56,8 +56,8 @@ class RegisteredUserController extends Controller
             ]);
         } elseif ($request->role === 'patient') {
             $request->validate([
-                'height'  => ['required', 'numeric'],
-                'weight'  => ['required', 'numeric'],
+                'height'  => ['nullable', 'numeric'],
+                'weight'  => ['nullable', 'numeric'],
                 'address' => ['required', 'string'],
             ]);
         } elseif ($request->role === 'pharmacist') {
