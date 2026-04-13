@@ -5,82 +5,123 @@
 @section('content')
     <div x-data="consultationConsole()" class="max-w-7xl mx-auto space-y-6 pb-12 relative">
 
-        <div
-            class="bg-white/90 backdrop-blur-md border border-gray-200 rounded-2xl p-5 flex flex-col xl:flex-row xl:items-center justify-between shadow-sm sticky top-0 z-30">
+        <div class="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-5 shadow-sm relative z-20">
 
-            <div class="flex items-center gap-5">
-                <a href="{{ route('doctor.queue') ?? '#' }}"
-                    class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition border border-gray-100"
-                    title="Back to Queue">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg>
-                </a>
-                <div>
-                    <div class="flex items-center gap-3 mb-1">
-                        <h2 class="text-2xl font-black text-securx-navy leading-none">Reyes, Maria Clara</h2>
+            <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4">
+
+                <div class="flex items-center gap-5">
+                    <a href="{{ route('doctor.queue') ?? '#' }}"
+                        class="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition border border-gray-100"
+                        title="Back to Queue">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </a>
+                    <div>
+                        <div class="flex items-center gap-3 mb-1">
+                            <h2 class="text-2xl font-black text-securx-navy leading-none">
+                                {{ $appointment->patient->name ?? 'Unknown Patient' }}</h2>
+                            <span
+                                class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">Active
+                                File</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-sm font-medium text-gray-500 mt-1">
+                            <span>ID: {{ substr($appointment->patient?->id ?? '00000000', 0, 8) }}</span>
+                            <span class="text-gray-300">•</span>
+                            <span>{{ $appointment->patient->dob ? \Carbon\Carbon::parse($appointment->patient->dob)->age : '--' }}
+                                yrs</span>
+                            <span class="text-gray-300">•</span>
+                            <span class="capitalize">{{ $appointment->patient->gender ?? 'Unknown' }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <button @click="showDurDrawer = true"
+                        class="relative p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition border border-amber-200 shadow-sm tooltip-trigger"
+                        title="Safety Alerts">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                            </path>
+                        </svg>
                         <span
-                            class="bg-blue-100 text-blue-700 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-widest">Active
-                            File</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-sm font-medium text-gray-500 mt-1">
-                        <span>ID: 019D57-X</span> <span class="text-gray-300">•</span> <span>45 yrs</span> <span
-                            class="text-gray-300">•</span> <span>Female</span>
-                    </div>
+                            class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-md animate-bounce">1</span>
+                    </button>
+                    <button @click="showTemplatesDrawer = true"
+                        class="bg-white border-2 border-gray-200 text-gray-600 hover:border-blue-600 hover:text-blue-600 font-bold py-2 px-4 rounded-xl transition shadow-sm flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                            </path>
+                        </svg>
+                        SOAP Templates
+                    </button>
+                    <button @click="showRecordsDrawer = true"
+                        class="bg-white border-2 border-securx-navy text-securx-navy hover:bg-securx-navy hover:text-white font-bold py-2 px-4 rounded-xl transition shadow-sm flex items-center gap-2 text-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                            </path>
+                        </svg>
+                        View Full Records
+                    </button>
                 </div>
             </div>
 
-            <div class="flex items-center gap-4 mt-4 xl:mt-0 flex-wrap">
-                <div class="hidden md:flex items-center gap-5 bg-slate-50 px-4 py-2 rounded-xl border border-gray-100 mr-2">
+            <div
+                class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-slate-50 border border-gray-100 rounded-xl p-4">
+                <div class="flex flex-col gap-1.5 flex-1">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Reason / Triage Note</p>
+                    <div class="text-sm text-gray-700 leading-snug">
+                        <p><span class="text-blue-600 font-black">Rx:</span> <span
+                                class="italic">"{{ $appointment->reason_for_visit ?? 'No reason provided.' }}"</span></p>
+                        <p><span class="text-emerald-600 font-black">Triage:</span> <span
+                                class="italic">"{{ $triageVitals['notes'] ?? 'No notes logged.' }}"</span></p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-5 flex-wrap shrink-0">
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase">BP</p>
-                        <p class="text-sm font-black text-red-500">140/90</p>
+                        <p class="text-sm font-black text-red-500">{{ $triageVitals['blood_pressure'] ?? '--' }}</p>
+                    </div>
+                    <div class="w-px h-6 bg-gray-200"></div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">HR</p>
+                        <p class="text-sm font-black text-rose-500">
+                            {{ $triageVitals['heart_rate'] ?? '--' }}{{ isset($triageVitals['heart_rate']) ? ' bpm' : '' }}
+                        </p>
                     </div>
                     <div class="w-px h-6 bg-gray-200"></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase">Temp</p>
-                        <p class="text-sm font-black text-securx-navy">37.2°C</p>
+                        <p class="text-sm font-black text-securx-navy">
+                            {{ $triageVitals['temperature'] ?? '--' }}{{ isset($triageVitals['temperature']) ? '°C' : '' }}
+                        </p>
+                    </div>
+                    <div class="w-px h-6 bg-gray-200"></div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Wt</p>
+                        <p class="text-sm font-black text-securx-navy">
+                            {{ $triageVitals['weight'] ?? ($appointment->patient->patientProfile->weight ?? '--') }}{{ isset($triageVitals['weight']) || isset($appointment->patient->patientProfile->weight) ? 'kg' : '' }}
+                        </p>
+                    </div>
+                    <div class="w-px h-6 bg-gray-200"></div>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase">Ht</p>
+                        <p class="text-sm font-black text-securx-navy">
+                            {{ $appointment->patient->patientProfile->height ?? '--' }}{{ isset($appointment->patient->patientProfile->height) ? 'cm' : '' }}
+                        </p>
                     </div>
                 </div>
-
-                <button @click="showDurDrawer = true"
-                    class="relative p-2.5 bg-amber-50 text-amber-600 rounded-xl hover:bg-amber-100 transition border border-amber-200 shadow-sm tooltip-trigger"
-                    title="Safety Alerts">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                        </path>
-                    </svg>
-                    <span
-                        class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-md animate-bounce">1</span>
-                </button>
-
-                <button @click="showTemplatesDrawer = true"
-                    class="bg-white border-2 border-gray-200 text-gray-600 hover:border-blue-600 hover:text-blue-600 font-bold py-2.5 px-4 rounded-xl transition shadow-sm flex items-center gap-2 text-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
-                        </path>
-                    </svg>
-                    SOAP Templates
-                </button>
-
-                <button @click="showRecordsDrawer = true"
-                    class="bg-white border-2 border-securx-navy text-securx-navy hover:bg-securx-navy hover:text-white font-bold py-2.5 px-4 rounded-xl transition shadow-sm flex items-center gap-2 text-sm">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                        </path>
-                    </svg>
-                    View Full Records
-                </button>
             </div>
         </div>
 
-        <div class="flex flex-col lg:flex-row gap-6 items-start">
-
-            <div class="w-full lg:w-7/12 xl:w-2/3 space-y-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
+        
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6 min-w-0">
 
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
                     <div class="p-5 border-b border-gray-100 bg-slate-50/50">
@@ -90,15 +131,13 @@
                             Clinical Notes (SOAP)
                         </h3>
                     </div>
-
                     <div class="p-6 space-y-6">
                         <div class="relative group">
                             <label
-                                class="block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Subjective
-                                (Patient's Story)</label>
+                                class="block text-[11px] font-bold text-blue-600 uppercase tracking-wider mb-1.5">Subjective</label>
                             <div
                                 class="relative flex items-start bg-slate-50 border border-gray-200 rounded-xl focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all overflow-hidden">
-                                <textarea @input="resizeTextarea"
+                                <textarea @input="resizeTextarea" x-model="subjective_note"
                                     class="w-full bg-transparent border-0 focus:ring-0 p-4 text-sm text-gray-800 placeholder-gray-400 min-h-[120px] resize-none"
                                     placeholder="What is the chief complaint?"></textarea>
                                 <button @click="toggleMic('subjective')"
@@ -113,14 +152,12 @@
                                 </button>
                             </div>
                         </div>
-
                         <div class="relative group">
                             <label
-                                class="block text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">Objective
-                                (Observations)</label>
+                                class="block text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">Objective</label>
                             <div
                                 class="relative flex items-start bg-slate-50 border border-gray-200 rounded-xl focus-within:border-emerald-500 focus-within:ring-1 focus-within:ring-emerald-500 transition-all overflow-hidden">
-                                <textarea @input="resizeTextarea"
+                                <textarea @input="resizeTextarea" x-model="objective_note"
                                     class="w-full bg-transparent border-0 focus:ring-0 p-4 text-sm text-gray-800 placeholder-gray-400 min-h-[120px] resize-none"
                                     placeholder="Physical exam findings..."></textarea>
                                 <button @click="toggleMic('objective')"
@@ -135,14 +172,12 @@
                                 </button>
                             </div>
                         </div>
-
                         <div class="relative group">
                             <label
-                                class="block text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-1.5">Assessment
-                                (Diagnosis)</label>
+                                class="block text-[11px] font-bold text-purple-600 uppercase tracking-wider mb-1.5">Assessment</label>
                             <div
                                 class="relative flex items-start bg-slate-50 border border-gray-200 rounded-xl focus-within:border-purple-500 focus-within:ring-1 focus-within:ring-purple-500 transition-all overflow-hidden">
-                                <textarea @input="resizeTextarea"
+                                <textarea @input="resizeTextarea" x-model="assessment_note"
                                     class="w-full bg-transparent border-0 focus:ring-0 p-4 text-sm text-gray-800 placeholder-gray-400 min-h-[100px] resize-none"
                                     placeholder="Medical diagnosis..."></textarea>
                                 <button @click="toggleMic('assessment')"
@@ -157,13 +192,12 @@
                                 </button>
                             </div>
                         </div>
-
                         <div class="relative group">
-                            <label class="block text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">Plan
-                                (Treatment)</label>
+                            <label
+                                class="block text-[11px] font-bold text-amber-600 uppercase tracking-wider mb-1.5">Plan</label>
                             <div
                                 class="relative flex items-start bg-slate-50 border border-gray-200 rounded-xl focus-within:border-amber-500 focus-within:ring-1 focus-within:ring-amber-500 transition-all overflow-hidden">
-                                <textarea @input="resizeTextarea"
+                                <textarea @input="resizeTextarea" x-model="plan_note"
                                     class="w-full bg-transparent border-0 focus:ring-0 p-4 text-sm text-gray-800 placeholder-gray-400 min-h-[100px] resize-none"
                                     placeholder="Next steps and advice..."></textarea>
                                 <button @click="toggleMic('plan')"
@@ -189,16 +223,15 @@
                             Medication & Instructions
                         </h3>
                     </div>
-
                     <div class="p-6 flex flex-col gap-5">
                         <div class="flex flex-col sm:flex-row gap-4">
                             <div class="relative flex-grow">
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">RxNorm
                                     Smart Search</label>
-                                <input @focus="showDropdown = true" @click.away="showDropdown = false" type="text"
+                                <input type="text" x-model="newMed.name"
                                     class="w-full bg-slate-50 border border-gray-200 text-securx-navy text-base rounded-xl focus:ring-blue-500 focus:border-blue-500 block pl-12 p-3.5 font-bold shadow-inner"
-                                    placeholder="Search drug generic or brand name..." value="Amox">
+                                    placeholder="Search drug generic or brand name...">
                                 <div class="absolute bottom-0 left-0 h-[52px] flex items-center pl-4 pointer-events-none">
                                     <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -207,7 +240,6 @@
                                     </svg>
                                 </div>
                             </div>
-
                             <div class="w-full sm:w-32 shrink-0">
                                 <label class="block text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5"
                                     title="Department of Health Drug Price Reference Index">Est. Price</label>
@@ -220,53 +252,68 @@
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-gray-100 pt-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 border-t border-gray-100 pt-5">
                             <div>
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Dose</label>
-                                <input type="text"
+                                <input type="text" x-model="newMed.dose"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
                                     placeholder="e.g. 1 cap">
                             </div>
                             <div>
-                                <div>
-                                    <label
-                                        class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Frequency</label>
-                                    <input type="text"
-                                        class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="e.g. TID (3x a day)">
-                                </div>
+                                <label
+                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Frequency</label>
+                                <input type="text" x-model="newMed.frequency"
+                                    class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="e.g. TID">
                             </div>
                             <div>
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Duration</label>
-                                <input type="text"
+                                <input type="text" x-model="newMed.duration"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
                                     placeholder="7 days">
                             </div>
+                            <div>
+                                <label
+                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Qty</label>
+                                <input type="number" x-model="newMed.quantity"
+                                    class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
+                                    placeholder="30">
+                            </div>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <label
-                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Instructions
-                                    to Pharmacist</label>
-                                <input type="text"
+                                <div class="flex justify-between items-end mb-1.5">
+                                    <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Sig
+                                        (Directions)</label>
+                                    <button type="button"
+                                        @click="newMed.sig = `Take ${newMed.dose || '[dose]'} ${newMed.frequency || '[freq]'} for ${newMed.duration || '[duration]'}`"
+                                        class="text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-wider transition">Auto-Fill</button>
+                                </div>
+                                <input type="text" x-model="newMed.sig"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500 italic placeholder-gray-400"
-                                    placeholder="e.g. Dispense exact brand only">
+                                    placeholder="e.g. Take 1 tab OD">
                             </div>
                             <div>
-                                <label
-                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Instructions
-                                    to Patient</label>
-                                <input type="text"
+                                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">To
+                                    Pharmacist</label>
+                                <input type="text" x-model="newMed.pharmacist_instructions"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500 italic placeholder-gray-400"
-                                    placeholder="e.g. Take with a full meal">
+                                    placeholder="e.g. Exact brand only">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">To
+                                    Patient</label>
+                                <input type="text" x-model="newMed.patient_instructions"
+                                    class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500 italic placeholder-gray-400"
+                                    placeholder="e.g. Take with meal">
                             </div>
                         </div>
 
                         <div class="pt-2">
-                            <button
+                            <button @click="addMedication()" type="button"
                                 class="w-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white font-black py-3 px-8 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -287,7 +334,6 @@
                         </h3>
                     </div>
                     <div class="p-6 space-y-5">
-
                         <label
                             class="flex items-center gap-3 cursor-pointer p-4 border border-blue-100 bg-blue-50/50 rounded-xl hover:bg-blue-50 transition">
                             <input type="checkbox" x-model="showPatientName"
@@ -319,11 +365,9 @@
                         </div>
                     </div>
                 </div>
-
             </div>
 
-            <div class="w-full lg:w-5/12 xl:w-1/3 sticky top-28">
-
+            <div class="lg:col-span-5 xl:col-span-4 sticky top-6 min-w-0">
                 <div class="flex items-center gap-2 mb-3 px-1">
                     <span
                         class="bg-emerald-600 text-white w-6 h-6 rounded-md flex items-center justify-center text-xs font-black">
@@ -338,11 +382,8 @@
 
                 <div
                     class="bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 aspect-[1/1.414] relative flex flex-col w-full rounded-sm overflow-hidden">
-
                     <div class="h-2 w-full bg-securx-navy shrink-0"></div>
-
                     <div class="p-6 flex-1 flex flex-col relative z-10">
-
                         <div class="text-center border-b-2 border-gray-800 pb-4 mb-4 flex flex-col items-center">
                             <div class="flex items-center justify-center gap-2">
                                 <a class="relative inline-block group pt-2 pb-1">
@@ -358,13 +399,15 @@
                                 <p class="text-[8px] font-bold text-gray-500 uppercase">Name:</p>
                                 <p class="font-bold border-b border-gray-300 border-dotted"
                                     :class="!showPatientName ? 'text-gray-400 italic' : 'text-gray-900'"
-                                    x-text="showPatientName ? 'Maria Clara Reyes' : '____________________'"></p>
+                                    x-text="showPatientName ? {{ Js::from($appointment->patient?->name ?? 'Unknown') }} : '____________________'">
+                                </p>
                             </div>
                             <div class="col-span-1">
                                 <p class="text-[8px] font-bold text-gray-500 uppercase">Age/Sex:</p>
                                 <p class="font-bold border-b border-gray-300 border-dotted"
                                     :class="!showPatientName ? 'text-gray-400 italic' : 'text-gray-900'"
-                                    x-text="showPatientName ? '45/F' : '__________'"></p>
+                                    x-text="showPatientName ? '{{ $appointment->patient->dob ? \Carbon\Carbon::parse($appointment->patient->dob)->age : 'N/A' }}/{{ strtoupper(substr($appointment->patient->gender ?? 'U', 0, 1)) }}' : '__________'">
+                                </p>
                             </div>
                             <div class="col-span-1">
                                 <p class="text-[8px] font-bold text-gray-500 uppercase">Date:</p>
@@ -378,26 +421,33 @@
                         </div>
 
                         <div class="flex-1 space-y-4 pl-2 font-serif overflow-y-auto custom-scrollbar pr-2 flex flex-col">
-
-                            <div class="relative group">
-                                <button
-                                    class="absolute -left-2 top-0 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition"><svg
-                                        class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L10 8.586 8.707 7.293z"
-                                            clip-rule="evenodd"></path>
-                                    </svg></button>
-
-                                <p class="text-sm font-bold text-gray-900">1. Losartan Potassium 50mg tab</p>
-                                <div class="flex justify-between items-end mt-0.5">
-                                    <p class="text-xs text-gray-700 italic">Sig: Take 1 tab OD for 30 days.</p>
-                                    <p class="text-xs font-bold text-gray-900">#30 tabs</p>
+                            <template x-for="(med, index) in medications" :key="index">
+                                <div class="relative group">
+                                    <button @click="removeMedication(index)" type="button"
+                                        class="absolute -left-2 top-0 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L10 8.586 8.707 7.293z"
+                                                clip-rule="evenodd"></path>
+                                        </svg>
+                                    </button>
+                                    <p class="text-sm font-bold text-gray-900"
+                                        x-text="`${index + 1}. ${med.name} ${med.dose || ''}`"></p>
+                                    <div class="flex justify-between items-end mt-0.5">
+                                        <p class="text-xs text-gray-700 italic"
+                                            x-text="`Sig: ${med.sig || 'Take as directed'}`"></p>
+                                        <p class="text-xs font-bold text-gray-900" x-text="`#${med.quantity || ''}`"></p>
+                                    </div>
+                                    <p x-show="med.pharmacist_instructions"
+                                        class="text-[9px] text-gray-500 italic mt-0.5 border-l border-gray-300 pl-2 ml-1"
+                                        x-text="`To Rx: ${med.pharmacist_instructions}`"></p>
+                                    <p x-show="med.patient_instructions"
+                                        class="text-[9px] text-blue-600 italic mt-0.5 border-l border-blue-200 pl-2 ml-1"
+                                        x-text="`To Pt: ${med.patient_instructions}`"></p>
                                 </div>
-                                <p class="text-[9px] text-gray-500 italic mt-0.5 border-l border-gray-300 pl-2 ml-1">To Rx:
-                                    Exact brand only.</p>
-                                <p class="text-[9px] text-blue-600 italic mt-0.5 border-l border-blue-200 pl-2 ml-1">To Pt:
-                                    Take after breakfast.</p>
-                            </div>
+                            </template>
+                            <div x-show="medications.length === 0" class="text-xs text-gray-400 italic">No medications
+                                prescribed yet.</div>
 
                             <div class="flex-1"></div>
 
@@ -420,7 +470,6 @@
 
                         <div class="mt-4 pt-2 border-t border-gray-100 shrink-0">
                             <div class="flex justify-between items-end">
-
                                 <div
                                     class="w-16 h-16 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
                                     <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor"
@@ -431,31 +480,25 @@
                                     </svg>
                                     <span class="text-[6px] text-gray-400 mt-1 font-sans">QR PENDING</span>
                                 </div>
-
                                 <div class="text-left w-[170px] ml-auto flex flex-col font-serif">
-
                                     <div class="relative z-0 space-y-1 text-[11px]">
                                         <div class="relative">
                                             <span class="text-gray-400 tracking-tighter">____________________, MD</span>
                                             <span
-                                                class="absolute left-0.5 bottom-0.5 font-sans font-bold text-blue-800 uppercase opacity-90">Juan
-                                                V. Santos</span>
+                                                class="absolute left-0.5 bottom-0.5 font-sans font-bold text-blue-800 uppercase opacity-90">{{ auth()->user()->name }}</span>
                                         </div>
-
                                         <div class="relative">
                                             <span class="text-gray-400">Lic. _________________</span>
                                             <span
-                                                class="absolute left-5 bottom-0.5 font-sans font-bold text-blue-800 opacity-90">0111111</span>
+                                                class="absolute left-5 bottom-0.5 font-sans font-bold text-blue-800 opacity-90">{{ $doctorProfile->prc_number ?? 'N/A' }}</span>
                                         </div>
-
                                         <div class="relative">
                                             <span class="text-gray-400">PTR _________________</span>
                                             <span
-                                                class="absolute left-6 bottom-0.5 font-sans font-bold text-blue-800 opacity-90">AC-1111111</span>
+                                                class="absolute left-6 bottom-0.5 font-sans font-bold text-blue-800 opacity-90">{{ $doctorProfile->ptr_number ?? 'N/A' }}</span>
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -471,8 +514,8 @@
                     Sign & Generate SecuRx
                 </button>
             </div>
-        </div>
 
+        </div>
         <div x-show="showRecordsDrawer || showTemplatesDrawer || showDurDrawer"
             class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" x-transition.opacity @click="closeAllDrawers()"
             style="display: none;"></div>
@@ -480,14 +523,10 @@
         <div x-show="showGenerateModal" class="fixed inset-0 z-50 overflow-y-auto" style="display: none;">
             <div x-show="showGenerateModal" x-transition.opacity class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
                 @click="!isGenerating && !isGenerated ? showGenerateModal = false : null"></div>
-
             <div class="flex min-h-full items-center justify-center p-4 text-center">
                 <div x-show="showGenerateModal" x-transition:enter="ease-out duration-300"
                     x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
-                    x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100"
-                    x-transition:leave-end="opacity-0 scale-95"
                     class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all w-full max-w-md border border-gray-200">
-
                     <div x-show="!isGenerating && !isGenerated">
                         <div class="bg-blue-50/50 px-6 py-5 border-b border-blue-100 flex items-center gap-4">
                             <div
@@ -508,15 +547,13 @@
                             <p class="text-sm text-gray-700 font-bold mb-2">Are you sure you want to finalize this
                                 document?</p>
                             <p class="text-xs text-red-500 font-medium">Once generated, it becomes legally binding and
-                                cannot be edited without a formal revocation.</p>
+                                cannot be edited.</p>
                         </div>
                         <div class="bg-slate-50 px-6 py-4 flex gap-3 border-t border-gray-100">
                             <button @click="showGenerateModal = false"
-                                class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 rounded-xl transition text-sm">No,
-                                Cancel</button>
+                                class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 rounded-xl transition text-sm">Cancel</button>
                             <button @click="confirmGeneration()"
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition shadow-md text-sm">Yes,
-                                Generate</button>
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl transition shadow-md text-sm">Generate</button>
                         </div>
                     </div>
 
@@ -530,7 +567,6 @@
                             </path>
                         </svg>
                         <h3 class="text-lg font-black text-securx-navy">Encrypting Document...</h3>
-                        <p class="text-sm text-gray-500 mt-1">Applying SecuRx digital signature</p>
                     </div>
 
                     <div x-show="isGenerated" style="display: none;">
@@ -543,108 +579,57 @@
                                 </svg>
                             </div>
                             <h3 class="text-xl font-black text-securx-navy">Prescription Ready!</h3>
-                            <p class="text-sm text-gray-500 mt-1 font-mono bg-slate-50 px-2 py-1 rounded inline-block">ID:
-                                ENCTR-0992X</p>
                         </div>
-                        <div class="bg-slate-50 px-6 py-5 flex flex-col gap-3">
-                            <div class="flex gap-3">
-                                <button onclick="window.print()"
-                                    class="flex-1 bg-white border border-gray-300 text-gray-700 hover:border-blue-600 hover:text-blue-600 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z">
-                                        </path>
-                                    </svg>
-                                    Print
-                                </button>
-                                <a href="{{ route('doctor.dashboard') }}"
-                                    class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 rounded-xl transition text-sm text-center flex items-center justify-center">Done</a>
-                            </div>
+                        <div class="bg-slate-50 px-6 py-5 flex gap-3">
+                            <button onclick="window.print()"
+                                class="flex-1 bg-white border border-gray-300 text-gray-700 hover:border-blue-600 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">Print</button>
+                            <a href="{{ route('doctor.dashboard') }}"
+                                class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 rounded-xl transition text-sm text-center flex items-center justify-center">Done</a>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
 
-        <div x-show="showDurDrawer"
-            class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col border-l border-amber-200"
-            x-transition:enter="transform transition ease-in-out duration-300" x-transition:enter-start="translate-x-full"
-            x-transition:enter-end="translate-x-0" x-transition:leave="transform transition ease-in-out duration-300"
-            x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" style="display: none;">
+        <div x-show="showDurDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col"
+            style="display: none;">
             <div class="px-6 py-4 bg-amber-50 border-b border-amber-200 flex justify-between items-center">
-                <h2 class="text-lg font-black text-amber-800 flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                        </path>
-                    </svg>
-                    DUR Safety Alerts
-                </h2>
-                <button @click="showDurDrawer = false" class="text-amber-600 hover:text-red-600"><svg class="w-6 h-6"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h2 class="text-lg font-black text-amber-800">DUR Alerts</h2>
+                <button @click="showDurDrawer = false" class="text-amber-600"><svg class="w-6 h-6" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
                     </svg></button>
             </div>
-            <div class="p-6 overflow-y-auto">
-                <div class="bg-white border border-red-200 rounded-xl p-4 shadow-sm relative">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-red-500 rounded-l-xl"></div>
-                    <p class="text-xs font-bold text-red-600 uppercase mb-1">Known Allergy</p>
-                    <p class="text-sm text-gray-700 font-medium">Patient has a verified allergy to <span
-                            class="font-bold text-red-600">Penicillin</span>. System will block Beta-lactam entries.</p>
-                </div>
-            </div>
+            <div class="p-6">Alert content here.</div>
         </div>
-
         <div x-show="showTemplatesDrawer"
-            class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col border-l border-gray-200"
-            x-transition:enter="transform transition ease-in-out duration-300" x-transition:enter-start="translate-x-full"
-            x-transition:enter-end="translate-x-0" x-transition:leave="transform transition ease-in-out duration-300"
-            x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" style="display: none;">
+            class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col" style="display: none;">
             <div class="px-6 py-4 bg-slate-50 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-lg font-black text-securx-navy">Select a Template</h2>
-                <button @click="showTemplatesDrawer = false" class="text-gray-400 hover:text-red-500"><svg
-                        class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h2 class="text-lg font-black text-securx-navy">Templates</h2>
+                <button @click="showTemplatesDrawer = false" class="text-gray-400"><svg class="w-6 h-6" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
                     </svg></button>
             </div>
-            <div class="p-4 overflow-y-auto space-y-3">
-                <button
-                    class="w-full text-left bg-white border border-gray-200 p-4 rounded-xl hover:border-blue-500 hover:shadow-md transition group">
-                    <p class="font-bold text-securx-navy group-hover:text-blue-600">Normal URI (Cold/Flu)</p>
-                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">Fills S.O.A.P for uncomplicated viral upper
-                        respiratory infection.</p>
-                </button>
-                <button
-                    class="w-full text-left bg-white border border-gray-200 p-4 rounded-xl hover:border-blue-500 hover:shadow-md transition group">
-                    <p class="font-bold text-securx-navy group-hover:text-blue-600">HTN Follow-up</p>
-                    <p class="text-xs text-gray-500 mt-1 line-clamp-1">Standard checkup for controlled Essential
-                        Hypertension.</p>
-                </button>
-            </div>
+            <div class="p-4 space-y-3">Template buttons here.</div>
         </div>
-
         <div x-show="showRecordsDrawer"
-            class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-slate-50 shadow-2xl flex flex-col border-l border-gray-200"
-            x-transition:enter="transform transition ease-in-out duration-300" x-transition:enter-start="translate-x-full"
-            x-transition:enter-end="translate-x-0" x-transition:leave="transform transition ease-in-out duration-300"
-            x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" style="display: none;">
+            class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-slate-50 shadow-2xl flex flex-col"
+            style="display: none;">
             <div class="px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-xl font-black text-securx-navy">Medical Records</h2>
-                <button @click="showRecordsDrawer = false" class="text-gray-400 hover:text-red-500"><svg class="w-6 h-6"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <h2 class="text-xl font-black text-securx-navy">Records</h2>
+                <button @click="showRecordsDrawer = false" class="text-gray-400"><svg class="w-6 h-6" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
                     </svg></button>
             </div>
-            <div class="flex-1 p-6 flex items-center justify-center text-gray-400 italic">
-                (Records Timeline loads here)
-            </div>
+            <div class="flex-1 p-6 text-gray-400 italic">(Timeline loads here)</div>
         </div>
-    </div>
 
+    </div>
 
     <script>
         document.addEventListener('alpine:init', () => {
@@ -654,12 +639,26 @@
                 showTemplatesDrawer: false,
                 showDurDrawer: false,
 
-                // New State Variables
+                subjective_note: '',
+                objective_note: '',
+                assessment_note: '',
+                plan_note: '',
                 showPatientName: false,
                 nextAppointment: '',
                 generalInstructions: '',
 
-                // Generate Modal States
+                medications: [],
+                newMed: {
+                    medication_id: 1,
+                    name: '',
+                    dose: '',
+                    frequency: '',
+                    duration: '',
+                    pharmacist_instructions: '',
+                    patient_instructions: '',
+                    sig: '',
+                    quantity: null
+                },
                 showGenerateModal: false,
                 isGenerating: false,
                 isGenerated: false,
@@ -668,22 +667,75 @@
                     this.activeMic = (this.activeMic === section) ? null : section;
                 },
 
-                // Simulates the backend signing process
-                confirmGeneration() {
+                addMedication() {
+                    if (this.newMed.name) {
+                        this.medications.push({
+                            ...this.newMed
+                        });
+                        this.newMed = {
+                            medication_id: 1,
+                            name: '',
+                            dose: '',
+                            frequency: '',
+                            duration: '',
+                            pharmacist_instructions: '',
+                            patient_instructions: '',
+                            sig: '',
+                            quantity: null
+                        };
+                    }
+                },
+                removeMedication(index) {
+                    this.medications.splice(index, 1);
+                },
+
+                async confirmGeneration() {
                     this.isGenerating = true;
-                    setTimeout(() => {
+                    try {
+                        const response = await fetch(
+                            `{{ route('doctor.consultation.store', $appointment->id ?? '') }}`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                },
+                                body: JSON.stringify({
+                                    subjective_note: this.subjective_note,
+                                    objective_note: this.objective_note,
+                                    assessment_note: this.assessment_note,
+                                    plan_note: this.plan_note,
+                                    next_appointment_date: this.nextAppointment,
+                                    print_patient_name: this.showPatientName,
+                                    general_instructions: this.generalInstructions,
+                                    medications: this.medications
+                                })
+                            });
+                        const data = await response.json();
+                        if (response.ok && data.success) {
+                            setTimeout(() => {
+                                this.isGenerating = false;
+                                this.isGenerated = true;
+                            }, 1000);
+                        } else {
+                            alert('Failed to generate prescription: ' + (data.message ||
+                                'Unknown error'));
+                            this.isGenerating = false;
+                            this.showGenerateModal = false;
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('An error occurred while saving the consultation.');
                         this.isGenerating = false;
-                        this.isGenerated = true;
-                    }, 2000);
+                        this.showGenerateModal = false;
+                    }
                 },
 
                 closeAllDrawers() {
                     this.showRecordsDrawer = false;
                     this.showTemplatesDrawer = false;
                     this.showDurDrawer = false;
-                    this.showGenerateModal = false; // Add this
+                    this.showGenerateModal = false;
                 },
-
                 resizeTextarea(e) {
                     let el = e.target;
                     el.style.height = 'auto';

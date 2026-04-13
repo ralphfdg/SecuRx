@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Doctor\QueueController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
@@ -103,29 +104,26 @@ Route::get('/dashboard', function () {
 // --------------------------------------------------------------------------
 // ADMIN ROUTES
 // --------------------------------------------------------------------------
-// --------------------------------------------------------------------------
-// ADMIN ROUTES
-// --------------------------------------------------------------------------
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // 1. Dashboard
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard');
-    
+
     // 2. Dataset Import Engine
     Route::get('/dataset', [AdminController::class, 'datasetView'])->name('dataset');
     Route::post('/dataset/import', [AdminController::class, 'importDataset'])->name('dataset.import');
-    
+
     // 3. Professional User Management
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::patch('/users/{id}/approve', [AdminController::class, 'approveUser'])->name('users.approve');
     Route::patch('/users/{id}/reject', [AdminController::class, 'rejectUser'])->name('users.reject');
-    
+
     // 4. Immutable Audit Logs
     Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
-    
+
     // 5. System Backup & Export
     Route::get('/backup', [AdminController::class, 'backupView'])->name('backup');
     Route::post('/backup/export', [AdminController::class, 'exportBackup'])->name('backup.export');
-    
+
     // 6. Global Platform Settings
     Route::get('/settings', [AdminController::class, 'settingsView'])->name('settings');
     Route::post('/settings', [AdminController::class, 'updateSettings'])->name('settings.update');
@@ -151,15 +149,13 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
         return view('doctor.dashboard');
     })->name('dashboard');
 
-    // 3. Clinic Queue & Live Triage
-    Route::get('/queue', function () {
-        return view('doctor.queue');
-    })->name('queue');
+    // 3. Clinic Queue & Schedule (Fixed)
+    // The prefix ('doctor') and name ('doctor.') are automatically applied from the parent group.
+    Route::get('/queue', [QueueController::class, 'index'])->name('queue');
 
     // 4. Voice-Assisted Consultation Console
-    Route::get('/prescribe', function () {
-        return view('doctor.prescribe');
-    })->name('prescribe');
+    Route::get('/consultation/{appointment}', [App\Http\Controllers\Doctor\ConsultationController::class, 'show'])->name('consultation.show');
+    Route::post('/consultation/{appointment}', [App\Http\Controllers\Doctor\ConsultationController::class, 'store'])->name('consultation.store');
 
     // 5. Consultation & Prescription History
     Route::get('/history', function () {

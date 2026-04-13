@@ -10,9 +10,14 @@ class Appointment extends Model
     use HasUuids;
     protected $guarded = [];
 
+    protected $fillable = [
+        'patient_id', 'doctor_id', 'secretary_id', 'appointment_date', 
+        'appointment_time', 'reason_for_visit', 'status', 'appointment_type', 'triage_vitals'
+    ];
+
     protected $casts = [
         'appointment_date' => 'datetime',
-        'triage_vitals' => 'array', // Automatically casts the JSON column to a PHP array!
+        'triage_vitals' => 'array', // Automatically casts the JSON column to a PHP array
     ];
 
     public function patient() { return $this->belongsTo(User::class, 'patient_id'); }
