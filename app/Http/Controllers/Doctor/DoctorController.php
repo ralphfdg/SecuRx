@@ -1,11 +1,18 @@
 <?php
+
 namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\PatientProfile;
+use App\Models\User;
+use Carbon\Carbon;
+use GuzzleHttp\Client;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class DoctorController extends Controller
 {
@@ -84,44 +91,47 @@ class DoctorController extends Controller
             ->get();
 
         return view('doctor.dashboard', compact(
-            'scheduledToday', 'completedToday', 'rxIssuedToday', 
-            'durAlertsCount', 'waitingQueue', 'chartLabels', 
+            'scheduledToday', 'completedToday', 'rxIssuedToday',
+            'durAlertsCount', 'waitingQueue', 'chartLabels',
             'chartData', 'recentDurFlags'
         ));
     }
 
-    public function directory(\Illuminate\Http\Request $request)
+    public function directory(Request $request)
     {
-        $query = \App\Models\User::where('role', 'patient')->with('patientProfile');
+        $query = User::where('role', 'patient')->with('patientProfile');
 
         // Handle Search
         if ($request->filled('search')) {
             $searchTerm = $request->search;
-            $query->where(function($q) use ($searchTerm) {
+            $query->where(function ($q) use ($searchTerm) {
                 $q->where('name', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('id', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('email', 'LIKE', "%{$searchTerm}%")
-                  ->orWhere('mobile_num', 'LIKE', "%{$searchTerm}%");
+                    ->orWhere('id', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('email', 'LIKE', "%{$searchTerm}%")
+                    ->orWhere('mobile_num', 'LIKE', "%{$searchTerm}%");
             });
         }
 
         // Handle Sorting
         if ($request->filled('sort')) {
             switch ($request->sort) {
-                case 'z-a': $query->orderBy('last_name', 'desc'); break;
-                case 'newest': $query->orderBy('created_at', 'desc'); break;
-                default: $query->orderBy('last_name', 'asc'); break; // a-z
+                case 'z-a': $query->orderBy('last_name', 'desc');
+                    break;
+                case 'newest': $query->orderBy('created_at', 'desc');
+                    break;
+                default: $query->orderBy('last_name', 'asc');
+                    break; // a-z
             }
         } else {
             $query->orderBy('last_name', 'asc');
         }
 
         $patients = $query->paginate(15)->withQueryString();
-        
+
         return view('doctor.directory', compact('patients'));
     }
 
-    public function storePatient(\Illuminate\Http\Request $request)
+    public function storePatient(Request $request)
     {
         $request->validate([
             'first_name' => 'required|string|max:255',
@@ -133,27 +143,27 @@ class DoctorController extends Controller
             'email' => 'nullable|email|unique:users,email',
         ]);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
-            $password = $request->has('generate_password') ? \Illuminate\Support\Str::random(10) : 'password123';
+        DB::transaction(function () use ($request) {
+            $password = $request->has('generate_password') ? Str::random(10) : 'password123';
 
-            $user = \App\Models\User::create([
+            $user = User::create([
                 'first_name' => $request->first_name,
                 'middle_name' => $request->middle_name,
                 'last_name' => $request->last_name,
                 'qualifier' => $request->qualifier,
                 'name' => $request->name,
-                'username' => strtolower($request->first_name) . '_' . time(),
+                'username' => strtolower($request->first_name).'_'.time(),
                 'email' => $request->email,
                 'dob' => $request->dob,
                 'gender' => $request->gender,
                 'mobile_num' => $request->mobile_num,
-                'password' => \Illuminate\Support\Facades\Hash::make($password),
+                'password' => Hash::make($password),
                 'role' => 'patient',
                 'status' => 'active',
             ]);
 
             // Assuming you have a PatientProfile model linking to the patient_profiles table
-            \App\Models\PatientProfile::create([
+            PatientProfile::create([
                 'user_id' => $user->id,
                 'height' => $request->height,
                 'weight' => $request->weight,
@@ -164,9 +174,9 @@ class DoctorController extends Controller
         return redirect()->back()->with('success', 'Patient registered successfully.');
     }
 
-    public function updatePatient(\Illuminate\Http\Request $request, $id)
+    public function updatePatient(Request $request, $id)
     {
-        $patient = \App\Models\User::where('role', 'patient')->findOrFail($id);
+        $patient = User::where('role', 'patient')->findOrFail($id);
 
         $request->validate([
             'first_name' => 'required|string|max:255',
@@ -175,13 +185,13 @@ class DoctorController extends Controller
             'dob' => 'required|date',
             'gender' => 'required|string',
             'mobile_num' => 'required|string',
-            'email' => 'nullable|email|unique:users,email,' . $patient->id,
+            'email' => 'nullable|email|unique:users,email,'.$patient->id,
         ]);
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $patient) {
+        DB::transaction(function () use ($request, $patient) {
             $patient->update($request->only([
-                'first_name', 'middle_name', 'last_name', 'qualifier', 
-                'name', 'email', 'dob', 'gender', 'mobile_num'
+                'first_name', 'middle_name', 'last_name', 'qualifier',
+                'name', 'email', 'dob', 'gender', 'mobile_num',
             ]));
 
             $patient->patientProfile()->updateOrCreate(
@@ -195,33 +205,33 @@ class DoctorController extends Controller
 
     public function patientRecords($id)
     {
-        $encounters = \Illuminate\Support\Facades\DB::table('encounters')
+        $encounters = DB::table('encounters')
             ->where('patient_id', $id)
-            ->select('id', 'encounter_title as title', 'encounter_date as date', \Illuminate\Support\Facades\DB::raw("'encounter' as type"))
-            ->get();
-            
-        $labResults = \Illuminate\Support\Facades\DB::table('lab_results')
-            ->where('patient_id', $id)
-            ->where('is_verified', 1)
-            ->select('id', 'test_name as title', 'test_date as date', \Illuminate\Support\Facades\DB::raw("'lab_result' as type"))
-            ->get();
-            
-        $documents = \Illuminate\Support\Facades\DB::table('medical_documents')
-            ->where('patient_id', $id)
-            ->where('is_verified', 1)
-            ->select('id', 'document_name as title', 'created_at as date', \Illuminate\Support\Facades\DB::raw("'document' as type"))
-            ->get();
-            
-        $immunizations = \Illuminate\Support\Facades\DB::table('immunizations')
-            ->where('patient_id', $id)
-            ->where('is_verified', 1)
-            ->select('id', 'vaccine_name as title', 'administered_date as date', \Illuminate\Support\Facades\DB::raw("'immunization' as type"))
+            ->select('id', 'encounter_title as title', 'encounter_date as date', DB::raw("'encounter' as type"))
             ->get();
 
-        $allergies = \Illuminate\Support\Facades\DB::table('patient_allergies')
+        $labResults = DB::table('lab_results')
             ->where('patient_id', $id)
             ->where('is_verified', 1)
-            ->select('id', \Illuminate\Support\Facades\DB::raw("CONCAT('Allergy: ', allergen_name) as title"), 'created_at as date', \Illuminate\Support\Facades\DB::raw("'allergy' as type"))
+            ->select('id', 'test_name as title', 'test_date as date', DB::raw("'lab_result' as type"))
+            ->get();
+
+        $documents = DB::table('medical_documents')
+            ->where('patient_id', $id)
+            ->where('is_verified', 1)
+            ->select('id', 'document_name as title', 'created_at as date', DB::raw("'document' as type"))
+            ->get();
+
+        $immunizations = DB::table('immunizations')
+            ->where('patient_id', $id)
+            ->where('is_verified', 1)
+            ->select('id', 'vaccine_name as title', 'administered_date as date', DB::raw("'immunization' as type"))
+            ->get();
+
+        $allergies = DB::table('patient_allergies')
+            ->where('patient_id', $id)
+            ->where('is_verified', 1)
+            ->select('id', DB::raw("CONCAT('Allergy: ', allergen_name) as title"), 'created_at as date', DB::raw("'allergy' as type"))
             ->get();
 
         $timeline = collect([])
@@ -234,56 +244,80 @@ class DoctorController extends Controller
             ->values();
 
         return response()->json([
-            'timeline' => $timeline
+            'timeline' => $timeline,
         ]);
     }
 
-    public function searchMedications(\Illuminate\Http\Request $request)
+    public function searchMedications(Request $request)
     {
         $query = $request->get('q');
-        
-        $medications = \Illuminate\Support\Facades\DB::table('medications')
-            ->select('medications.*', 'dpri_records.lowest_price', 'dpri_records.median_price', 'dpri_records.highest_price')
+
+        $medications = DB::table('medications')
+            ->select(
+                'medications.*',
+                'dpri_records.lowest_price',
+                'dpri_records.median_price',
+                'dpri_records.highest_price',
+                'dpri_records.doh_raw_drug_name' // 1. Pull the DOH string
+            )
             ->leftJoin('dpri_records', 'medications.id', '=', 'dpri_records.medication_id')
-            ->where('medications.generic_name', 'LIKE', "%{$query}%")
-            ->orWhere('medications.brand_name', 'LIKE', "%{$query}%")
+            ->where(function ($q) use ($query) {
+                // Always group your OR statements when using joins!
+                $q->where('medications.generic_name', 'LIKE', "%{$query}%")
+                    ->orWhere('medications.brand_name', 'LIKE', "%{$query}%");
+            })
             ->limit(20)
-            ->get();
-            
+            ->get()
+            ->map(function ($med) {
+                // 2. Format a beautiful display name for the frontend
+                // Prioritize DOH name. If missing, combine generic name + dosage
+                $baseName = $med->doh_raw_drug_name ?? ($med->generic_name.' '.($med->dosage_strength ?? ''));
+
+                // Append the brand name in parentheses if it exists
+                if (! empty($med->brand_name)) {
+                    $baseName .= ' ('.$med->brand_name.')';
+                }
+
+                // Attach it as a new property called 'display_name'
+                $med->display_name = trim(strtoupper($baseName));
+
+                return $med;
+            });
+
         return response()->json($medications);
     }
 
-    public function checkDur(\Illuminate\Http\Request $request)
+    public function checkDur(Request $request)
     {
         $rxcui = $request->input('rxcui');
         $patientId = $request->input('patient_id');
-        
+
         $alerts = [];
 
         // Check 1: Allergies (If rxcui matches or we do a simple check. Since our allergy schema doesn't have rxcui, we check medication_id or name if passed)
         // For simplicity, if medication_id was provided we could use it, but prompt says "accept the selected drug's rxcui". We'll do a join if needed.
         if ($rxcui) {
-            $medication = \Illuminate\Support\Facades\DB::table('medications')->where('rxcui', $rxcui)->first();
+            $medication = DB::table('medications')->where('rxcui', $rxcui)->first();
             if ($medication) {
-                $allergies = \Illuminate\Support\Facades\DB::table('patient_allergies')
+                $allergies = DB::table('patient_allergies')
                     ->where('patient_id', $patientId)
-                    ->where(function($q) use ($medication) {
+                    ->where(function ($q) use ($medication) {
                         $q->where('medication_id', $medication->id)
-                          ->orWhere('allergen_name', 'LIKE', '%' . $medication->generic_name . '%');
+                            ->orWhere('allergen_name', 'LIKE', '%'.$medication->generic_name.'%');
                     })
                     ->get();
-                
+
                 foreach ($allergies as $allergy) {
                     $alerts[] = [
                         'type' => 'allergy',
                         'severity' => $allergy->severity ?? 'high',
-                        'message' => "Patient has a documented allergy to " . ($allergy->allergen_name ?? $medication->generic_name) . "."
+                        'message' => 'Patient has a documented allergy to '.($allergy->allergen_name ?? $medication->generic_name).'.',
                     ];
                 }
             }
 
             // Check 2: Active Prescriptions Interactions
-            $activePrescriptions = \Illuminate\Support\Facades\DB::table('prescriptions')
+            $activePrescriptions = DB::table('prescriptions')
                 ->join('prescription_items', 'prescriptions.id', '=', 'prescription_items.prescription_id')
                 ->join('medications', 'prescription_items.medication_id', '=', 'medications.id')
                 ->where('prescriptions.patient_id', $patientId)
@@ -291,17 +325,17 @@ class DoctorController extends Controller
                 ->whereNotNull('medications.rxcui')
                 ->select('medications.rxcui', 'medications.generic_name')
                 ->get();
-                
+
             $activeRxCuis = $activePrescriptions->pluck('rxcui')->unique()->filter()->toArray();
-            
-            if (!empty($activeRxCuis) && !in_array($rxcui, $activeRxCuis)) {
+
+            if (! empty($activeRxCuis) && ! in_array($rxcui, $activeRxCuis)) {
                 $activeRxCuis[] = $rxcui;
                 $rxcuisString = implode('+', $activeRxCuis);
-                
+
                 try {
-                    $client = new \GuzzleHttp\Client();
+                    $client = new Client;
                     $response = $client->request('GET', "https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis={$rxcuisString}");
-                    
+
                     if ($response->getStatusCode() == 200) {
                         $data = json_decode($response->getBody(), true);
                         if (isset($data['fullInteractionTypeGroup'])) {
@@ -320,7 +354,7 @@ class DoctorController extends Controller
                                             $alerts[] = [
                                                 'type' => 'interaction',
                                                 'severity' => $pair['severity'] ?? 'warning',
-                                                'message' => $pair['description'] ?? 'Potential drug interaction detected.'
+                                                'message' => $pair['description'] ?? 'Potential drug interaction detected.',
                                             ];
                                         }
                                     }
@@ -336,7 +370,7 @@ class DoctorController extends Controller
 
         return response()->json([
             'has_alerts' => count($alerts) > 0,
-            'alerts' => $alerts
+            'alerts' => $alerts,
         ]);
     }
 }

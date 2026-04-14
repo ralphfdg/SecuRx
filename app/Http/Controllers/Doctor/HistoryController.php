@@ -74,10 +74,17 @@ class HistoryController extends Controller
 
     public function show($id)
     {
-        // Fetch the encounter with its patient and the prescription details
-        $encounter = Encounter::with(['patient', 'prescriptions'])->findOrFail($id);
-        
-        // Return a view (you will need to create doctor/history_show.blade.php)
-        return view('doctor.view-history', compact('encounter'));
+        // Fetch the encounter with nested relationships to get the exact drugs and patient info
+        $encounter = Encounter::with([
+            'patient.patientProfile',
+            'prescriptions.items.medication'
+        ])->findOrFail($id);
+
+        // Fetch the doctor's license details for the prescription pad
+        $doctorProfile = \Illuminate\Support\Facades\DB::table('doctor_profiles')
+            ->where('user_id', Auth::id())
+            ->first();
+
+        return view('doctor.view-history', compact('encounter', 'doctorProfile'));
     }
 }

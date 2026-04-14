@@ -3,7 +3,11 @@
 @section('page_title', 'Consultation Console')
 
 @section('content')
-    <div x-data="consultationConsole()" class="max-w-7xl mx-auto space-y-6 pb-12 relative">
+    <div x-data="consultationConsole({
+        patientId: '{{ $appointment->patient->id ?? '' }}',
+        csrfToken: '{{ csrf_token() }}',
+        storeRoute: '{{ route('doctor.consultation.store', $appointment->id ?? '') }}'
+    })" class="max-w-7xl mx-auto space-y-6 pb-12">
 
         <div class="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-5 shadow-sm relative z-20">
 
@@ -120,7 +124,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
-        
+
             <div class="lg:col-span-7 xl:col-span-8 space-y-6 min-w-0">
 
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -377,12 +381,47 @@
                     class="bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 aspect-[1/1.414] relative flex flex-col w-full rounded-sm overflow-hidden">
                     <div class="h-2 w-full bg-securx-navy shrink-0"></div>
                     <div class="p-6 flex-1 flex flex-col relative z-10">
-                        <div class="text-center border-b-2 border-gray-800 pb-4 mb-4 flex flex-col items-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <a class="relative inline-block group pt-2 pb-1">
-                                    <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo"
-                                        class="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105">
-                                </a>
+                        <div class="w-full flex justify-center mb-3">
+                            <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx" class="h-3 w-auto">
+                        </div>
+
+                        <div class="flex flex-row items-center gap-4 border-b-2 border-gray-800 pb-4 mb-4">
+
+                            <div
+                                class="w-14 h-14 sm:w-16 sm:h-16 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center shrink-0 overflow-hidden">
+                                @if (!empty($doctorProfile->clinic->clinic_logo))
+                                    <img src="{{ asset('storage/' . $doctorProfile->clinic->clinic_logo) }}"
+                                        alt="Clinic Logo" class="w-full h-full object-contain p-1">
+                                @else
+                                    <svg class="w-8 h-8 text-blue-800 opacity-80" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                        </path>
+                                    </svg>
+                                @endif
+                            </div>
+
+                            <div class="flex-1 flex flex-col min-w-0">
+
+                                <h1
+                                    class="text-lg sm:text-xl font-serif font-black text-gray-900 tracking-wide uppercase text-center mb-1.5 break-words leading-tight">
+                                    {{ $doctorProfile->clinic->clinic_name ?? 'MEDICAL CLINIC INC.' }}
+                                </h1>
+
+                                <div class="flex flex-row justify-between items-start gap-4 w-full">
+
+                                    <p
+                                        class="text-[10px] sm:text-xs font-serif text-gray-600 leading-snug flex-1 break-words text-left">
+                                        {{ $doctorProfile->clinic->clinic_address ?? '123 Health Avenue, Medical District, City' }}
+                                    </p>
+
+                                    <p
+                                        class="text-[10px] sm:text-xs font-serif text-gray-800 font-bold shrink-0 text-right">
+                                        Tel: {{ $doctorProfile->clinic->contact_number ?? '(000) 123-4567' }}
+                                    </p>
+
+                                </div>
                             </div>
                         </div>
 
@@ -596,14 +635,17 @@
             </div>
             <div class="p-6 overflow-y-auto space-y-4">
                 <template x-for="(alert, index) in durAlerts" :key="index">
-                    <div class="p-4 rounded-xl border" :class="alert.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' : 'bg-amber-50 border-amber-200 text-amber-800'">
+                    <div class="p-4 rounded-xl border"
+                        :class="alert.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' :
+                            'bg-amber-50 border-amber-200 text-amber-800'">
                         <div class="flex items-center gap-2 font-bold mb-1">
                             <span class="uppercase text-[10px] tracking-wider" x-text="alert.type"></span>
                         </div>
                         <p class="text-sm" x-text="alert.message"></p>
                     </div>
                 </template>
-                <div x-show="durAlerts.length === 0" class="text-center text-sm text-gray-500 italic">No alerts found.</div>
+                <div x-show="durAlerts.length === 0" class="text-center text-sm text-gray-500 italic">No alerts found.
+                </div>
             </div>
         </div>
         <div x-show="showTemplatesDrawer"
@@ -631,7 +673,8 @@
             </div>
             <div class="flex-1 p-6 text-gray-400 overflow-y-auto">
                 <div x-show="isFetchingRecords" class="text-center py-4 italic">Loading records...</div>
-                <div x-show="!isFetchingRecords && patientRecords.length === 0" class="text-center py-4 italic">No records found.</div>
+                <div x-show="!isFetchingRecords && patientRecords.length === 0" class="text-center py-4 italic">No records
+                    found.</div>
                 <div class="space-y-4" x-show="patientRecords.length > 0">
                     <template x-for="(record, index) in patientRecords" :key="index">
                         <div class="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
@@ -643,10 +686,13 @@
                                             'bg-emerald-100 text-emerald-700': record.type === 'lab_result',
                                             'bg-amber-100 text-amber-700': record.type === 'document',
                                             'bg-purple-100 text-purple-700': record.type === 'immunization'
-                                        }" x-text="record.type.replace('_', ' ')"></span>
-                                    <h3 class="text-sm font-bold text-gray-900 mt-2" x-text="record.title || 'Untitled Record'"></h3>
+                                        }"
+                                        x-text="record.type.replace('_', ' ')"></span>
+                                    <h3 class="text-sm font-bold text-gray-900 mt-2"
+                                        x-text="record.title || 'Untitled Record'"></h3>
                                 </div>
-                                <span class="text-xs text-gray-500 font-medium" x-text="record.date ? new Date(record.date).toLocaleDateString() : ''"></span>
+                                <span class="text-xs text-gray-500 font-medium"
+                                    x-text="record.date ? new Date(record.date).toLocaleDateString() : ''"></span>
                             </div>
                         </div>
                     </template>
@@ -658,257 +704,4 @@
 
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('consultationConsole', () => ({
-                activeMic: null,
-                showRecordsDrawer: false,
-                showTemplatesDrawer: false,
-                showDurDrawer: false,
-                durAlerts: [],
-                patientRecords: [],
-                isFetchingRecords: false,
-                patientId: '{{ $appointment->patient->id ?? "" }}',
-
-                subjective_note: '',
-                objective_note: '',
-                assessment_note: '',
-                plan_note: '',
-                showPatientName: false,
-                nextAppointment: '',
-                generalInstructions: '',
-
-                medications: [],
-                newMed: {
-                    medication_id: 1,
-                    rxcui: '',
-                    name: '',
-                    dose: '',
-                    frequency: '',
-                    duration: '',
-                    pharmacist_instructions: '',
-                    patient_instructions: '',
-                    sig: '',
-                    quantity: null,
-                    est_price: null
-                },
-                showGenerateModal: false,
-                isGenerating: false,
-                isGenerated: false,
-                ts: null,
-                recognition: null,
-
-                init() {
-                    if (this.$refs.rxnormSearch) {
-                        this.ts = new TomSelect(this.$refs.rxnormSearch, {
-                            valueField: 'id',
-                            labelField: 'generic_name',
-                            searchField: ['generic_name', 'brand_name'],
-                            load: function(query, callback) {
-                                if (!query.length) return callback();
-                                fetch(`/doctor/api/medications/search?q=${encodeURIComponent(query)}`)
-                                    .then(response => response.json())
-                                    .then(json => callback(json))
-                                    .catch(() => callback());
-                            },
-                            render: {
-                                option: function(item, escape) {
-                                    return `<div><span class="font-bold">${escape(item.generic_name)}</span>` +
-                                           (item.brand_name ? ` <span class="text-xs text-gray-500">(${escape(item.brand_name)})</span>` : '') +
-                                           `</div>`;
-                                },
-                                item: function(item, escape) {
-                                    return `<div>${escape(item.generic_name)}</div>`;
-                                }
-                            },
-                            onChange: (value) => {
-                                const selectedItem = this.ts.options[value];
-                                if (selectedItem) {
-                                    this.newMed.medication_id = selectedItem.id;
-                                    this.newMed.name = selectedItem.generic_name;
-                                    this.newMed.rxcui = selectedItem.rxcui;
-                                    this.newMed.est_price = selectedItem.median_price || null;
-                                    this.checkDur(selectedItem.rxcui, selectedItem.generic_name);
-                                } else {
-                                    this.newMed.name = '';
-                                    this.newMed.rxcui = '';
-                                    this.newMed.est_price = null;
-                                }
-                            }
-                        });
-                    }
-
-                    this.$watch('showRecordsDrawer', value => {
-                        if (value && this.patientRecords.length === 0 && this.patientId) {
-                            this.fetchRecords();
-                        }
-                    });
-                },
-
-                async fetchRecords() {
-                    this.isFetchingRecords = true;
-                    try {
-                        const response = await fetch(`/doctor/api/patients/${this.patientId}/records`);
-                        const data = await response.json();
-                        this.patientRecords = data.timeline || [];
-                    } catch (e) {
-                        console.error(e);
-                    } finally {
-                        this.isFetchingRecords = false;
-                    }
-                },
-
-                async checkDur(rxcui, drugName) {
-                    if (!rxcui || !this.patientId) return;
-                    try {
-                        const response = await fetch(`/doctor/api/dur/check`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                            },
-                            body: JSON.stringify({ rxcui: rxcui, patient_id: this.patientId, drug_name: drugName })
-                        });
-                        const data = await response.json();
-                        if (data.has_alerts) {
-                            this.durAlerts = data.alerts;
-                            this.showDurDrawer = true;
-                        }
-                    } catch (e) {
-                        console.error(e);
-                    }
-                },
-
-                toggleMic(section) {
-                    if (this.activeMic === section) {
-                        if (this.recognition) {
-                            this.recognition.stop();
-                        }
-                        this.activeMic = null;
-                    } else {
-                        if (this.recognition) {
-                            this.recognition.stop();
-                        }
-                        this.activeMic = section;
-                        
-                        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                        if (!SpeechRecognition) {
-                            alert('Speech recognition is not supported in this browser.');
-                            this.activeMic = null;
-                            return;
-                        }
-                        
-                        this.recognition = new SpeechRecognition();
-                        this.recognition.continuous = true;
-                        this.recognition.interimResults = true;
-                        
-                        this.recognition.onresult = (event) => {
-                            let finalTranscript = '';
-                            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                                if (event.results[i].isFinal) {
-                                    finalTranscript += event.results[i][0].transcript + ' ';
-                                }
-                            }
-                            if (finalTranscript) {
-                                this[`${section}_note`] = (this[`${section}_note`] + ' ' + finalTranscript).trim();
-                            }
-                        };
-                        
-                        this.recognition.onerror = (event) => {
-                            console.error('Speech recognition error', event.error);
-                            this.activeMic = null;
-                        };
-                        
-                        this.recognition.onend = () => {
-                            if (this.activeMic === section) {
-                                this.activeMic = null;
-                            }
-                        };
-                        
-                        this.recognition.start();
-                    }
-                },
-
-                addMedication() {
-                    if (this.newMed.name) {
-                        this.medications.push({
-                            ...this.newMed
-                        });
-                        this.newMed = {
-                            medication_id: 1,
-                            rxcui: '',
-                            name: '',
-                            dose: '',
-                            frequency: '',
-                            duration: '',
-                            pharmacist_instructions: '',
-                            patient_instructions: '',
-                            sig: '',
-                            quantity: null,
-                            est_price: null
-                        };
-                        if (this.ts) {
-                            this.ts.clear();
-                        }
-                    }
-                },
-                removeMedication(index) {
-                    this.medications.splice(index, 1);
-                },
-
-                async confirmGeneration() {
-                    this.isGenerating = true;
-                    try {
-                        const response = await fetch(
-                            `{{ route('doctor.consultation.store', $appointment->id ?? '') }}`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    subjective_note: this.subjective_note,
-                                    objective_note: this.objective_note,
-                                    assessment_note: this.assessment_note,
-                                    plan_note: this.plan_note,
-                                    next_appointment_date: this.nextAppointment,
-                                    print_patient_name: this.showPatientName,
-                                    general_instructions: this.generalInstructions,
-                                    medications: this.medications
-                                })
-                            });
-                        const data = await response.json();
-                        if (response.ok && data.success) {
-                            setTimeout(() => {
-                                this.isGenerating = false;
-                                this.isGenerated = true;
-                            }, 1000);
-                        } else {
-                            alert('Failed to generate prescription: ' + (data.message ||
-                                'Unknown error'));
-                            this.isGenerating = false;
-                            this.showGenerateModal = false;
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('An error occurred while saving the consultation.');
-                        this.isGenerating = false;
-                        this.showGenerateModal = false;
-                    }
-                },
-
-                closeAllDrawers() {
-                    this.showRecordsDrawer = false;
-                    this.showTemplatesDrawer = false;
-                    this.showDurDrawer = false;
-                    this.showGenerateModal = false;
-                },
-                resizeTextarea(e) {
-                    let el = e.target;
-                    el.style.height = 'auto';
-                    el.style.height = el.scrollHeight + 'px';
-                }
-            }))
-        })
-    </script>
 @endsection

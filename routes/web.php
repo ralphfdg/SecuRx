@@ -5,6 +5,8 @@ use App\Http\Controllers\Doctor\ConsultationController;
 use App\Http\Controllers\Doctor\DoctorController;
 use App\Http\Controllers\Doctor\QueueController;
 use App\Http\Controllers\Doctor\HistoryController;
+use App\Http\Controllers\Doctor\TemplateController;  
+use App\Http\Controllers\Doctor\ManageStaffController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
@@ -179,15 +181,17 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     Route::get('/api/medications/search', [DoctorController::class, 'searchMedications'])->name('api.medications.search');
     Route::post('/api/dur/check', [DoctorController::class, 'checkDur'])->name('api.dur.check');
 
-    // 7. SOAP Templates (Clinical Macros)
-    Route::get('/templates', function () {
-        return view('doctor.templates');
-    })->name('templates');
+    // SOAP Templates
+    Route::get('/templates', [TemplateController::class, 'index'])->name('templates');
+    Route::post('/templates', [TemplateController::class, 'store'])->name('templates.store');
+    Route::patch('/templates/{id}', [TemplateController::class, 'update'])->name('templates.update');
+    Route::delete('/templates/{id}', [TemplateController::class, 'destroy'])->name('templates.destroy');
 
     // 8. Staff Management (Secretary Accounts)
-    Route::get('/staff', function () {
-        return view('doctor.staff');
-    })->name('staff');
+    Route::get('/staff', [ManageStaffController::class, 'index'])->name('staff');
+    Route::post('/staff', [ManageStaffController::class, 'store'])->name('staff.store');
+    Route::patch('/staff/{id}', [ManageStaffController::class, 'update'])->name('staff.update');
+    Route::patch('/staff/{id}/toggle', [ManageStaffController::class, 'toggleStatus'])->name('staff.toggle');
 
     // 9. Profile & Settings (Digital Signature, Clinic Info)
     Route::get('/settings', function () {
