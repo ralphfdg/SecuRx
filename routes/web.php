@@ -1,7 +1,12 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Doctor\ConsultationController;
+use App\Http\Controllers\Doctor\DoctorController;
 use App\Http\Controllers\Doctor\QueueController;
+use App\Http\Controllers\Doctor\HistoryController;
+use App\Http\Controllers\Doctor\TemplateController;  
+use App\Http\Controllers\Doctor\ManageStaffController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
@@ -145,43 +150,48 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     })->name('setup');
 
     // 2. The Main Command Center (Integrated Analytics)
-    Route::get('/dashboard', function () {
-        return view('doctor.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DoctorController::class, 'dashboard'])->name('dashboard');
 
     // 3. Clinic Queue & Schedule (Fixed)
-    // The prefix ('doctor') and name ('doctor.') are automatically applied from the parent group.
     Route::get('/queue', [QueueController::class, 'index'])->name('queue');
 
     // 4. Voice-Assisted Consultation Console
-    Route::get('/consultation/{appointment}', [App\Http\Controllers\Doctor\ConsultationController::class, 'show'])->name('consultation.show');
-    Route::post('/consultation/{appointment}', [App\Http\Controllers\Doctor\ConsultationController::class, 'store'])->name('consultation.store');
+    Route::get('/consultation/{appointment}', [ConsultationController::class, 'show'])->name('consultation.show');
+    Route::post('/consultation/{appointment}', [ConsultationController::class, 'store'])->name('consultation.store');
 
     // 5. Consultation & Prescription History
     Route::get('/history', function () {
         return view('doctor.history');
     })->name('history');
 
-    // NEW: View Specific History Record
-    Route::get('/history/{id}', function ($id) {
-        // In the future, you'll fetch the actual record using the $id
-        return view('doctor.view-history', ['id' => $id]);
-    })->name('history.show');
+    // Consultation History & Revocation
+    Route::get('/history', [HistoryController::class, 'index'])->name('history');
+    Route::post('/history/revoke/{id}', [HistoryController::class, 'revoke'])->name('history.revoke');
+    Route::get('/history/{id}', [HistoryController::class, 'show'])->name('history.show');
 
-    // 6. Patient Directory & Longitudinal Analytics
-    Route::get('/directory', function () {
-        return view('doctor.directory');
-    })->name('directory');
+    // Patient Directory & CRUD
+    Route::get('/directory', [DoctorController::class, 'directory'])->name('directory');
+    Route::post('/directory/patient', [DoctorController::class, 'storePatient'])->name('patient.store');
+    Route::patch('/directory/patient/{id}', [DoctorController::class, 'updatePatient'])->name('patient.update');
 
-    // 7. SOAP Templates (Clinical Macros)
-    Route::get('/templates', function () {
-        return view('doctor.templates');
-    })->name('templates');
+    // API Endpoint for the Records Drawer
+    Route::get('/api/patients/{id}/records', [DoctorController::class, 'patientRecords'])->name('api.patient.records');
+
+    // API Endpoints for Medications Search and DUR Check
+    Route::get('/api/medications/search', [DoctorController::class, 'searchMedications'])->name('api.medications.search');
+    Route::post('/api/dur/check', [DoctorController::class, 'checkDur'])->name('api.dur.check');
+
+    // SOAP Templates
+    Route::get('/templates', [TemplateController::class, 'index'])->name('templates');
+    Route::post('/templates', [TemplateController::class, 'store'])->name('templates.store');
+    Route::patch('/templates/{id}', [TemplateController::class, 'update'])->name('templates.update');
+    Route::delete('/templates/{id}', [TemplateController::class, 'destroy'])->name('templates.destroy');
 
     // 8. Staff Management (Secretary Accounts)
-    Route::get('/staff', function () {
-        return view('doctor.staff');
-    })->name('staff');
+    Route::get('/staff', [ManageStaffController::class, 'index'])->name('staff');
+    Route::post('/staff', [ManageStaffController::class, 'store'])->name('staff.store');
+    Route::patch('/staff/{id}', [ManageStaffController::class, 'update'])->name('staff.update');
+    Route::patch('/staff/{id}/toggle', [ManageStaffController::class, 'toggleStatus'])->name('staff.toggle');
 
     // 9. Profile & Settings (Digital Signature, Clinic Info)
     Route::get('/settings', function () {

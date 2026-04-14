@@ -1,5 +1,16 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import consultationConsole from './doctor-prescribe.js';
+import templateManager from './doctor-templates.js';
+import staffManager from './doctor-staff-manager.js';
+
+
+// Make the consultation console available globally for the Blade view
+window.consultationConsole = consultationConsole;
+// Make the template manager available globally for the Blade view
+window.templateManager = templateManager;
+// Make the staff manager available globally for the Blade view
+window.staffManager = staffManager;
 
 // Initialize Alpine
 window.Alpine = Alpine;
@@ -75,5 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
 
 });

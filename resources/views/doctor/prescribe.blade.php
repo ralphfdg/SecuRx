@@ -3,7 +3,11 @@
 @section('page_title', 'Consultation Console')
 
 @section('content')
-    <div x-data="consultationConsole()" class="max-w-7xl mx-auto space-y-6 pb-12 relative">
+    <div x-data="consultationConsole({
+        patientId: '{{ $appointment->patient->id ?? '' }}',
+        csrfToken: '{{ csrf_token() }}',
+        storeRoute: '{{ route('doctor.consultation.store', $appointment->id ?? '') }}'
+    })" class="max-w-7xl mx-auto space-y-6 pb-12">
 
         <div class="bg-white border border-gray-200 rounded-2xl p-5 flex flex-col gap-5 shadow-sm relative z-20">
 
@@ -120,7 +124,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start w-full">
-        
+
             <div class="lg:col-span-7 xl:col-span-8 space-y-6 min-w-0">
 
                 <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
@@ -225,27 +229,20 @@
                     </div>
                     <div class="p-6 flex flex-col gap-5">
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <div class="relative flex-grow">
+                            <div class="relative flex-grow" wire:ignore>
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">RxNorm
                                     Smart Search</label>
-                                <input type="text" x-model="newMed.name"
-                                    class="w-full bg-slate-50 border border-gray-200 text-securx-navy text-base rounded-xl focus:ring-blue-500 focus:border-blue-500 block pl-12 p-3.5 font-bold shadow-inner"
-                                    placeholder="Search drug generic or brand name...">
-                                <div class="absolute bottom-0 left-0 h-[52px] flex items-center pl-4 pointer-events-none">
-                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                    </svg>
-                                </div>
+                                <select x-ref="rxnormSearch"
+                                    class="w-full bg-slate-50 border border-gray-200 text-securx-navy text-base rounded-xl focus:ring-blue-500 focus:border-blue-500 block font-bold shadow-inner"
+                                    placeholder="Search drug generic or brand name..."></select>
                             </div>
                             <div class="w-full sm:w-32 shrink-0">
                                 <label class="block text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5"
                                     title="Department of Health Drug Price Reference Index">Est. Price</label>
                                 <div class="relative">
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₱</span>
-                                    <input type="number" step="0.01"
+                                    <input type="number" step="0.01" x-model="newMed.est_price" readonly
                                         class="w-full bg-emerald-50/30 border border-emerald-200 text-emerald-700 text-sm rounded-xl focus:ring-emerald-500 focus:border-emerald-500 block pl-7 p-3.5 font-bold placeholder-emerald-300"
                                         placeholder="0.00">
                                 </div>
@@ -384,12 +381,47 @@
                     class="bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 aspect-[1/1.414] relative flex flex-col w-full rounded-sm overflow-hidden">
                     <div class="h-2 w-full bg-securx-navy shrink-0"></div>
                     <div class="p-6 flex-1 flex flex-col relative z-10">
-                        <div class="text-center border-b-2 border-gray-800 pb-4 mb-4 flex flex-col items-center">
-                            <div class="flex items-center justify-center gap-2">
-                                <a class="relative inline-block group pt-2 pb-1">
-                                    <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo"
-                                        class="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105">
-                                </a>
+                        <div class="w-full flex justify-center mb-3">
+                            <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx" class="h-3 w-auto">
+                        </div>
+
+                        <div class="flex flex-row items-center gap-4 border-b-2 border-gray-800 pb-4 mb-4">
+
+                            <div
+                                class="w-14 h-14 sm:w-16 sm:h-16 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center shrink-0 overflow-hidden">
+                                @if (!empty($doctorProfile->clinic->clinic_logo))
+                                    <img src="{{ asset('storage/' . $doctorProfile->clinic->clinic_logo) }}"
+                                        alt="Clinic Logo" class="w-full h-full object-contain p-1">
+                                @else
+                                    <svg class="w-8 h-8 text-blue-800 opacity-80" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                        </path>
+                                    </svg>
+                                @endif
+                            </div>
+
+                            <div class="flex-1 flex flex-col min-w-0">
+
+                                <h1
+                                    class="text-lg sm:text-xl font-serif font-black text-gray-900 tracking-wide uppercase text-center mb-1.5 break-words leading-tight">
+                                    {{ $doctorProfile->clinic->clinic_name ?? 'MEDICAL CLINIC INC.' }}
+                                </h1>
+
+                                <div class="flex flex-row justify-between items-start gap-4 w-full">
+
+                                    <p
+                                        class="text-[10px] sm:text-xs font-serif text-gray-600 leading-snug flex-1 break-words text-left">
+                                        {{ $doctorProfile->clinic->clinic_address ?? '123 Health Avenue, Medical District, City' }}
+                                    </p>
+
+                                    <p
+                                        class="text-[10px] sm:text-xs font-serif text-gray-800 font-bold shrink-0 text-right">
+                                        Tel: {{ $doctorProfile->clinic->contact_number ?? '(000) 123-4567' }}
+                                    </p>
+
+                                </div>
                             </div>
                         </div>
 
@@ -601,7 +633,20 @@
                         </path>
                     </svg></button>
             </div>
-            <div class="p-6">Alert content here.</div>
+            <div class="p-6 overflow-y-auto space-y-4">
+                <template x-for="(alert, index) in durAlerts" :key="index">
+                    <div class="p-4 rounded-xl border"
+                        :class="alert.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' :
+                            'bg-amber-50 border-amber-200 text-amber-800'">
+                        <div class="flex items-center gap-2 font-bold mb-1">
+                            <span class="uppercase text-[10px] tracking-wider" x-text="alert.type"></span>
+                        </div>
+                        <p class="text-sm" x-text="alert.message"></p>
+                    </div>
+                </template>
+                <div x-show="durAlerts.length === 0" class="text-center text-sm text-gray-500 italic">No alerts found.
+                </div>
+            </div>
         </div>
         <div x-show="showTemplatesDrawer"
             class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col" style="display: none;">
@@ -626,122 +671,37 @@
                         </path>
                     </svg></button>
             </div>
-            <div class="flex-1 p-6 text-gray-400 italic">(Timeline loads here)</div>
+            <div class="flex-1 p-6 text-gray-400 overflow-y-auto">
+                <div x-show="isFetchingRecords" class="text-center py-4 italic">Loading records...</div>
+                <div x-show="!isFetchingRecords && patientRecords.length === 0" class="text-center py-4 italic">No records
+                    found.</div>
+                <div class="space-y-4" x-show="patientRecords.length > 0">
+                    <template x-for="(record, index) in patientRecords" :key="index">
+                        <div class="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded"
+                                        :class="{
+                                            'bg-blue-100 text-blue-700': record.type === 'encounter',
+                                            'bg-emerald-100 text-emerald-700': record.type === 'lab_result',
+                                            'bg-amber-100 text-amber-700': record.type === 'document',
+                                            'bg-purple-100 text-purple-700': record.type === 'immunization'
+                                        }"
+                                        x-text="record.type.replace('_', ' ')"></span>
+                                    <h3 class="text-sm font-bold text-gray-900 mt-2"
+                                        x-text="record.title || 'Untitled Record'"></h3>
+                                </div>
+                                <span class="text-xs text-gray-500 font-medium"
+                                    x-text="record.date ? new Date(record.date).toLocaleDateString() : ''"></span>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('consultationConsole', () => ({
-                activeMic: null,
-                showRecordsDrawer: false,
-                showTemplatesDrawer: false,
-                showDurDrawer: false,
-
-                subjective_note: '',
-                objective_note: '',
-                assessment_note: '',
-                plan_note: '',
-                showPatientName: false,
-                nextAppointment: '',
-                generalInstructions: '',
-
-                medications: [],
-                newMed: {
-                    medication_id: 1,
-                    name: '',
-                    dose: '',
-                    frequency: '',
-                    duration: '',
-                    pharmacist_instructions: '',
-                    patient_instructions: '',
-                    sig: '',
-                    quantity: null
-                },
-                showGenerateModal: false,
-                isGenerating: false,
-                isGenerated: false,
-
-                toggleMic(section) {
-                    this.activeMic = (this.activeMic === section) ? null : section;
-                },
-
-                addMedication() {
-                    if (this.newMed.name) {
-                        this.medications.push({
-                            ...this.newMed
-                        });
-                        this.newMed = {
-                            medication_id: 1,
-                            name: '',
-                            dose: '',
-                            frequency: '',
-                            duration: '',
-                            pharmacist_instructions: '',
-                            patient_instructions: '',
-                            sig: '',
-                            quantity: null
-                        };
-                    }
-                },
-                removeMedication(index) {
-                    this.medications.splice(index, 1);
-                },
-
-                async confirmGeneration() {
-                    this.isGenerating = true;
-                    try {
-                        const response = await fetch(
-                            `{{ route('doctor.consultation.store', $appointment->id ?? '') }}`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                },
-                                body: JSON.stringify({
-                                    subjective_note: this.subjective_note,
-                                    objective_note: this.objective_note,
-                                    assessment_note: this.assessment_note,
-                                    plan_note: this.plan_note,
-                                    next_appointment_date: this.nextAppointment,
-                                    print_patient_name: this.showPatientName,
-                                    general_instructions: this.generalInstructions,
-                                    medications: this.medications
-                                })
-                            });
-                        const data = await response.json();
-                        if (response.ok && data.success) {
-                            setTimeout(() => {
-                                this.isGenerating = false;
-                                this.isGenerated = true;
-                            }, 1000);
-                        } else {
-                            alert('Failed to generate prescription: ' + (data.message ||
-                                'Unknown error'));
-                            this.isGenerating = false;
-                            this.showGenerateModal = false;
-                        }
-                    } catch (error) {
-                        console.error('Error:', error);
-                        alert('An error occurred while saving the consultation.');
-                        this.isGenerating = false;
-                        this.showGenerateModal = false;
-                    }
-                },
-
-                closeAllDrawers() {
-                    this.showRecordsDrawer = false;
-                    this.showTemplatesDrawer = false;
-                    this.showDurDrawer = false;
-                    this.showGenerateModal = false;
-                },
-                resizeTextarea(e) {
-                    let el = e.target;
-                    el.style.height = 'auto';
-                    el.style.height = el.scrollHeight + 'px';
-                }
-            }))
-        })
-    </script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
 @endsection
