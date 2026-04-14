@@ -163,6 +163,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
+            DoctorScheduleSeeder::class,
             PrescriptionSeeder::class,
             PharmacistSeeder::class,
         ]);

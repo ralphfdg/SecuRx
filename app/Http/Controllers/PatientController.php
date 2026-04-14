@@ -99,7 +99,6 @@ class PatientController extends Controller
     {
         $user = Auth::user();
 
-        // Fetch only verified, active doctors for the dropdown
         $doctors = User::where('role', 'doctor')
             ->where('status', 'active')
             ->whereHas('doctorProfile', function ($query) {
@@ -108,23 +107,21 @@ class PatientController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        // Fetch all upcoming appointments to check for conflicts on the frontend
-        $upcomingAppointments = Appointment::where('appointment_date', '>=', now())
+        // Fix: Properly combine date and time for the Javascript calendar checking
+        $upcomingAppointments = Appointment::where('appointment_date', '>=', now()->toDateString())
             ->whereIn('status', ['pending', 'confirmed'])
             ->get()
             ->groupBy('doctor_id')
             ->map(function ($appointments) {
-                return $appointments->pluck('appointment_date')->map(function ($date) {
-                    return Carbon::parse($date)->toDateTimeString();
+                return $appointments->map(function ($appt) {
+                    $time = $appt->appointment_time ?? '00:00:00';
+                    return Carbon::parse($appt->appointment_date->format('Y-m-d') . ' ' . $time)->toDateTimeString();
                 });
             });
 
         return view('patient.book-appointment', compact('user', 'doctors', 'upcomingAppointments'));
     }
 
-    /**
-     * Store the new Appointment in the Database
-     */
     public function storeAppointment(Request $request)
     {
         $request->validate([
@@ -137,15 +134,17 @@ class PatientController extends Controller
             ],
         ]);
 
+        // Fix: Split the Flatpickr input into Date and Time components
+        $datetime = Carbon::parse($request->appointment_date);
+
         Appointment::create([
             'patient_id' => Auth::id(),
             'doctor_id' => $request->doctor_id,
-            // Assuming the secretary will be assigned later by the clinic
-            'appointment_date' => $request->appointment_date,
+            'appointment_date' => $datetime->toDateString(),
+            'appointment_time' => $datetime->toTimeString(),
             'status' => 'pending',
         ]);
 
-        // Redirect back to the appointments list with a success message
         return redirect()->route('patient.appointments')->with('success', 'Your appointment request has been submitted to the clinic.');
     }
 
