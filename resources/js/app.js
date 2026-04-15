@@ -3,14 +3,18 @@ import Alpine from 'alpinejs';
 import consultationConsole from './doctor-prescribe.js';
 import templateManager from './doctor-templates.js';
 import staffManager from './doctor-staff-manager.js';
+import patientDirectory from './doctor-directory.js';
+
 
 
 // Make the consultation console available globally for the Blade view
 window.consultationConsole = consultationConsole;
 // Make the template manager available globally for the Blade view
-window.templateManager = templateManager;
+Alpine.data('templateManager', templateManager);
 // Make the staff manager available globally for the Blade view
-window.staffManager = staffManager;
+Alpine.data('staffManager', staffManager);
+// Make the directory manager available globally for the Blade view
+Alpine.data('patientDirectory', patientDirectory);
 
 // Initialize Alpine
 window.Alpine = Alpine;

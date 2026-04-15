@@ -17,6 +17,7 @@ export default defineConfig({
                 'resources/js/doctor-prescribe.js',
                 'resources/js/doctor-templates.js',
                 'resources/js/doctor-staff-manager.js',
+                'resources/js/doctor-directory.js',
             ],
             refresh: true,
         }),

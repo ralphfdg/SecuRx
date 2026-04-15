@@ -6,31 +6,32 @@ export default function consultationConsole(config) {
         showTemplatesDrawer: false,
         showDurDrawer: false,
         durAlerts: [],
-        patientRecords: [],
         isFetchingRecords: false,
-        patientId: config.patientId, 
+        patientId: config.patientId,
 
-        subjective_note: '',
-        objective_note: '',
-        assessment_note: '',
-        plan_note: '',
+        subjective_note: "",
+        objective_note: "",
+        assessment_note: "",
+        plan_note: "",
         showPatientName: false,
-        nextAppointment: '',
-        generalInstructions: '',
+        nextAppointment: "",
+        generalInstructions: "",
 
         medications: [],
         newMed: {
             medication_id: 1,
-            rxcui: '',
-            name: '',
-            dose: '',
-            frequency: '',
-            duration: '',
-            pharmacist_instructions: '',
-            patient_instructions: '',
-            sig: '',
+            rxcui: "",
+            name: "",
+            dose: "",
+            dosage_strength: "",
+            form: "",
+            frequency: "",
+            duration: "",
+            pharmacist_instructions: "",
+            patient_instructions: "",
+            sig: "",
             quantity: null,
-            est_price: null
+            est_price: null,
         },
         showGenerateModal: false,
         isGenerating: false,
@@ -38,91 +39,218 @@ export default function consultationConsole(config) {
         ts: null,
         recognition: null,
 
+        // state variables for the QR and PDF
+        generatedPdfUrl: "#",
+        prescriptionId: null,
+        hasPrescription: false,
+
+        isLoadingRecords: false,
+        activePatient: config.patientName || "Unknown Patient",
+        patientId: config.patientId,
+
+        // State mapped to your specific HTML design
+        recordsData: {
+            timeline: [],
+        },
+
         init() {
             // Slight delay to ensure the TomSelect CDN is fully loaded
             setTimeout(() => {
-                if (this.$refs.rxnormSearch && typeof window.TomSelect !== 'undefined') {
+                if (
+                    this.$refs.rxnormSearch &&
+                    typeof window.TomSelect !== "undefined"
+                ) {
                     this.ts = new window.TomSelect(this.$refs.rxnormSearch, {
-                        valueField: 'id',
-                        labelField: 'display_name',
-                        searchField: ['generic_name', 'brand_name'],
-                        load: function(query, callback) {
+                        valueField: "id",
+                        labelField: "display_name",
+                        searchField: ["generic_name", "brand_name"],
+                        load: function (query, callback) {
                             if (!query.length) return callback();
-                            fetch(`/doctor/api/medications/search?q=${encodeURIComponent(query)}`)
-                                .then(response => response.json())
-                                .then(json => callback(json))
+                            fetch(
+                                `/doctor/api/medications/search?q=${encodeURIComponent(query)}`,
+                            )
+                                .then((response) => response.json())
+                                .then((json) => callback(json))
                                 .catch(() => callback());
                         },
                         render: {
-                            option: function(item, escape) {
-                                return `<div><span class="font-bold">${escape(item.generic_name)}</span>` +
-                                    (item.brand_name ? ` <span class="text-xs text-gray-500">(${escape(item.brand_name)})</span>` : '') +
-                                    `</div>`;
+                            option: function (item, escape) {
+                                // Create the UI elements only if the data exists
+                                const doseBadge = item.dosage_strength
+                                    ? `<span class="bg-red-100 text-red-700 font-black px-1.5 py-0.5 rounded text-[10px] uppercase ml-2 shadow-sm">${escape(item.dosage_strength)}</span>`
+                                    : "";
+
+                                const formText = item.form
+                                    ? `<span class="text-xs text-gray-500 ml-1 font-medium">${escape(item.form)}</span>`
+                                    : "";
+
+                                const brandText = item.brand_name
+                                    ? ` <span class="text-xs text-gray-400 italic ml-1">(${escape(item.brand_name)})</span>`
+                                    : "";
+
+                                return `
+                                    <div class="flex items-center py-1">
+                                    <span class="font-bold text-gray-900">${escape(item.generic_name)}</span>
+                                    ${brandText}
+                                    ${doseBadge}
+                                    ${formText}
+                                    </div>
+                                    `;
                             },
-                            item: function(item, escape) {
-                                return `<div>${escape(item.generic_name)}</div>`;
-                            }
+                            item: function (item, escape) {
+                                // This controls how it looks AFTER the doctor clicks it (inside the search box)
+                                const doseText = item.dosage_strength
+                                    ? ` <span class="text-red-600">[${escape(item.dosage_strength)}]</span>`
+                                    : "";
+                                return `<div class="font-bold">${escape(item.generic_name)}${doseText}</div>`;
+                            },
                         },
                         onChange: (value) => {
                             const selectedItem = this.ts.options[value];
                             if (selectedItem) {
                                 this.newMed.medication_id = selectedItem.id;
                                 this.newMed.name = selectedItem.generic_name;
+                                this.newMed.dosage_strength =
+                                    selectedItem.dosage_strength || ""; // Capture 500mg!
+                                this.newMed.form = selectedItem.form || ""; // Capture Capsule!
+
                                 this.newMed.rxcui = selectedItem.rxcui;
-                                this.newMed.est_price = selectedItem.median_price || null;
-                                this.checkDur(selectedItem.rxcui, selectedItem.generic_name);
+                                this.newMed.est_price =
+                                    selectedItem.median_price || null;
+                                this.checkDur(
+                                    selectedItem.rxcui,
+                                    selectedItem.generic_name,
+                                );
                             } else {
-                                this.newMed.name = '';
-                                this.newMed.rxcui = '';
+                                this.newMed.name = "";
+                                this.newMed.rxcui = "";
                                 this.newMed.est_price = null;
                             }
-                        }
+                        },
                     });
                 }
             }, 100);
 
-            this.$watch('showRecordsDrawer', value => {
-                if (value && this.patientRecords.length === 0 && this.patientId) {
+            this.$watch("showRecordsDrawer", (value) => {
+                if (
+                    value &&
+                    this.recordsData.timeline.length === 0 &&
+                    this.patientId
+                ) {
                     this.fetchRecords();
                 }
             });
+
+            setTimeout(() => {
+                if (this.patientId) {
+                    this.checkDur(null, null);
+                }
+            }, 500);
         },
 
+        patientRecords: [],
+        patientProfile: {},
+        isFetchingRecords: false,
+
+        // Integrated from Patient Directory
         async fetchRecords() {
-            this.isFetchingRecords = true;
+            this.isLoadingRecords = true;
+            this.isFetchingRecords = true; // Ensure UI loading text shows
+
             try {
-                const response = await fetch(`/doctor/api/patients/${this.patientId}/records`);
+                const response = await fetch(
+                    `/doctor/patients/${this.patientId}/records`,
+                );
                 const data = await response.json();
+
+                // 2. Fix the array mismatch and assign the new profile data
                 this.patientRecords = data.timeline || [];
+                this.patientProfile = data.profile || {};
             } catch (e) {
-                console.error(e);
+                console.error("Clinical Timeline Sync Error:", e);
             } finally {
+                this.isLoadingRecords = false;
                 this.isFetchingRecords = false;
             }
         },
 
+        async verifyRecord(recordId, recordType) {
+            // Human-in-the-Loop: Confirmation gate
+            if (
+                !confirm(
+                    "Officially verify this record for the patient's digital file?",
+                )
+            )
+                return;
+
+            try {
+                const response = await fetch(`/doctor/records/verify`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": config.csrfToken,
+                    },
+                    body: JSON.stringify({ id: recordId, type: recordType }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Instantly update UI state for the specific item
+                    const record = this.recordsData.timeline.find(
+                        (r) => r.id === recordId && r.type === recordType,
+                    );
+                    if (record) record.is_verified = 1;
+                }
+            } catch (error) {
+                console.error("Verification Error:", error);
+                alert("Network error: Could not verify record.");
+            }
+        },
+
         async checkDur(rxcui, drugName) {
-            if (!rxcui || !this.patientId) return;
+            if (!this.patientId) return;
+
+            const currentRxcuis = this.medications
+                .map((m) => m.rxcui)
+                .filter(Boolean);
+
             try {
                 const response = await fetch(`/doctor/api/dur/check`, {
-                    method: 'POST',
+                    method: "POST",
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': config.csrfToken
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": config.csrfToken,
                     },
                     body: JSON.stringify({
-                        rxcui: rxcui,
+                        rxcui: rxcui, // Can be null on page load
                         patient_id: this.patientId,
-                        drug_name: drugName
-                    })
+                        drug_name: drugName,
+                        current_rxcuis: currentRxcuis,
+                    }),
                 });
+
+                if (!response.ok) return;
+
                 const data = await response.json();
-                if (data.has_alerts) {
-                    this.durAlerts = data.alerts;
+
+                // We always update the alerts array now, whether it's just allergies or new interactions
+                this.durAlerts = data.alerts || [];
+
+                // Only force open the drawer if they actively selected a drug that caused a NEW alert
+                if (
+                    rxcui &&
+                    data.has_alerts &&
+                    data.alerts.some(
+                        (a) =>
+                            a.type === "interaction" ||
+                            a.message.includes("CRITICAL"),
+                    )
+                ) {
                     this.showDurDrawer = true;
                 }
             } catch (e) {
-                console.error(e);
+                console.error("DUR Check Error:", e);
             }
         },
 
@@ -138,9 +266,12 @@ export default function consultationConsole(config) {
                 }
                 this.activeMic = section;
 
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const SpeechRecognition =
+                    window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) {
-                    alert('Speech recognition is not supported in this browser.');
+                    alert(
+                        "Speech recognition is not supported in this browser.",
+                    );
                     this.activeMic = null;
                     return;
                 }
@@ -150,19 +281,28 @@ export default function consultationConsole(config) {
                 this.recognition.interimResults = true;
 
                 this.recognition.onresult = (event) => {
-                    let finalTranscript = '';
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    let finalTranscript = "";
+                    for (
+                        let i = event.resultIndex;
+                        i < event.results.length;
+                        ++i
+                    ) {
                         if (event.results[i].isFinal) {
-                            finalTranscript += event.results[i][0].transcript + ' ';
+                            finalTranscript +=
+                                event.results[i][0].transcript + " ";
                         }
                     }
                     if (finalTranscript) {
-                        this[`${section}_note`] = (this[`${section}_note`] + ' ' + finalTranscript).trim();
+                        this[`${section}_note`] = (
+                            this[`${section}_note`] +
+                            " " +
+                            finalTranscript
+                        ).trim();
                     }
                 };
 
                 this.recognition.onerror = (event) => {
-                    console.error('Speech recognition error', event.error);
+                    console.error("Speech recognition error", event.error);
                     this.activeMic = null;
                 };
 
@@ -180,16 +320,26 @@ export default function consultationConsole(config) {
             if (this.newMed.name) {
                 this.medications.push({ ...this.newMed });
                 this.newMed = {
-                    medication_id: 1, rxcui: '', name: '', dose: '', frequency: '',
-                    duration: '', pharmacist_instructions: '', patient_instructions: '',
-                    sig: '', quantity: null, est_price: null
+                    medication_id: 1,
+                    rxcui: "",
+                    name: "",
+                    dose: "",
+                    dosage_strength: "",
+                    form: "",
+                    frequency: "",
+                    duration: "",
+                    pharmacist_instructions: "",
+                    patient_instructions: "",
+                    sig: "",
+                    quantity: null,
+                    est_price: null,
                 };
                 if (this.ts) {
                     this.ts.clear();
                 }
             }
         },
-        
+
         removeMedication(index) {
             this.medications.splice(index, 1);
         },
@@ -197,11 +347,11 @@ export default function consultationConsole(config) {
         async confirmGeneration() {
             this.isGenerating = true;
             try {
-                const response = await fetch(config.storeRoute, { 
-                    method: 'POST',
+                const response = await fetch(config.storeRoute, {
+                    method: "POST",
                     headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': config.csrfToken 
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": config.csrfToken,
                     },
                     body: JSON.stringify({
                         subjective_note: this.subjective_note,
@@ -211,23 +361,32 @@ export default function consultationConsole(config) {
                         next_appointment_date: this.nextAppointment,
                         print_patient_name: this.showPatientName,
                         general_instructions: this.generalInstructions,
-                        medications: this.medications
-                    })
+                        medications: this.medications,
+                    }),
                 });
                 const data = await response.json();
+
                 if (response.ok && data.success) {
+                    // Capture the new backend variables!
+                    this.hasPrescription = data.has_prescription || false;
+                    this.prescriptionId = data.prescription_id || null;
+                    this.generatedPdfUrl = data.pdf_url || "#";
+
                     setTimeout(() => {
                         this.isGenerating = false;
                         this.isGenerated = true;
                     }, 1000);
                 } else {
-                    alert('Failed to generate prescription: ' + (data.message || 'Unknown error'));
+                    alert(
+                        "Failed to generate prescription: " +
+                            (data.message || "Unknown error"),
+                    );
                     this.isGenerating = false;
                     this.showGenerateModal = false;
                 }
             } catch (error) {
-                console.error('Error:', error);
-                alert('An error occurred while saving the consultation.');
+                console.error("Error:", error);
+                alert("An error occurred while saving the consultation.");
                 this.isGenerating = false;
                 this.showGenerateModal = false;
             }
@@ -239,11 +398,44 @@ export default function consultationConsole(config) {
             this.showDurDrawer = false;
             this.showGenerateModal = false;
         },
-        
+
         resizeTextarea(e) {
             let el = e.target;
-            el.style.height = 'auto';
-            el.style.height = el.scrollHeight + 'px';
-        }
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
+        },
+
+        calculateSigAndQty() {
+            let fMultiplier = 0;
+            let freq = (this.newMed.frequency || "").toUpperCase();
+
+            // Fuzzy matching for typed text
+            if (freq.includes("OD") || freq.includes("ONCE")) fMultiplier = 1;
+            else if (freq.includes("BID") || freq.includes("TWICE"))
+                fMultiplier = 2;
+            else if (freq.includes("TID") || freq.includes("THRICE"))
+                fMultiplier = 3;
+            else if (freq.includes("QID") || freq.includes("FOUR TIMES"))
+                fMultiplier = 4;
+            else if (freq.includes("Q4H")) fMultiplier = 6;
+            else if (freq.includes("Q6H")) fMultiplier = 4;
+
+            // Extract the first number found in the dose input (e.g., "2 caps" -> 2)
+            let doseMatch = (this.newMed.dose || "").match(/[\d\.]+/);
+            let doseVal = doseMatch ? parseFloat(doseMatch[0]) : 0;
+            let durationVal = parseInt(this.newMed.duration) || 0;
+
+            // Auto calculate if all vars are found
+            if (doseVal > 0 && fMultiplier > 0 && durationVal > 0) {
+                this.newMed.quantity = Math.ceil(
+                    doseVal * fMultiplier * durationVal,
+                );
+            }
+
+            // Always attempt to build the Sig
+            if (this.newMed.dose && this.newMed.frequency) {
+                this.newMed.sig = `Take ${this.newMed.dose} ${this.newMed.frequency} for ${this.newMed.duration || "[X]"} Days`;
+            }
+        },
     };
 }

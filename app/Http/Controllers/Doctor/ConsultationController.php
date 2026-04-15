@@ -4,33 +4,31 @@ namespace App\Http\Controllers\Doctor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
+use App\Models\DoctorProfile;
 use App\Models\Encounter;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
-use App\Models\DoctorProfile;
+use App\Models\SoapTemplate;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class ConsultationController extends Controller
 {
     public function show(Appointment $appointment)
     {
-        // Ensure the appointment belongs to the logged-in doctor
         if ($appointment->doctor_id !== Auth::id()) {
             abort(403, 'Unauthorized access to this consultation.');
         }
 
-        // Load relationships
-        $appointment->load('patient');
         $appointment->load('patient.patientProfile');
-        
         $doctorProfile = DoctorProfile::where('user_id', Auth::id())->first();
-
-        // Triage vitals is already cast to array in Appointment model
         $triageVitals = $appointment->triage_vitals ?? [];
-        
-        return view('doctor.prescribe', compact('appointment', 'doctorProfile', 'triageVitals'));
+
+        // FETCH THE SOAP TEMPLATES
+        $soapTemplates = SoapTemplate::where('doctor_id', Auth::id())->get();
+
+        return view('doctor.prescribe', compact('appointment', 'doctorProfile', 'triageVitals', 'soapTemplates'));
     }
 
     public function store(Request $request, Appointment $appointment)
@@ -59,7 +57,10 @@ class ConsultationController extends Controller
             'medications.*.quantity' => 'nullable|integer',
         ]);
 
-        DB::transaction(function () use ($request, $appointment) {
+        // Initialize a variable to capture the UUID outside the transaction scope
+        $prescriptionId = null;
+
+        DB::transaction(function () use ($request, $appointment, &$prescriptionId) {
             // 1. Create Encounter record
             $encounter = Encounter::create([
                 'appointment_id' => $appointment->id,
@@ -85,6 +86,9 @@ class ConsultationController extends Controller
                     'status' => 'active',
                 ]);
 
+                // Capture the newly generated UUID (char(36))
+                $prescriptionId = $prescription->id;
+
                 // 3. Loop and save PrescriptionItem records
                 if ($request->has('medications') && is_array($request->medications)) {
                     foreach ($request->medications as $medication) {
@@ -109,10 +113,23 @@ class ConsultationController extends Controller
             ]);
         });
 
-        return response()->json([
+        // 5. Build the dynamic response payload for the frontend
+        $responseData = [
             'success' => true,
             'message' => 'Consultation completed successfully.',
-            'redirect' => route('doctor.dashboard')
-        ]);
+        ];
+
+        // If a prescription was generated, pass the UUID and future PDF URL
+        if ($prescriptionId) {
+            $responseData['has_prescription'] = true;
+            $responseData['prescription_id'] = $prescriptionId;
+
+            // IMPORTANT: This uses a named route. Ensure this route exists in your web.php
+            $responseData['pdf_url'] = route('doctor.prescription.pdf', ['id' => $prescriptionId]);
+        } else {
+            $responseData['has_prescription'] = false;
+        }
+
+        return response()->json($responseData);
     }
 }

@@ -3,10 +3,10 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Doctor\ConsultationController;
 use App\Http\Controllers\Doctor\DoctorController;
-use App\Http\Controllers\Doctor\QueueController;
 use App\Http\Controllers\Doctor\HistoryController;
-use App\Http\Controllers\Doctor\TemplateController;  
 use App\Http\Controllers\Doctor\ManageStaffController;
+use App\Http\Controllers\Doctor\QueueController;
+use App\Http\Controllers\Doctor\TemplateController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ProfileController;
@@ -158,6 +158,7 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     // 4. Voice-Assisted Consultation Console
     Route::get('/consultation/{appointment}', [ConsultationController::class, 'show'])->name('consultation.show');
     Route::post('/consultation/{appointment}', [ConsultationController::class, 'store'])->name('consultation.store');
+    Route::get('/doctor/prescription/{id}/pdf', [ConsultationController::class, 'generatePdf'])->name('prescription.pdf');
 
     // 5. Consultation & Prescription History
     Route::get('/history', function () {
@@ -175,7 +176,8 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     Route::patch('/directory/patient/{id}', [DoctorController::class, 'updatePatient'])->name('patient.update');
 
     // API Endpoint for the Records Drawer
-    Route::get('/api/patients/{id}/records', [DoctorController::class, 'patientRecords'])->name('api.patient.records');
+    Route::get('/patients/{id}/records', [DoctorController::class, 'patientRecords']);
+    Route::patch('/patients/records/verify', [DoctorController::class, 'verifyRecord']);
 
     // API Endpoints for Medications Search and DUR Check
     Route::get('/api/medications/search', [DoctorController::class, 'searchMedications'])->name('api.medications.search');

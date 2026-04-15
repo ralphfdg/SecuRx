@@ -50,8 +50,9 @@
                                 d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
                             </path>
                         </svg>
-                        <span
-                            class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-md animate-bounce">1</span>
+                        <span x-show="durAlerts.length > 0" x-text="durAlerts.length" x-cloak
+                            class="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-black text-white shadow-md animate-bounce">
+                        </span>
                     </button>
                     <button @click="showTemplatesDrawer = true"
                         class="bg-white border-2 border-gray-200 text-gray-600 hover:border-blue-600 hover:text-blue-600 font-bold py-2 px-4 rounded-xl transition shadow-sm flex items-center gap-2 text-sm">
@@ -236,6 +237,22 @@
                                 <select x-ref="rxnormSearch"
                                     class="w-full bg-slate-50 border border-gray-200 text-securx-navy text-base rounded-xl focus:ring-blue-500 focus:border-blue-500 block font-bold shadow-inner"
                                     placeholder="Search drug generic or brand name..."></select>
+
+                                <div x-show="newMed.name"
+                                    class="mt-2 flex items-center gap-2 p-2 bg-blue-50 border border-blue-100 rounded-lg"
+                                    style="display: none;">
+                                    <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-sm font-black text-securx-navy" x-text="newMed.name"></span>
+                                    <span x-show="newMed.dosage_strength"
+                                        class="bg-red-100 text-red-700 border border-red-200 font-black px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider shadow-sm"
+                                        x-text="newMed.dosage_strength"></span>
+                                    <span x-show="newMed.form" class="text-xs text-gray-500 font-medium"
+                                        x-text="newMed.form"></span>
+                                </div>
                             </div>
                             <div class="w-full sm:w-32 shrink-0">
                                 <label class="block text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5"
@@ -253,30 +270,59 @@
                             <div>
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Dose</label>
-                                <input type="text" x-model="newMed.dose"
+                                <input type="text" list="dose-options" x-model="newMed.dose"
+                                    @input="calculateSigAndQty()"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
                                     placeholder="e.g. 1 cap">
+                                <datalist id="dose-options">
+                                    <option value="1 cap">
+                                    <option value="1 tab">
+                                    <option value="2 caps">
+                                    <option value="5 mL">
+                                    <option value="10 mL">
+                                    <option value="1 sachet">
+                                </datalist>
                             </div>
+
                             <div>
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Frequency</label>
-                                <input type="text" x-model="newMed.frequency"
+                                <input type="text" list="freq-options" x-model="newMed.frequency"
+                                    @input="calculateSigAndQty()"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
                                     placeholder="e.g. TID">
+                                <datalist id="freq-options">
+                                    <option value="OD">
+                                    <option value="BID">
+                                    <option value="TID">
+                                    <option value="QID">
+                                    <option value="Q4H">
+                                    <option value="As needed (PRN)">
+                                </datalist>
                             </div>
+
                             <div>
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Duration</label>
-                                <input type="text" x-model="newMed.duration"
+                                <input type="number" list="duration-options" x-model="newMed.duration"
+                                    @input="calculateSigAndQty()"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="7 days">
+                                    placeholder="Days">
+                                <datalist id="duration-options">
+                                    <option value="3">
+                                    <option value="5">
+                                    <option value="7">
+                                    <option value="14">
+                                    <option value="30">
+                                </datalist>
                             </div>
+
                             <div>
                                 <label
                                     class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Qty</label>
                                 <input type="number" x-model="newMed.quantity"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="30">
+                                    placeholder="0">
                             </div>
                         </div>
 
@@ -285,9 +331,10 @@
                                 <div class="flex justify-between items-end mb-1.5">
                                     <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Sig
                                         (Directions)</label>
-                                    <button type="button"
-                                        @click="newMed.sig = `Take ${newMed.dose || '[dose]'} ${newMed.frequency || '[freq]'} for ${newMed.duration || '[duration]'}`"
-                                        class="text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-wider transition">Auto-Fill</button>
+                                    <button type="button" @click="calculateSigAndQty()"
+                                        class="text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-wider transition">
+                                        Auto-Fill
+                                    </button>
                                 </div>
                                 <input type="text" x-model="newMed.sig"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500 italic placeholder-gray-400"
@@ -457,14 +504,22 @@
                                 <div class="relative group">
                                     <button @click="removeMedication(index)" type="button"
                                         class="absolute -left-2 top-0 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition">
-                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
                                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L10 8.586 8.707 7.293z"
                                                 clip-rule="evenodd"></path>
                                         </svg>
                                     </button>
-                                    <p class="text-sm font-bold text-gray-900"
-                                        x-text="`${index + 1}. ${med.name} ${med.dose || ''}`"></p>
+                                    <p class="text-sm font-bold text-gray-900 flex items-center flex-wrap gap-2">
+                                        <span x-text="`${index + 1}. ${med.name}`"></span>
+
+                                        <span x-show="med.dosage_strength"
+                                            class="bg-red-100 text-red-700 border border-red-200 font-black px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider shadow-sm"
+                                            x-text="med.dosage_strength"></span>
+
+                                        <span x-show="med.form" class="text-xs text-gray-500 font-medium"
+                                            x-text="med.form"></span>
+                                    </p>
                                     <div class="flex justify-between items-end mt-0.5">
                                         <p class="text-xs text-gray-700 italic"
                                             x-text="`Sig: ${med.sig || 'Take as directed'}`"></p>
@@ -502,7 +557,7 @@
 
                         <div class="mt-4 pt-2 border-t border-gray-100 shrink-0">
                             <div class="flex justify-between items-end">
-                                <div
+                                <div x-show="!prescriptionId"
                                     class="w-16 h-16 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
                                     <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
@@ -511,6 +566,11 @@
                                         </path>
                                     </svg>
                                     <span class="text-[6px] text-gray-400 mt-1 font-sans">QR PENDING</span>
+                                </div>
+
+                                <div x-show="prescriptionId" class="w-16 h-16 shrink-0" style="display: none;">
+                                    <img :src="'/doctor/api/qr/' + prescriptionId" alt="Prescription QR"
+                                        class="w-full h-full object-contain">
                                 </div>
                                 <div class="text-left w-[170px] ml-auto flex flex-col font-serif">
                                     <div class="relative z-0 space-y-1 text-[11px]">
@@ -576,10 +636,24 @@
                             </div>
                         </div>
                         <div class="px-6 py-6 text-center">
-                            <p class="text-sm text-gray-700 font-bold mb-2">Are you sure you want to finalize this
-                                document?</p>
-                            <p class="text-xs text-red-500 font-medium">Once generated, it becomes legally binding and
-                                cannot be edited.</p>
+                            <div class="px-6 py-6 text-center">
+                                <p class="text-sm text-gray-700 font-bold mb-2">Are you sure you want to finalize this
+                                    document?</p>
+                                <p class="text-xs text-red-500 font-medium">Once generated, it becomes legally binding and
+                                    cannot be edited.</p>
+
+                                <div x-show="medications.length === 0"
+                                    class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm font-bold flex items-start gap-2 text-left">
+                                    <svg class="w-5 h-5 shrink-0 text-amber-600 mt-0.5" fill="none"
+                                        stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                        </path>
+                                    </svg>
+                                    <p>Warning: You are finalizing this encounter with NO prescribed medications. A "No Rx"
+                                        encounter will be logged.</p>
+                                </div>
+                            </div>
                         </div>
                         <div class="bg-slate-50 px-6 py-4 flex gap-3 border-t border-gray-100">
                             <button @click="showGenerateModal = false"
@@ -613,8 +687,10 @@
                             <h3 class="text-xl font-black text-securx-navy">Prescription Ready!</h3>
                         </div>
                         <div class="bg-slate-50 px-6 py-5 flex gap-3">
-                            <button onclick="window.print()"
-                                class="flex-1 bg-white border border-gray-300 text-gray-700 hover:border-blue-600 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">Print</button>
+                            <a :href="generatedPdfUrl" target="_blank" x-show="hasPrescription"
+                                class="flex-1 bg-white border border-gray-300 text-gray-700 hover:border-blue-600 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">
+                                Download PDF
+                            </a>
                             <a href="{{ route('doctor.dashboard') }}"
                                 class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 rounded-xl transition text-sm text-center flex items-center justify-center">Done</a>
                         </div>
@@ -658,48 +734,204 @@
                         </path>
                     </svg></button>
             </div>
-            <div class="p-4 space-y-3">Template buttons here.</div>
+            <div class="p-4 space-y-3">
+                @forelse($soapTemplates ?? [] as $template)
+                    <button type="button"
+                        @click="
+                subjective_note = `{{ addslashes($template->subjective_text) }}`;
+                objective_note = `{{ addslashes($template->objective_text) }}`;
+                assessment_note = `{{ addslashes($template->assessment_text) }}`;
+                plan_note = `{{ addslashes($template->plan_text) }}`;
+                showTemplatesDrawer = false;
+            "
+                        class="w-full text-left p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition shadow-sm">
+                        <span class="block font-black text-securx-navy">{{ $template->template_name }}</span>
+                        <span class="block text-xs text-gray-500 truncate mt-1">{{ $template->assessment_text }}</span>
+                    </button>
+                @empty
+                    <p class="text-sm text-gray-500 italic text-center py-4">No templates found. Create them in your Doctor
+                        Settings.</p>
+                @endforelse
+            </div>
         </div>
         <div x-show="showRecordsDrawer"
             class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-slate-50 shadow-2xl flex flex-col"
-            style="display: none;">
-            <div class="px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-xl font-black text-securx-navy">Records</h2>
-                <button @click="showRecordsDrawer = false" class="text-gray-400"><svg class="w-6 h-6" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
+            style="display: none;" x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-data="{ activeCategory: 'all' }">
+            <div class="px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
+                <h2 class="text-xl font-black text-securx-navy uppercase tracking-tight">Full Medical History</h2>
+                <button @click="showRecordsDrawer = false" class="text-gray-400 hover:text-red-500 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
-                    </svg></button>
+                    </svg>
+                </button>
             </div>
-            <div class="flex-1 p-6 text-gray-400 overflow-y-auto">
-                <div x-show="isFetchingRecords" class="text-center py-4 italic">Loading records...</div>
-                <div x-show="!isFetchingRecords && patientRecords.length === 0" class="text-center py-4 italic">No records
-                    found.</div>
-                <div class="space-y-4" x-show="patientRecords.length > 0">
-                    <template x-for="(record, index) in patientRecords" :key="index">
-                        <div class="p-4 bg-white rounded-lg shadow-sm border border-gray-200">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <span class="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded"
-                                        :class="{
-                                            'bg-blue-100 text-blue-700': record.type === 'encounter',
-                                            'bg-emerald-100 text-emerald-700': record.type === 'lab_result',
-                                            'bg-amber-100 text-amber-700': record.type === 'document',
-                                            'bg-purple-100 text-purple-700': record.type === 'immunization'
-                                        }"
-                                        x-text="record.type.replace('_', ' ')"></span>
-                                    <h3 class="text-sm font-bold text-gray-900 mt-2"
-                                        x-text="record.title || 'Untitled Record'"></h3>
-                                </div>
-                                <span class="text-xs text-gray-500 font-medium"
-                                    x-text="record.date ? new Date(record.date).toLocaleDateString() : ''"></span>
+
+            <div class="bg-white border-b border-gray-200 px-6 pt-2 shrink-0 overflow-x-auto flex gap-6 custom-scrollbar">
+                <button @click="activeCategory = 'all'"
+                    :class="activeCategory === 'all' ? 'border-securx-navy text-securx-navy' :
+                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">All Records</button>
+
+                <button @click="activeCategory = 'encounter'"
+                    :class="activeCategory === 'encounter' ? 'border-blue-600 text-blue-600' :
+                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Encounters</button>
+
+                <button @click="activeCategory = 'lab_result'"
+                    :class="activeCategory === 'lab_result' ? 'border-purple-600 text-purple-600' :
+                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Labs</button>
+
+                <button @click="activeCategory = 'document'"
+                    :class="activeCategory === 'document' ? 'border-amber-600 text-amber-600' :
+                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Documents</button>
+
+                <button @click="activeCategory = 'immunization'"
+                    :class="activeCategory === 'immunization' ? 'border-emerald-600 text-emerald-600' :
+                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Immunizations</button>
+
+                <button @click="activeCategory = 'allergy'"
+                    :class="activeCategory === 'allergy' ? 'border-rose-600 text-rose-600' :
+                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Allergies</button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+                <div x-show="isFetchingRecords" class="text-center py-10 italic text-gray-400">Syncing encrypted
+                    records...</div>
+
+                <template
+                    x-for="(record, index) in patientRecords.filter(r => activeCategory === 'all' || r.type === activeCategory)"
+                    :key="record.id">
+                    <div x-data="{ expanded: false }"
+                        class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all hover:border-blue-400">
+
+                        <div @click="expanded = !expanded" class="p-4 flex items-center gap-4 cursor-pointer">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                                :class="{
+                                    'bg-blue-100 text-blue-600': record.type === 'encounter',
+                                    'bg-purple-100 text-purple-600': record.type === 'lab_result',
+                                    'bg-amber-100 text-amber-600': record.type === 'document',
+                                    'bg-emerald-100 text-emerald-600': record.type === 'immunization',
+                                    'bg-rose-100 text-rose-600': record.type === 'allergy'
+                                }">
+                                <svg x-show="record.type === 'encounter'" class="w-5 h-5" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                                <svg x-show="record.type === 'allergy'" class="w-5 h-5" fill="none"
+                                    stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                    </path>
+                                </svg>
+                                <svg x-show="['lab_result', 'document', 'immunization'].includes(record.type)"
+                                    class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                            </div>
+
+                            <div class="flex-1 truncate">
+                                <h4 class="font-black text-securx-navy text-xs uppercase" x-text="record.title"></h4>
+                                <p class="text-[10px] text-gray-400 font-bold"
+                                    x-text="new Date(record.date).toLocaleDateString()"></p>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <span x-show="record.is_verified == 0"
+                                    class="text-[9px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">PENDING</span>
+                                <span x-show="record.is_verified == 1"
+                                    class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase">Verified</span>
                             </div>
                         </div>
-                    </template>
-                </div>
+
+                        <div x-show="expanded" x-collapse class="px-4 pb-4 pt-2 bg-slate-50 border-t border-gray-100">
+                            <div class="space-y-3">
+                                <template x-if="record.type === 'encounter'">
+                                    <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                        <div class="bg-white p-2 rounded border border-gray-100"><span
+                                                class="text-blue-500 font-black uppercase block">Subjective</span><span
+                                                x-text="record.subjective_note"></span></div>
+                                        <div class="bg-white p-2 rounded border border-gray-100"><span
+                                                class="text-emerald-500 font-black uppercase block">Objective</span><span
+                                                x-text="record.objective_note"></span></div>
+                                        <div class="bg-white p-2 rounded border border-gray-100"><span
+                                                class="text-purple-500 font-black uppercase block">Assessment</span><span
+                                                x-text="record.assessment_note"></span></div>
+                                        <div class="bg-white p-2 rounded border border-gray-100"><span
+                                                class="text-amber-500 font-black uppercase block">Plan</span><span
+                                                x-text="record.plan_note"></span></div>
+                                    </div>
+                                </template>
+
+                                <template x-if="record.type === 'lab_result' || record.type === 'document'">
+                                    <div>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase">Attached File</span>
+                                        <div class="mt-1">
+                                            <a :href="record.file_path ? '/storage/' + record.file_path : '#'"
+                                                target="_blank"
+                                                class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition"
+                                                x-show="record.file_path">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
+                                                    </path>
+                                                </svg>
+                                                View Attachment
+                                            </a>
+                                            <p x-show="!record.file_path" class="text-gray-500 italic text-xs">No file
+                                                attached.</p>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template x-if="record.type === 'immunization'">
+                                    <div class="grid grid-cols-2 gap-4 text-[11px]">
+                                        <div><span class="text-[10px] font-bold text-gray-400 uppercase">Facility</span>
+                                            <p class="mt-0.5 text-gray-800" x-text="record.facility || 'Not specified'">
+                                            </p>
+                                        </div>
+                                        <div><span class="text-[10px] font-bold text-gray-400 uppercase">Valid Until</span>
+                                            <p class="mt-0.5 text-gray-800"
+                                                x-text="record.valid_until ? new Date(record.valid_until).toLocaleDateString() : 'Lifetime'">
+                                            </p>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <template x-if="record.type === 'allergy'">
+                                    <p class="text-xs text-rose-700 font-bold">Reaction: <span class="font-normal"
+                                            x-text="record.reaction || 'N/A'"></span></p>
+                                </template>
+
+                                <div x-show="record.is_verified == 0" class="flex justify-end pt-2">
+                                    <button @click.stop="verifyRecord(record.id, record.type)"
+                                        class="text-[10px] font-black bg-securx-navy text-white px-4 py-1.5 rounded-lg hover:bg-blue-600 transition">
+                                        Officially Verify
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                </template>
+                <p x-show="!isFetchingRecords && patientRecords && patientRecords.filter(r => activeCategory === 'all' || r.type === activeCategory).length === 0"
+                    class="text-sm text-center text-gray-400 italic py-8">
+                    No <span x-text="activeCategory === 'all' ? 'records' : activeCategory.replace('_', ' ')"></span> found
+                    for this patient.
+                </p>
+
             </div>
         </div>
-
     </div>
 
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
