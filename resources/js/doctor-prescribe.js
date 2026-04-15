@@ -209,6 +209,8 @@ export default function consultationConsole(config) {
         },
 
         async checkDur(rxcui, drugName) {
+            console.log("DUR INITIATED for drug:", drugName, "RxCUI:", rxcui); // Debug Start
+
             if (!this.patientId) return;
 
             const currentRxcuis = this.medications
@@ -223,34 +225,30 @@ export default function consultationConsole(config) {
                         "X-CSRF-TOKEN": config.csrfToken,
                     },
                     body: JSON.stringify({
-                        rxcui: rxcui, // Can be null on page load
+                        rxcui: rxcui,
                         patient_id: this.patientId,
                         drug_name: drugName,
                         current_rxcuis: currentRxcuis,
                     }),
                 });
 
-                if (!response.ok) return;
-
                 const data = await response.json();
 
-                // We always update the alerts array now, whether it's just allergies or new interactions
+                // NEW: Print the backend's internal logs to your browser console
+                if (data.debug) {
+                    console.group("--- Backend DUR Debug Logs ---");
+                    data.debug.forEach((log) => console.log(log));
+                    console.groupEnd();
+                }
+
                 this.durAlerts = data.alerts || [];
 
-                // Only force open the drawer if they actively selected a drug that caused a NEW alert
-                if (
-                    rxcui &&
-                    data.has_alerts &&
-                    data.alerts.some(
-                        (a) =>
-                            a.type === "interaction" ||
-                            a.message.includes("CRITICAL"),
-                    )
-                ) {
+                if (data.has_alerts && rxcui) {
+                    console.log("Alerts found! Opening drawer.");
                     this.showDurDrawer = true;
                 }
             } catch (e) {
-                console.error("DUR Check Error:", e);
+                console.error("DUR Fetch Error:", e);
             }
         },
 

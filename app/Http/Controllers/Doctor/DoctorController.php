@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
 class DoctorController extends Controller
 {
@@ -447,86 +446,79 @@ class DoctorController extends Controller
         $currentRxcuis = (array) $request->input('current_rxcuis', []);
 
         $alerts = [];
+        $debug_logs = []; // NEW: Tracking for your console
 
-        // --- CHECK 1: BASELINE ALLERGIES (Always runs) ---
-        $allergies = DB::table('patient_allergies')
-            ->where('patient_id', $patientId)
-            ->get();
-
+        // Baseline Allergies
+        $allergies = DB::table('patient_allergies')->where('patient_id', $patientId)->get();
         foreach ($allergies as $allergy) {
-            $alerts[] = [
-                'type' => 'allergy',
-                'severity' => $allergy->severity ?? 'high',
-                'message' => 'Documented baseline allergy to '.$allergy->allergen_name.'.',
-            ];
+            $alerts[] = ['type' => 'allergy', 'severity' => 'high', 'message' => "Allergy to: {$allergy->allergen_name}"];
         }
 
-        // --- CHECK 2: SPECIFIC DRUG INTERACTION & ALLERGY MATCH ---
         if ($rxcui) {
-            // Did they just prescribe a drug they are allergic to?
-            $medication = DB::table('medications')->where('rxcui', $rxcui)->first();
-            if ($medication) {
-                foreach ($allergies as $allergy) {
-                    // Simple fuzzy match fallback
-                    if (stripos($medication->generic_name, $allergy->allergen_name) !== false) {
-                        $alerts[] = [
-                            'type' => 'allergy',
-                            'severity' => 'high',
-                            'message' => 'CRITICAL: Patient is allergic to selected drug ('.$medication->generic_name.').',
-                        ];
-                    }
-                }
-            }
-
-            // NIH RxNav Drug-Drug Interaction Check
-            $activePrescriptions = DB::table('prescriptions')
+            $activeMeds = DB::table('prescriptions')
                 ->join('prescription_items', 'prescriptions.id', '=', 'prescription_items.prescription_id')
                 ->join('medications', 'prescription_items.medication_id', '=', 'medications.id')
                 ->where('prescriptions.patient_id', $patientId)
                 ->where('prescriptions.status', 'active')
-                ->whereNotNull('medications.rxcui')
-                ->select('medications.rxcui')
-                ->get();
+                ->pluck('medications.generic_name')
+                ->toArray();
 
-            $activeRxCuis = $activePrescriptions->pluck('rxcui')->unique()->filter()->toArray();
-            $activeRxCuis = array_unique(array_merge($activeRxCuis, $currentRxcuis));
+            $cartMeds = DB::table('medications')->whereIn('rxcui', $currentRxcuis)->pluck('generic_name')->toArray();
+            $allExistingNames = array_unique(array_merge($activeMeds, $cartMeds));
 
-            if (! empty($activeRxCuis) && ! in_array($rxcui, $activeRxCuis)) {
-                $activeRxCuis[] = $rxcui;
-                $rxcuisString = implode('+', $activeRxCuis);
+            $client = new Client(['verify' => false, 'timeout' => 5]);
+            // 1. Grab the API key from the .env file securely
+            $apiKey = env('OPENFDA_API_KEY', '');
 
-                try {
-                    $client = new Client;
-                    $response = $client->request('GET', "https://rxnav.nlm.nih.gov/REST/interaction/list.json?rxcuis={$rxcuisString}");
+            // 2. Prepare the authentication string
+            $authParam = $apiKey ? "api_key={$apiKey}&" : '';
 
-                    if ($response->getStatusCode() == 200) {
-                        $data = json_decode($response->getBody(), true);
-                        if (isset($data['fullInteractionTypeGroup'])) {
-                            foreach ($data['fullInteractionTypeGroup'] as $group) {
-                                foreach ($group['fullInteractionType'] as $interactionType) {
-                                    $involvesNewDrug = false;
-                                    foreach ($interactionType['minConcept'] as $concept) {
-                                        if ($concept['rxcui'] == $rxcui) {
-                                            $involvesNewDrug = true;
-                                            break;
-                                        }
-                                    }
+            // 3. Grab the generic name of the NEW drug so we can search backwards
+            $newMedication = DB::table('medications')->where('rxcui', $rxcui)->first();
+            $newMedName = $newMedication ? preg_replace('/[^A-Za-z]/', '', explode(' ', $newMedication->generic_name)[0]) : '';
 
-                                    if ($involvesNewDrug) {
-                                        foreach ($interactionType['interactionPair'] as $pair) {
-                                            $alerts[] = [
-                                                'type' => 'interaction',
-                                                'severity' => $pair['severity'] ?? 'warning',
-                                                'message' => $pair['description'] ?? 'Drug interaction detected.',
-                                            ];
-                                        }
-                                    }
-                                }
+            foreach ($allExistingNames as $existingDrugName) {
+
+                $cleanedName = preg_replace('/[^A-Za-z]/', '', explode(' ', $existingDrugName)[0]);
+
+                // Query 1: Does the NEW drug's label warn about the EXISTING drug?
+                $query1 = "openfda.rxcui:\"{$rxcui}\"+AND+drug_interactions:{$cleanedName}";
+                // INJECT $authParam HERE
+                $url1 = "https://api.fda.gov/drug/label.json?{$authParam}search={$query1}&limit=1";
+
+                // Query 2: Does the EXISTING drug's label warn about the NEW drug?
+                $query2 = "openfda.generic_name:\"{$cleanedName}\"+AND+drug_interactions:{$newMedName}";
+                // INJECT $authParam HERE
+                $url2 = "https://api.fda.gov/drug/label.json?{$authParam}search={$query2}&limit=1";
+
+                // Test both directions
+                $urlsToTest = [$url1, $url2];
+                $interactionFound = false;
+
+                foreach ($urlsToTest as $url) {
+                    if ($interactionFound) {
+                        break;
+                    }
+
+                    try {
+                        $response = $client->request('GET', $url);
+                        $status = $response->getStatusCode();
+
+                        if ($status == 200) {
+                            $data = json_decode($response->getBody(), true);
+                            if (isset($data['results'][0]['drug_interactions'])) {
+                                $alerts[] = [
+                                    'type' => 'interaction',
+                                    'severity' => 'high',
+                                    'message' => "FDA Label Warning ({$cleanedName}): ".substr($data['results'][0]['drug_interactions'][0], 0, 200).'...',
+                                ];
+                                $debug_logs[] = "SUCCESS (200): Found interaction at {$url}";
+                                $interactionFound = true;
                             }
                         }
+                    } catch (\Exception $e) {
+                        $debug_logs[] = "404 No Interaction for: {$url}";
                     }
-                } catch (\Exception $e) {
-                    Log::error('NLM API Error: '.$e->getMessage());
                 }
             }
         }
@@ -534,6 +526,7 @@ class DoctorController extends Controller
         return response()->json([
             'has_alerts' => count($alerts) > 0,
             'alerts' => $alerts,
+            'debug' => $debug_logs, // This will now show up in your JS console!
         ]);
     }
 }
