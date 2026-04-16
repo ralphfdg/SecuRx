@@ -157,15 +157,19 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     // 3. Clinic Queue & Schedule (Fixed)
     Route::get('/queue', [QueueController::class, 'index'])->name('queue');
 
-    // 4. Voice-Assisted Consultation Console
     Route::get('/consultation/{appointment}', [ConsultationController::class, 'show'])->name('consultation.show');
     Route::post('/consultation/{appointment}', [ConsultationController::class, 'store'])->name('consultation.store');
-    Route::get('/doctor/prescription/{id}/pdf', [ConsultationController::class, 'generatePdf'])->name('prescription.pdf');
 
-    // 5. Consultation & Prescription History
-    Route::get('/history', function () {
-        return view('doctor.history');
-    })->name('history');
+    // 5. Prescription Viewing & PDF Generation
+    Route::get('/prescription/{id}', [ConsultationController::class, 'showPrescription'])->name('prescription.show');
+    Route::get('/prescription/{id}/print', [ConsultationController::class, 'printPrescription'])->name('prescription.print');
+    
+    // API Endpoint for dynamic QR code loading in your Vue/Alpine Modal
+    Route::get('/api/qr/{id}', [ConsultationController::class, 'renderQr'])->name('api.qr');
+
+    // 6. API Endpoints for the Records Drawer
+    Route::get('/patients/{id}/records', [DoctorController::class, 'patientRecords']);
+    Route::post('/records/verify', [DoctorController::class, 'verifyRecord']); // Fixed: Changed from PATCH to POST
 
     // Consultation History & Revocation
     Route::get('/history', [HistoryController::class, 'index'])->name('history');
@@ -178,8 +182,8 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     Route::patch('/directory/patient/{id}', [DoctorController::class, 'updatePatient'])->name('patient.update');
 
     // API Endpoint for the Records Drawer
-    Route::get('/patients/{id}/records', [DoctorController::class, 'patientRecords']);
-    Route::patch('/patients/records/verify', [DoctorController::class, 'verifyRecord']);
+    Route::get('/{id}/records', [DoctorController::class, 'patientRecords']);
+    Route::patch('/records/verify', [DoctorController::class, 'verifyRecord']);
 
     // API Endpoints for Medications Search and DUR Check
     Route::get('/api/medications/search', [DoctorController::class, 'searchMedications'])->name('api.medications.search');

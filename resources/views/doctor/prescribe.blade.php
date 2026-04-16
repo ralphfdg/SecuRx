@@ -76,10 +76,12 @@
             </div>
 
             <div
-                class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-slate-50 border border-gray-100 rounded-xl p-4">
-                <div class="flex flex-col gap-1.5 flex-1">
+                class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-slate-50 border border-gray-100 rounded-xl p-4 overflow-hidden w-full">
+
+                <div class="flex flex-col gap-1.5 flex-1 min-w-0 w-full">
                     <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Reason / Triage Note</p>
-                    <div class="text-sm text-gray-700 leading-snug">
+
+                    <div class="text-sm text-gray-700 leading-snug break-words">
                         <p><span class="text-blue-600 font-black">Rx:</span> <span
                                 class="italic">"{{ $appointment->reason_for_visit ?? 'No reason provided.' }}"</span></p>
                         <p><span class="text-emerald-600 font-black">Triage:</span> <span
@@ -87,33 +89,33 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-5 flex-wrap shrink-0">
+                <div class="flex items-center gap-3 sm:gap-5 flex-wrap shrink-0">
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase">BP</p>
                         <p class="text-sm font-black text-red-500">{{ $triageVitals['blood_pressure'] ?? '--' }}</p>
                     </div>
-                    <div class="w-px h-6 bg-gray-200"></div>
+                    <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase">HR</p>
                         <p class="text-sm font-black text-rose-500">
                             {{ $triageVitals['heart_rate'] ?? '--' }}{{ isset($triageVitals['heart_rate']) ? ' bpm' : '' }}
                         </p>
                     </div>
-                    <div class="w-px h-6 bg-gray-200"></div>
+                    <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase">Temp</p>
                         <p class="text-sm font-black text-securx-navy">
                             {{ $triageVitals['temperature'] ?? '--' }}{{ isset($triageVitals['temperature']) ? '°C' : '' }}
                         </p>
                     </div>
-                    <div class="w-px h-6 bg-gray-200"></div>
+                    <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase">Wt</p>
                         <p class="text-sm font-black text-securx-navy">
                             {{ $triageVitals['weight'] ?? ($appointment->patient->patientProfile->weight ?? '--') }}{{ isset($triageVitals['weight']) || isset($appointment->patient->patientProfile->weight) ? 'kg' : '' }}
                         </p>
                     </div>
-                    <div class="w-px h-6 bg-gray-200"></div>
+                    <div class="w-px h-6 bg-gray-200 hidden sm:block"></div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase">Ht</p>
                         <p class="text-sm font-black text-securx-navy">
@@ -232,7 +234,7 @@
                         <div class="flex flex-col sm:flex-row gap-4">
                             <div class="relative flex-grow" wire:ignore>
                                 <label
-                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">RxNorm
+                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">OpenFDA
                                     Smart Search</label>
                                 <select x-ref="rxnormSearch"
                                     class="w-full bg-slate-50 border border-gray-200 text-securx-navy text-base rounded-xl focus:ring-blue-500 focus:border-blue-500 block font-bold shadow-inner"
@@ -686,7 +688,7 @@
                         <div class="bg-slate-50 px-6 py-5 flex gap-3">
                             <a :href="generatedPdfUrl" target="_blank" x-show="hasPrescription"
                                 class="flex-1 bg-white border border-gray-300 text-gray-700 hover:border-blue-600 font-bold py-2.5 rounded-xl transition text-sm flex items-center justify-center gap-2">
-                                Download PDF
+                                Print PDF
                             </a>
                             <a href="{{ route('doctor.dashboard') }}"
                                 class="flex-1 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 rounded-xl transition text-sm text-center flex items-center justify-center">Done</a>

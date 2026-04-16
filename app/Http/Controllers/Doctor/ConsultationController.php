@@ -9,6 +9,8 @@ use App\Models\Encounter;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\SoapTemplate;
+use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -125,11 +127,62 @@ class ConsultationController extends Controller
             $responseData['prescription_id'] = $prescriptionId;
 
             // IMPORTANT: This uses a named route. Ensure this route exists in your web.php
-            $responseData['pdf_url'] = route('doctor.prescription.pdf', ['id' => $prescriptionId]);
+            $responseData['pdf_url'] = route('doctor.prescription.print', ['id' => $prescriptionId]);
         } else {
             $responseData['has_prescription'] = false;
         }
 
         return response()->json($responseData);
+    }
+
+    public function showPrescription($id)
+    {
+        $prescription = Prescription::with([
+            'patient.patientProfile',
+            'doctor.doctorProfile.clinic',
+            'items.medication',
+            'encounter'
+        ])->findOrFail($id);
+
+        if ($prescription->doctor_id !== Auth::id()) {
+            abort(403, 'Unauthorized access to this prescription.');
+        }
+
+        return view('doctor.prescription.show', compact('prescription'));
+    }
+
+    /**
+     * Display the A5 Tailwind Print View.
+     */
+    public function printPrescription($id)
+    {
+        $prescription = Prescription::with([
+            'patient.patientProfile',
+            'doctor.doctorProfile.clinic',
+            'items.medication'
+        ])->findOrFail($id);
+
+        if ($prescription->doctor_id !== Auth::id()) {
+            abort(403, 'Unauthorized access to this prescription.');
+        }
+
+        return view('doctor.prescription.print', compact('prescription'));
+    }
+
+    /**
+     * Renders the dynamic SVG for the QR Code inside the frontend modal.
+     */
+    public function renderQr($id)
+    {
+        // Add a layer of security so only authorized doctors can generate the image preview
+        $exists = Prescription::where('id', $id)->where('doctor_id', Auth::id())->exists();
+        if (!$exists) {
+            abort(404, 'Prescription not found.');
+        }
+
+        // Generates a clean, scalable SVG string
+        $qrCode = QrCode::format('svg')->size(150)->margin(0)->generate($id);
+
+        return response($qrCode)->header('Content-Type', 'image/svg+xml');
     }
 }
