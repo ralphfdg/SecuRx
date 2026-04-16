@@ -1,10 +1,6 @@
-// resources/js/medical-profile.js
-
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Attach the switchTab function globally so inline onClick events can access it
     window.switchTab = function(tabId) {
-        
         // Hide all contents
         document.querySelectorAll('.tab-content').forEach(el => {
             el.classList.remove('block');
@@ -30,5 +26,23 @@ document.addEventListener('DOMContentLoaded', function() {
             activeBtn.classList.remove('border-transparent', 'text-slate-500');
             activeBtn.classList.add('border-securx-cyan', 'text-securx-cyan');
         }
+
+        // FIX: Save the active tab to the browser's memory!
+        sessionStorage.setItem('activeMedicalTab', tabId);
+    };
+
+    // FIX: On page load, check if there's a saved tab, otherwise default to 'encounters'
+    const savedTab = sessionStorage.getItem('activeMedicalTab') || 'encounters';
+    window.switchTab(savedTab);
+
+    // Modal Logic
+    window.openModal = function(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeModal = function(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.classList.add('hidden');
     };
 });

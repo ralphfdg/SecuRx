@@ -47,14 +47,37 @@ class PatientController extends Controller
     public function appointments()
     {
         $user = Auth::user();
-
-        // Get upcoming appointments
-        $appointments = $user->patientAppointments()
-            ->with('doctor')
+        
+        // 1. Fetch Upcoming (Not paginated)
+        $upcomingAppointments = $user->patientAppointments()
+            ->with(['doctor.schedules']) 
+            ->whereIn('status', ['pending', 'confirmed'])
             ->orderBy('appointment_date', 'asc')
             ->get();
-
-        return view('patient.appointments', compact('user', 'appointments'));
+            
+        // 2. Fetch History (Paginated at 5 per page!)
+        $historyAppointments = $user->patientAppointments()
+            ->with(['doctor']) 
+            ->whereIn('status', ['completed', 'cancelled'])
+            ->orderBy('appointment_date', 'desc')
+            ->paginate(5);
+            
+        // 3. Fetch taken slots for the reschedule calendar
+        $doctorIds = $upcomingAppointments->pluck('doctor_id')->unique();
+        
+        $bookedAppointments = \App\Models\Appointment::whereIn('doctor_id', $doctorIds)
+            ->where('appointment_date', '>=', now()->toDateString())
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->get()
+            ->groupBy('doctor_id')
+            ->map(function ($appts) {
+                return $appts->map(function ($appt) {
+                    $time = $appt->appointment_time ?? '00:00:00';
+                    return \Carbon\Carbon::parse($appt->appointment_date->format('Y-m-d') . ' ' . $time)->toDateTimeString();
+                });
+            });
+            
+        return view('patient.appointments', compact('user', 'upcomingAppointments', 'historyAppointments', 'bookedAppointments'));
     }
 
     /**
@@ -78,18 +101,128 @@ class PatientController extends Controller
     public function medicalProfile()
     {
         $user = Auth::user();
+        $user->load('patientProfile');
 
-        // Eager load ALL medical history relationships to prevent N+1 queries
-        $user->load([
-            'patientProfile',
-            'allergies.medication',
-            'immunizations',
-            'labResults',
-            'medicalDocuments',
-            'patientEncounters.doctor', // Eager load the doctor for each encounter
+        // Paginate each section independently with distinct query parameters
+        $allergies = $user->allergies()
+            ->orderBy('created_at', 'desc')
+            ->paginate(5, ['*'], 'allergies_page')
+            ->withQueryString();
+
+        $immunizations = $user->immunizations()
+            ->orderBy('administered_date', 'desc')
+            ->paginate(5, ['*'], 'immunizations_page')
+            ->withQueryString();
+
+        $labs = $user->labResults()
+            ->orderBy('test_date', 'desc')
+            ->paginate(5, ['*'], 'labs_page')
+            ->withQueryString();
+
+        $documents = $user->medicalDocuments()
+            ->orderBy('created_at', 'desc')
+            ->paginate(5, ['*'], 'documents_page')
+            ->withQueryString();
+
+        $encounters = $user->patientEncounters()
+            ->with('doctor')
+            ->orderBy('created_at', 'desc')
+            ->paginate(5, ['*'], 'encounters_page')
+            ->withQueryString();
+
+        return view('patient.medical-profile', compact(
+            'user', 'allergies', 'immunizations', 'labs', 'documents', 'encounters'
+        ));
+    }
+
+    /**
+     * Store a new Patient Allergy
+     */
+    public function storeAllergy(Request $request)
+    {
+        $request->validate([
+            'allergen_name' => 'required|string|max:255',
+            'reaction' => 'required|string|max:255',
+            'severity' => 'required|string|in:Low,Medium,High Severity', 
         ]);
 
-        return view('patient.medical-profile', compact('user'));
+        Auth::user()->allergies()->create([
+            'allergen_name' => $request->allergen_name,
+            'reaction' => $request->reaction,
+            'severity' => $request->severity,
+            'is_verified' => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Allergy reported successfully. It is now pending physician verification.');
+    }
+
+    /**
+     * Store a new Patient Immunization
+     */
+    public function storeImmunization(Request $request)
+    {
+        $request->validate([
+            'vaccine_name' => 'required|string|max:255',
+            'administered_date' => 'required|date|before_or_equal:today',
+            'facility' => 'required|string|max:255',
+        ]);
+
+        Auth::user()->immunizations()->create([
+            'vaccine_name' => $request->vaccine_name,
+            'administered_date' => $request->administered_date,
+            'facility' => $request->facility,
+            'is_verified' => false,
+        ]);
+
+        return redirect()->back()->with('success', 'Immunization logged successfully.');
+    }
+
+    /**
+     * Store a new Patient Lab Result
+     */
+    public function storeLabResult(Request $request)
+    {
+        $request->validate([
+            'test_name' => 'required|string|max:255',
+            // FIX: Add validation for the missing test date
+            'test_date' => 'required|date|before_or_equal:today', 
+            'lab_file' => 'required|mimes:pdf,jpg,jpeg,png|max:5120', 
+        ]);
+
+        if ($request->hasFile('lab_file')) {
+            $file = $request->file('lab_file');
+            $filename = time().'_lab_'.Auth::id().'.'.$file->getClientOriginalExtension();
+            $path = $file->storeAs('lab_results', $filename, 'public');
+
+            Auth::user()->labResults()->create([
+                'test_name' => $request->test_name,
+                // FIX: Save the test date to the database
+                'test_date' => $request->test_date, 
+                'file_path' => $path,
+                'is_verified' => false,
+            ]);
+
+            return redirect()->back()->with('success', 'Lab result uploaded successfully.');
+        }
+
+        return redirect()->back()->with('error', 'File upload failed.');
+    }
+
+    /**
+     * Securely display uploaded medical files (Bypasses public symlinks)
+     */
+    public function viewFile($path)
+    {
+        // Get the absolute path to the file inside the secure storage directory
+        $fullPath = storage_path('app/public/' . $path);
+
+        // Check if the file actually exists
+        if (!file_exists($fullPath)) {
+            abort(404, 'Medical record not found.');
+        }
+
+        // Return the file securely directly through Laravel's backend
+        return response()->file($fullPath);
     }
 
     /**
@@ -99,7 +232,6 @@ class PatientController extends Controller
     {
         $user = Auth::user();
 
-        // Fetch only verified, active doctors for the dropdown
         $doctors = User::where('role', 'doctor')
             ->where('status', 'active')
             ->whereHas('doctorProfile', function ($query) {
@@ -108,23 +240,21 @@ class PatientController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        // Fetch all upcoming appointments to check for conflicts on the frontend
-        $upcomingAppointments = Appointment::where('appointment_date', '>=', now())
+        // Fix: Properly combine date and time for the Javascript calendar checking
+        $upcomingAppointments = Appointment::where('appointment_date', '>=', now()->toDateString())
             ->whereIn('status', ['pending', 'confirmed'])
             ->get()
             ->groupBy('doctor_id')
             ->map(function ($appointments) {
-                return $appointments->pluck('appointment_date')->map(function ($date) {
-                    return Carbon::parse($date)->toDateTimeString();
+                return $appointments->map(function ($appt) {
+                    $time = $appt->appointment_time ?? '00:00:00';
+                    return Carbon::parse($appt->appointment_date->format('Y-m-d') . ' ' . $time)->toDateTimeString();
                 });
             });
 
         return view('patient.book-appointment', compact('user', 'doctors', 'upcomingAppointments'));
     }
 
-    /**
-     * Store the new Appointment in the Database
-     */
     public function storeAppointment(Request $request)
     {
         $request->validate([
@@ -134,36 +264,95 @@ class PatientController extends Controller
                 'date',
                 'after:now',
                 new ValidAppointmentTime($request->doctor_id),
+                
+                // NEW: Anti-Double-Booking Validation
+                function ($attribute, $value, $fail) use ($request) {
+                    $datetime = Carbon::parse($value);
+                    
+                    $conflict = Appointment::where('doctor_id', $request->doctor_id)
+                        ->where('appointment_date', $datetime->toDateString())
+                        ->where('appointment_time', $datetime->toTimeString())
+                        ->whereIn('status', ['pending', 'confirmed'])
+                        ->exists();
+
+                    if ($conflict) {
+                        $fail('That exact time slot has already been booked. Please choose a different time.');
+                    }
+                },
             ],
         ]);
+
+        $datetime = Carbon::parse($request->appointment_date);
 
         Appointment::create([
             'patient_id' => Auth::id(),
             'doctor_id' => $request->doctor_id,
-            // Assuming the secretary will be assigned later by the clinic
-            'appointment_date' => $request->appointment_date,
+            'appointment_date' => $datetime->toDateString(),
+            'appointment_time' => $datetime->toTimeString(),
             'status' => 'pending',
         ]);
 
-        // Redirect back to the appointments list with a success message
         return redirect()->route('patient.appointments')->with('success', 'Your appointment request has been submitted to the clinic.');
     }
 
     /**
      * Cancel an existing Appointment
      */
+    /**
+     * Cancel an existing appointment
+     */
     public function cancelAppointment($id)
     {
-        // Ensure the patient can only cancel THEIR OWN appointments
-        $appointment = Appointment::where('id', $id)
-            ->where('patient_id', Auth::id())
-            ->firstOrFail();
+        // FIX: Changed appointments() to patientAppointments()
+        $appointment = Auth::user()->patientAppointments()->findOrFail($id);
 
-        $appointment->update([
-            'status' => 'cancelled',
+        if (in_array($appointment->status, ['completed', 'cancelled'])) {
+            return redirect()->back()->with('error', 'This appointment cannot be modified.');
+        }
+
+        $appointment->update(['status' => 'cancelled']);
+
+        return redirect()->back()->with('success', 'Your appointment has been successfully cancelled.');
+    }
+
+    public function rescheduleAppointment(Request $request, $id)
+    {
+        $appointment = Auth::user()->patientAppointments()->findOrFail($id);
+
+        $request->validate([
+            'appointment_date' => [
+                'required',
+                'date',
+                'after:now',
+                new \App\Rules\ValidAppointmentTime($appointment->doctor_id),
+                
+                // NEW: Anti-Double-Booking Validation
+                function ($attribute, $value, $fail) use ($appointment) {
+                    $datetime = Carbon::parse($value);
+                    
+                    $conflict = Appointment::where('doctor_id', $appointment->doctor_id)
+                        ->where('appointment_date', $datetime->toDateString())
+                        ->where('appointment_time', $datetime->toTimeString())
+                        ->where('id', '!=', $appointment->id) // Ignore their own current slot!
+                        ->whereIn('status', ['pending', 'confirmed'])
+                        ->exists();
+
+                    if ($conflict) {
+                        $fail('That exact time slot has already been booked. Please choose a different time.');
+                    }
+                },
+            ],
         ]);
 
-        return redirect()->back()->with('success', 'Appointment has been cancelled.');
+        $datetime = Carbon::parse($request->appointment_date);
+
+        $appointment->update([
+            'appointment_date' => $datetime->toDateString(),
+            'appointment_time' => $datetime->toTimeString(),
+            'status' => 'pending', 
+        ]);
+
+        return redirect()->back()->with('success', 'Your appointment has been rescheduled and is pending clinic confirmation.');
     }
 
     /**
@@ -188,31 +377,26 @@ class PatientController extends Controller
     public function storeDocument(Request $request)
     {
         $request->validate([
-            'document_file' => 'required|mimes:pdf,jpg,jpeg,png|max:5120', // Max 5MB
             'document_name' => 'required|string|max:255',
+            'document_file' => 'required|mimes:pdf,jpg,jpeg,png|max:5120',
         ]);
 
         if ($request->hasFile('document_file')) {
             $file = $request->file('document_file');
-            // Generate a secure, unique filename
-            $filename = time().'_'.Auth::id().'.'.$file->getClientOriginalExtension();
-
-            // Save to storage/app/public/medical_documents
+            $filename = time().'_'.$request->user()->id.'.'.$file->getClientOriginalExtension();
             $path = $file->storeAs('medical_documents', $filename, 'public');
 
-            // Save to database
-            MedicalDocument::create([
-                'patient_id' => Auth::id(),
+            Auth::user()->medicalDocuments()->create([
                 'document_name' => $request->document_name,
-                'document_type' => $file->getClientOriginalExtension(), // PDF, JPG, etc.
                 'file_path' => $path,
-                'is_verified' => false, // STRICT COMPLIANCE: Defaults to unverified PGHD
+                'is_verified' => false,
+                // FIX: We completely removed the 'document_type' line here so it matches your ERD!
             ]);
 
-            return redirect()->back()->with('success', 'Document uploaded successfully. It is now pending physician review.');
+            return redirect()->back()->with('success', 'Medical document uploaded successfully.');
         }
 
-        return redirect()->back()->with('error', 'File upload failed. Please try again.');
+        return redirect()->back()->with('error', 'File upload failed.');
     }
 
     /**
@@ -233,15 +417,13 @@ class PatientController extends Controller
     {
         $user = Auth::user();
 
-        // Checkboxes in HTML only send data if they are checked.
-        // We use $request->has() to convert that to a boolean true/false.
-        $user->patientProfile()->update([
-            'data_consent' => $request->has('allow_pharmacist'), // This is your main database column
-            // Note: If you add 'allow_doctor' or 'allow_research' to your database later,
-            // you would update those here as well.
-        ]);
+        // Save the master toggle state to the existing database column
+        $user->patientProfile()->updateOrCreate(
+            ['user_id' => $user->id],
+            ['data_consent' => $request->has('data_consent')]
+        );
 
-        return redirect()->back()->with('success', 'Your privacy settings have been securely updated.');
+        return redirect()->back()->with('success', 'Your master privacy settings have been securely updated.');
     }
 
     /**

@@ -241,12 +241,25 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
     // NEW: The missing routes from your demo flow
     Route::get('/appointments/book', [PatientController::class, 'bookAppointment'])->name('appointments.book');
     Route::post('/appointments', [PatientController::class, 'storeAppointment'])->name('appointments.store');
-    Route::patch('/appointments/{id}/cancel', [PatientController::class, 'cancelAppointment'])->name('appointments.cancel');
+// Appointment Management Routes
+    Route::post('/appointments/{id}/cancel', [PatientController::class, 'cancelAppointment'])->name('appointments.cancel');
+    Route::post('/appointments/{id}/reschedule', [PatientController::class, 'rescheduleAppointment'])->name('appointments.reschedule');
+
     Route::get('/prescriptions', [PatientController::class, 'prescriptions'])->name('prescriptions');
 
     Route::get('/prescriptions/{id}/qr', [PatientController::class, 'showQr'])->name('qr-live');
 
     Route::get('/medical-profile', [PatientController::class, 'medicalProfile'])->name('profile.medical');
+
+    // NEW: Data Submission Routes for the Medical Profile
+    Route::post('/medical-profile/allergies', [PatientController::class, 'storeAllergy'])->name('allergies.store');
+    Route::post('/medical-profile/immunizations', [PatientController::class, 'storeImmunization'])->name('immunizations.store');
+    Route::post('/medical-profile/labs', [PatientController::class, 'storeLabResult'])->name('labs.store');
+    // Secure File Viewer Route
+    Route::get('/medical-profile/file/{path}', [PatientController::class, 'viewFile'])
+        ->where('path', '.*') // This allows slashes in the filename
+        ->name('file.view');
+
     Route::post('/documents/upload', [PatientController::class, 'storeDocument'])->name('documents.store');
 
     // Update the GET route to point to the controller instead of a closure

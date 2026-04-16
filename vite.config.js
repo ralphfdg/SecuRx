@@ -13,6 +13,7 @@ export default defineConfig({
                 'resources/js/secretary-calendar.js',
                 'resources/js/secretary-triage.js',
                 'resources/js/secretary-patients.js',
+                'resources/js/prescriptions.js',
                 'resources/js/doctor-dashboard.js',
                 'resources/js/doctor-prescribe.js',
                 'resources/js/doctor-templates.js',

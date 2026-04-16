@@ -66,10 +66,21 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 mb-6 w-full flex justify-center">
                     <input type="text" id="appointment_datetime" name="appointment_date" value="{{ old('appointment_date') }}" class="hidden" required>
                 </div>
+                
+                <div id="taken-slots-container" class="hidden mb-6 p-4 bg-slate-100 border border-slate-200 rounded-xl text-sm transition-all">
+                    <p class="font-bold text-slate-700 mb-2">Booked Times for <span id="taken-slots-date"></span>:</p>
+                    <div id="taken-slots-list" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div id="booking-conflict-warning" class="hidden mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm font-bold flex items-center gap-3 transition-all">
+                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>This exact time slot is already taken! Please adjust the time below.</span>
+                </div>
+
                 @error('appointment_date') <span class="text-xs text-red-500 font-bold mb-4 block text-center">{{ $message }}</span> @enderror
 
                 <div class="mt-8 pt-6 border-t border-gray-200/60">
-                    <button type="submit" class="w-full py-4 bg-gradient-to-r from-securx-navy to-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 text-lg">
+                    <button type="submit" id="btn-confirm-booking" class="w-full py-4 bg-gradient-to-r from-securx-navy to-slate-800 text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2 text-lg disabled:opacity-50 disabled:cursor-not-allowed">
                         Confirm Appointment
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </button>
@@ -87,6 +98,9 @@
     window.doctorSchedules = @json($doctors->keyBy('id')->map(function($doc) {
         return $doc->schedules;
     }));
+    
+    // NEW: Pass the taken appointments to JS
+    window.bookedAppointments = @json($upcomingAppointments ?? []);
 </script>
 
 @vite(['resources/js/appointments.js'])

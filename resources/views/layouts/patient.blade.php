@@ -122,5 +122,41 @@
         </div>
     </main>
 
+    <script>
+        // Listen to ALL form submissions on the entire page at the document level
+        document.addEventListener('submit', function(e) {
+            const form = e.target;
+
+            // 1. If it is already marked as submitting, kill the event instantly
+            if (form.getAttribute('data-submitting') === 'true') {
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                return false;
+            }
+
+            // 2. Mark this form as actively submitting
+            form.setAttribute('data-submitting', 'true');
+
+            // 3. Find the exact button that was clicked
+            const btn = form.querySelector('button[type="submit"]');
+            
+            if (btn) {
+                // 4. The Magic Delay: We wait 10ms. This ensures the browser actually fires 
+                // the payload to Laravel BEFORE we completely lock the button down.
+                setTimeout(() => {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                    btn.innerHTML = `
+                        <svg class="animate-spin h-5 w-5 mr-2 inline-block text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                    `;
+                }, 10);
+            }
+        }, true); // 'true' uses event capturing to catch it before anything else does
+    </script>
+
 </body>
 </html>
