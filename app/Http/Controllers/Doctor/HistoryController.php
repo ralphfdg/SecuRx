@@ -67,7 +67,7 @@ class HistoryController extends Controller
             ->firstOrFail();
 
         // Update status to revoked so Pharmacist portal flags it immediately
-        $prescription->update(['status' => 'revoked']);
+        $prescription->update(['status' => 'revoked', 'revocation_reason' => $request->reason]);
 
         return back()->with('success', 'Prescription successfully revoked and invalidated.');
     }
@@ -80,11 +80,6 @@ class HistoryController extends Controller
             'prescriptions.items.medication'
         ])->findOrFail($id);
 
-        // Fetch the doctor's license details for the prescription pad
-        $doctorProfile = \Illuminate\Support\Facades\DB::table('doctor_profiles')
-            ->where('user_id', Auth::id())
-            ->first();
-
-        return view('doctor.view-history', compact('encounter', 'doctorProfile'));
+        return view('doctor.view-history', compact('encounter'));
     }
 }

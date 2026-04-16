@@ -234,7 +234,7 @@
                         <div class="flex flex-col sm:flex-row gap-4">
                             <div class="relative flex-grow" wire:ignore>
                                 <label
-                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">RxNorm
+                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">OpenFDA
                                     Smart Search</label>
                                 <select x-ref="rxnormSearch"
                                     class="w-full bg-slate-50 border border-gray-200 text-securx-navy text-base rounded-xl focus:ring-blue-500 focus:border-blue-500 block font-bold shadow-inner"
