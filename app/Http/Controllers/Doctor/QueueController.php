@@ -29,8 +29,8 @@ class QueueController extends Controller
             ->get();
 
         // 3. Map Calendar Events to FullCalendar.js format
+        // 3. Map Calendar Events to FullCalendar.js format
         $calendarEvents = $allAppointments->map(function ($appt) {
-            // UI Color mapping based on status
             $color = '#2563eb'; // Default Blue (Confirmed)
             if ($appt->status === 'completed') $color = '#10b981'; // Green
             if ($appt->status === 'cancelled') $color = '#ef4444'; // Red
@@ -38,13 +38,17 @@ class QueueController extends Controller
 
             $start = $appt->appointment_date;
             if ($appt->appointment_time) {
-                $start .= 'T' . $appt->appointment_time;
+                // Force strict ISO8601 time format for FullCalendar
+                $start .= 'T' . \Carbon\Carbon::parse($appt->appointment_time)->format('H:i:s');
             }
 
             return [
                 'title' => $appt->patient->last_name . ' (' . ucfirst($appt->appointment_type) . ')',
                 'start' => $start,
                 'backgroundColor' => $color,
+                // Setting text color explicitly to fix the "white text" contrast issue
+                'textColor' => '#ffffff', 
+                'borderColor' => 'transparent'
             ];
         });
 
