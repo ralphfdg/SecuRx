@@ -32,17 +32,17 @@
         scrollbar-width: none;
     }
 
-
-        /* ---------------------------------------------------------
+    /* ---------------------------------------------------------
     Patient Live QR Print Styles
     --------------------------------------------------------- */
     @media print {
         @page {
             size: portrait;
-            margin: 0; 
+            margin: 0;
         }
-        
-        html, body {
+
+        html,
+        body {
             width: 100%;
             height: 100vh !important;
             margin: 0 !important;
@@ -52,7 +52,7 @@
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
-        
+
         /* Completely hide scrollbars during print */
         ::-webkit-scrollbar {
             display: none !important;
@@ -60,11 +60,14 @@
         * {
             scrollbar-width: none !important;
         }
-        
-        nav, aside, footer, .print\:hidden { 
-            display: none !important; 
+
+        nav,
+        aside,
+        footer,
+        .print\:hidden {
+            display: none !important;
         }
-        
+
         .main-container {
             margin: 0 !important;
             padding: 0 !important;
@@ -73,20 +76,38 @@
             overflow: hidden !important;
         }
 
-        #prescription-paper { 
+        #prescription-paper {
             margin: 0 auto !important;
             padding: 0 !important;
             border: none !important;
-            box-shadow: none !important; 
+            box-shadow: none !important;
             width: 100% !important;
-            height: 100vh !important; 
+            height: 100vh !important;
             max-width: none !important;
             max-height: 100vh !important;
-            aspect-ratio: auto !important; 
+            aspect-ratio: auto !important;
             display: flex !important;
             flex-direction: column !important;
             overflow: hidden !important;
             page-break-inside: avoid !important;
         }
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px; /* Increased width! */
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background-color: #cbd5e1; /* Tailwind slate-300 */
+        border-radius: 10px;
+        border: 2px solid #ffffff; /* Adds a clean border so it doesn't touch the edges */
+    }
+
+    .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+        background-color: #94a3b8; /* Tailwind slate-400 */
     }
 }

@@ -446,15 +446,39 @@ class DoctorController extends Controller
         $currentRxcuis = (array) $request->input('current_rxcuis', []);
 
         $alerts = [];
-        $debug_logs = []; // NEW: Tracking for your console
+        $debug_logs = [];
+        $trigger_drawer = false; // NEW: Controls if the drawer forcefully opens
 
-        // Baseline Allergies
+        // 1. Baseline Allergies (Does NOT trigger the drawer to open, just populates the badge)
         $allergies = DB::table('patient_allergies')->where('patient_id', $patientId)->get();
         foreach ($allergies as $allergy) {
-            $alerts[] = ['type' => 'allergy', 'severity' => 'high', 'message' => "Allergy to: {$allergy->allergen_name}"];
+            $alerts[] = [
+                'type' => 'allergy',
+                'severity' => 'high',
+                'title' => 'Baseline Patient Allergy',
+                'message' => "Documented baseline allergy to {$allergy->allergen_name}.",
+            ];
         }
 
         if ($rxcui) {
+            // Grab the generic name of the NEW drug
+            $newMedication = DB::table('medications')->where('rxcui', $rxcui)->first();
+            $newMedName = $newMedication ? preg_replace('/[^A-Za-z]/', '', explode(' ', $newMedication->generic_name)[0]) : '';
+
+            // 2. Direct Allergy Match (DOES trigger the drawer)
+            foreach ($allergies as $allergy) {
+                if (stripos($newMedName, $allergy->allergen_name) !== false || stripos($allergy->allergen_name, $newMedName) !== false) {
+                    $alerts[] = [
+                        'type' => 'allergy',
+                        'severity' => 'high',
+                        'title' => "ALLERGY CONFLICT: {$newMedName}",
+                        'message' => "CRITICAL: The patient has a documented allergy to the drug you just selected ({$allergy->allergen_name}).",
+                    ];
+                    $trigger_drawer = true; // Force open!
+                }
+            }
+
+            // 3. FDA Interaction Check
             $activeMeds = DB::table('prescriptions')
                 ->join('prescription_items', 'prescriptions.id', '=', 'prescription_items.prescription_id')
                 ->join('medications', 'prescription_items.medication_id', '=', 'medications.id')
@@ -467,31 +491,19 @@ class DoctorController extends Controller
             $allExistingNames = array_unique(array_merge($activeMeds, $cartMeds));
 
             $client = new Client(['verify' => false, 'timeout' => 5]);
-            // 1. Grab the API key from the .env file securely
             $apiKey = env('OPENFDA_API_KEY', '');
-
-            // 2. Prepare the authentication string
             $authParam = $apiKey ? "api_key={$apiKey}&" : '';
-
-            // 3. Grab the generic name of the NEW drug so we can search backwards
-            $newMedication = DB::table('medications')->where('rxcui', $rxcui)->first();
-            $newMedName = $newMedication ? preg_replace('/[^A-Za-z]/', '', explode(' ', $newMedication->generic_name)[0]) : '';
 
             foreach ($allExistingNames as $existingDrugName) {
 
                 $cleanedName = preg_replace('/[^A-Za-z]/', '', explode(' ', $existingDrugName)[0]);
 
-                // Query 1: Does the NEW drug's label warn about the EXISTING drug?
                 $query1 = "openfda.rxcui:\"{$rxcui}\"+AND+drug_interactions:{$cleanedName}";
-                // INJECT $authParam HERE
                 $url1 = "https://api.fda.gov/drug/label.json?{$authParam}search={$query1}&limit=1";
 
-                // Query 2: Does the EXISTING drug's label warn about the NEW drug?
                 $query2 = "openfda.generic_name:\"{$cleanedName}\"+AND+drug_interactions:{$newMedName}";
-                // INJECT $authParam HERE
                 $url2 = "https://api.fda.gov/drug/label.json?{$authParam}search={$query2}&limit=1";
 
-                // Test both directions
                 $urlsToTest = [$url1, $url2];
                 $interactionFound = false;
 
@@ -502,22 +514,25 @@ class DoctorController extends Controller
 
                     try {
                         $response = $client->request('GET', $url);
-                        $status = $response->getStatusCode();
-
-                        if ($status == 200) {
+                        if ($response->getStatusCode() == 200) {
                             $data = json_decode($response->getBody(), true);
                             if (isset($data['results'][0]['drug_interactions'])) {
+
                                 $alerts[] = [
                                     'type' => 'interaction',
                                     'severity' => 'high',
-                                    'message' => "FDA Label Warning ({$cleanedName}): ".substr($data['results'][0]['drug_interactions'][0], 0, 200).'...',
+                                    // NEW: Explicitly name the two drugs clashing
+                                    'title' => "{$newMedName} + {$cleanedName}",
+                                    // NEW: Pass the ENTIRE text to the frontend
+                                    'message' => $data['results'][0]['drug_interactions'][0],
                                 ];
-                                $debug_logs[] = "SUCCESS (200): Found interaction at {$url}";
+
+                                $trigger_drawer = true; // Force open!
                                 $interactionFound = true;
                             }
                         }
                     } catch (\Exception $e) {
-                        $debug_logs[] = "404 No Interaction for: {$url}";
+                        // 404 No interaction found
                     }
                 }
             }
@@ -525,8 +540,9 @@ class DoctorController extends Controller
 
         return response()->json([
             'has_alerts' => count($alerts) > 0,
+            'trigger_drawer' => $trigger_drawer, // Tell the frontend if it should pop open
             'alerts' => $alerts,
-            'debug' => $debug_logs, // This will now show up in your JS console!
+            'debug' => $debug_logs,
         ]);
     }
 }

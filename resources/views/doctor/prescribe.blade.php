@@ -411,8 +411,8 @@
                 </div>
             </div>
 
-            <div class="lg:col-span-5 xl:col-span-4 sticky top-6 min-w-0">
-                <div class="flex items-center gap-2 mb-3 px-1">
+            <div class="lg:col-span-5 xl:col-span-4 sticky top-6 min-w-0 flex flex-col h-[calc(100vh-3rem)]">
+                <div class="flex items-center gap-2 mb-3 px-1 shrink-0">
                     <span
                         class="bg-emerald-600 text-white w-6 h-6 rounded-md flex items-center justify-center text-xs font-black">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -425,22 +425,23 @@
                 </div>
 
                 <div
-                    class="bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 aspect-[1/1.414] relative flex flex-col w-full rounded-sm overflow-hidden">
+                    class="bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 relative flex flex-col w-full rounded-sm overflow-hidden flex-1 min-h-0">
                     <div class="h-2 w-full bg-securx-navy shrink-0"></div>
-                    <div class="p-6 flex-1 flex flex-col relative z-10">
-                        <div class="w-full flex justify-center mb-3">
+
+                    <div class="p-4 sm:p-5 flex-1 flex flex-col relative z-10 min-h-0">
+
+                        <div class="w-full flex justify-center mb-3 shrink-0">
                             <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx" class="h-3 w-auto">
                         </div>
 
-                        <div class="flex flex-row items-center gap-4 border-b-2 border-gray-800 pb-4 mb-4">
-
+                        <div class="flex flex-row items-center gap-3 border-b-2 border-gray-800 pb-3 mb-3 shrink-0">
                             <div
-                                class="w-14 h-14 sm:w-16 sm:h-16 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center shrink-0 overflow-hidden">
+                                class="w-12 h-12 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center shrink-0 overflow-hidden">
                                 @if (!empty($doctorProfile->clinic->clinic_logo))
                                     <img src="{{ asset('storage/' . $doctorProfile->clinic->clinic_logo) }}"
                                         alt="Clinic Logo" class="w-full h-full object-contain p-1">
                                 @else
-                                    <svg class="w-8 h-8 text-blue-800 opacity-80" fill="none" stroke="currentColor"
+                                    <svg class="w-6 h-6 text-blue-800 opacity-80" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                             d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
@@ -450,144 +451,141 @@
                             </div>
 
                             <div class="flex-1 flex flex-col min-w-0">
-
                                 <h1
-                                    class="text-lg sm:text-xl font-serif font-black text-gray-900 tracking-wide uppercase text-center mb-1.5 break-words leading-tight">
+                                    class="text-base sm:text-lg font-serif font-black text-gray-900 tracking-wide uppercase text-center mb-1 leading-tight">
                                     {{ $doctorProfile->clinic->clinic_name ?? 'MEDICAL CLINIC INC.' }}
                                 </h1>
 
-                                <div class="flex flex-row justify-between items-start gap-4 w-full">
-
+                                <div
+                                    class="flex flex-col xl:flex-row justify-between items-center xl:items-start gap-1 w-full">
                                     <p
-                                        class="text-[10px] sm:text-xs font-serif text-gray-600 leading-snug flex-1 break-words text-left">
+                                        class="text-[9px] sm:text-[10px] font-serif text-gray-600 leading-snug flex-1 text-center xl:text-left">
                                         {{ $doctorProfile->clinic->clinic_address ?? '123 Health Avenue, Medical District, City' }}
                                     </p>
-
                                     <p
-                                        class="text-[10px] sm:text-xs font-serif text-gray-800 font-bold shrink-0 text-right">
+                                        class="text-[9px] sm:text-[10px] font-serif text-gray-800 font-bold shrink-0 text-center xl:text-right whitespace-nowrap mt-0.5 xl:mt-0">
                                         Tel: {{ $doctorProfile->clinic->contact_number ?? '(000) 123-4567' }}
                                     </p>
-
                                 </div>
                             </div>
                         </div>
 
                         <div
-                            class="grid grid-cols-4 gap-2 text-[10px] font-serif text-gray-800 mb-4 border-b border-gray-300 pb-3">
+                            class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9px] font-serif text-gray-800 mb-3 border-b border-gray-300 pb-2 shrink-0">
                             <div class="col-span-2">
-                                <p class="text-[8px] font-bold text-gray-500 uppercase">Name:</p>
-                                <p class="font-bold border-b border-gray-300 border-dotted"
+                                <p class="text-[7px] font-bold text-gray-500 uppercase">Name:</p>
+                                <p class="font-bold border-b border-gray-300 border-dotted truncate"
                                     :class="!showPatientName ? 'text-gray-400 italic' : 'text-gray-900'"
                                     x-text="showPatientName ? {{ Js::from($appointment->patient?->name ?? 'Unknown') }} : '____________________'">
                                 </p>
                             </div>
                             <div class="col-span-1">
-                                <p class="text-[8px] font-bold text-gray-500 uppercase">Age/Sex:</p>
+                                <p class="text-[7px] font-bold text-gray-500 uppercase">Age/Sex:</p>
                                 <p class="font-bold border-b border-gray-300 border-dotted"
                                     :class="!showPatientName ? 'text-gray-400 italic' : 'text-gray-900'"
                                     x-text="showPatientName ? '{{ $appointment->patient->dob ? \Carbon\Carbon::parse($appointment->patient->dob)->age : 'N/A' }}/{{ strtoupper(substr($appointment->patient->gender ?? 'U', 0, 1)) }}' : '__________'">
                                 </p>
                             </div>
                             <div class="col-span-1">
-                                <p class="text-[8px] font-bold text-gray-500 uppercase">Date:</p>
+                                <p class="text-[7px] font-bold text-gray-500 uppercase">Date:</p>
                                 <p class="font-bold border-b border-gray-300 border-dotted text-gray-900">
                                     {{ date('m/d/Y') }}</p>
                             </div>
                         </div>
 
-                        <div class="mb-2">
-                            <span class="text-4xl font-serif font-black text-gray-900 italic tracking-tighter">Rx</span>
+                        <div class="mb-1 shrink-0">
+                            <span class="text-3xl font-serif font-black text-gray-900 italic tracking-tighter">Rx</span>
                         </div>
 
-                        <div class="flex-1 space-y-4 pl-2 font-serif overflow-y-auto custom-scrollbar pr-2 flex flex-col">
+                        <div
+                            class="flex-1 space-y-3 pl-1 font-serif overflow-y-auto custom-scrollbar pr-2 flex flex-col min-h-0 relative">
                             <template x-for="(med, index) in medications" :key="index">
                                 <div class="relative group">
                                     <button @click="removeMedication(index)" type="button"
                                         class="absolute -left-2 top-0 text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition">
-                                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                                             <path fill-rule="evenodd"
                                                 d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L10 8.586 8.707 7.293z"
                                                 clip-rule="evenodd"></path>
                                         </svg>
                                     </button>
-                                    <p class="text-sm font-bold text-gray-900 flex items-center flex-wrap gap-2">
+                                    <p class="text-xs font-bold text-gray-900 flex items-center flex-wrap gap-1.5">
                                         <span x-text="`${index + 1}. ${med.name}`"></span>
-
                                         <span x-show="med.dosage_strength"
-                                            class="bg-red-100 text-red-700 border border-red-200 font-black px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider shadow-sm"
+                                            class="bg-red-100 text-red-700 border border-red-200 font-black px-1 py-0.5 rounded text-[9px] uppercase tracking-wider shadow-sm"
                                             x-text="med.dosage_strength"></span>
-
-                                        <span x-show="med.form" class="text-xs text-gray-500 font-medium"
+                                        <span x-show="med.form" class="text-[10px] text-gray-500 font-medium"
                                             x-text="med.form"></span>
                                     </p>
                                     <div class="flex justify-between items-end mt-0.5">
-                                        <p class="text-xs text-gray-700 italic"
+                                        <p class="text-[11px] text-gray-700 italic"
                                             x-text="`Sig: ${med.sig || 'Take as directed'}`"></p>
-                                        <p class="text-xs font-bold text-gray-900" x-text="`#${med.quantity || ''}`"></p>
+                                        <p class="text-[11px] font-bold text-gray-900" x-text="`#${med.quantity || ''}`">
+                                        </p>
                                     </div>
                                     <p x-show="med.pharmacist_instructions"
-                                        class="text-[9px] text-gray-500 italic mt-0.5 border-l border-gray-300 pl-2 ml-1"
+                                        class="text-[8px] text-gray-500 italic mt-0.5 border-l border-gray-300 pl-2 ml-1"
                                         x-text="`To Rx: ${med.pharmacist_instructions}`"></p>
                                     <p x-show="med.patient_instructions"
-                                        class="text-[9px] text-blue-600 italic mt-0.5 border-l border-blue-200 pl-2 ml-1"
+                                        class="text-[8px] text-blue-600 italic mt-0.5 border-l border-blue-200 pl-2 ml-1"
                                         x-text="`To Pt: ${med.patient_instructions}`"></p>
                                 </div>
                             </template>
                             <div x-show="medications.length === 0" class="text-xs text-gray-400 italic">No medications
                                 prescribed yet.</div>
 
-                            <div class="flex-1"></div>
-
-                            <div class="pt-3 border-t border-gray-200 border-dashed"
+                            <div class="pt-2 border-t border-gray-200 border-dashed shrink-0"
                                 x-show="generalInstructions || nextAppointment" style="display: none;">
-                                <div x-show="generalInstructions" class="mb-2">
-                                    <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Additional
+                                <div x-show="generalInstructions" class="mb-1.5">
+                                    <p class="text-[7px] font-bold text-gray-400 uppercase tracking-widest">Additional
                                         Instructions:</p>
-                                    <p class="text-[11px] font-serif text-gray-800 mt-0.5 italic"
+                                    <p class="text-[10px] font-serif text-gray-800 mt-0.5 italic"
                                         x-text="generalInstructions"></p>
                                 </div>
                                 <div x-show="nextAppointment">
-                                    <p class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">Next
+                                    <p class="text-[7px] font-bold text-gray-400 uppercase tracking-widest">Next
                                         Appointment:</p>
-                                    <p class="text-[11px] font-serif text-gray-900 mt-0.5 font-bold"
+                                    <p class="text-[10px] font-serif text-gray-900 mt-0.5 font-bold"
                                         x-text="nextAppointment"></p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mt-4 pt-2 border-t border-gray-100 shrink-0">
+                        <div class="mt-2 pt-2 border-t border-gray-100 shrink-0">
                             <div class="flex justify-between items-end">
                                 <div x-show="!prescriptionId"
-                                    class="w-16 h-16 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
-                                    <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor"
+                                    class="w-12 h-12 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
+                                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
                                         </path>
                                     </svg>
-                                    <span class="text-[6px] text-gray-400 mt-1 font-sans">QR PENDING</span>
+                                    <span class="text-[5px] text-gray-400 mt-1 font-sans">QR PENDING</span>
                                 </div>
 
-                                <div x-show="prescriptionId" class="w-16 h-16 shrink-0" style="display: none;">
+                                <div x-show="prescriptionId" class="w-12 h-12 shrink-0" style="display: none;">
                                     <img :src="'/doctor/api/qr/' + prescriptionId" alt="Prescription QR"
                                         class="w-full h-full object-contain">
                                 </div>
-                                <div class="text-left w-[170px] ml-auto flex flex-col font-serif">
-                                    <div class="relative z-0 space-y-1 text-[11px]">
+
+                                <div class="text-left w-[140px] ml-auto flex flex-col font-serif">
+                                    <div class="relative z-0 space-y-1 text-[9px]">
                                         <div class="relative">
-                                            <span class="text-gray-400 tracking-tighter">____________________, MD</span>
+                                            <span class="text-gray-400 tracking-tighter">__________________, MD</span>
                                             <span
-                                                class="absolute left-0.5 bottom-0.5 font-sans font-bold text-blue-800 uppercase opacity-90">{{ auth()->user()->name }}</span>
+                                                class="absolute left-0.5 bottom-0 font-sans font-bold text-blue-800 uppercase opacity-90 truncate max-w-[120px] inline-block"
+                                                title="{{ auth()->user()->name }}">{{ auth()->user()->name }}</span>
                                         </div>
                                         <div class="relative">
-                                            <span class="text-gray-400">Lic. _________________</span>
+                                            <span class="text-gray-400">Lic. _______________</span>
                                             <span
-                                                class="absolute left-5 bottom-0.5 font-sans font-bold text-blue-800 opacity-90">{{ $doctorProfile->prc_number ?? 'N/A' }}</span>
+                                                class="absolute left-5 bottom-0 font-sans font-bold text-blue-800 opacity-90">{{ $doctorProfile->prc_number ?? 'N/A' }}</span>
                                         </div>
                                         <div class="relative">
-                                            <span class="text-gray-400">PTR _________________</span>
+                                            <span class="text-gray-400">PTR _______________</span>
                                             <span
-                                                class="absolute left-6 bottom-0.5 font-sans font-bold text-blue-800 opacity-90">{{ $doctorProfile->ptr_number ?? 'N/A' }}</span>
+                                                class="absolute left-6 bottom-0 font-sans font-bold text-blue-800 opacity-90">{{ $doctorProfile->ptr_number ?? 'N/A' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -597,7 +595,7 @@
                 </div>
 
                 <button @click="showGenerateModal = true"
-                    class="w-full mt-4 bg-securx-navy hover:bg-blue-700 text-white font-black py-4 px-4 rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-2 text-sm">
+                    class="w-full mt-4 shrink-0 bg-securx-navy hover:bg-blue-700 text-white font-black py-4 px-4 rounded-xl transition-all duration-300 shadow-lg flex items-center justify-center gap-2 text-sm">
                     <svg class="w-5 h-5 text-securx-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
@@ -606,7 +604,6 @@
                     Sign & Generate SecuRx
                 </button>
             </div>
-
         </div>
         <div x-show="showRecordsDrawer || showTemplatesDrawer || showDurDrawer"
             class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40" x-transition.opacity @click="closeAllDrawers()"
@@ -711,13 +708,28 @@
             </div>
             <div class="p-6 overflow-y-auto space-y-4">
                 <template x-for="(alert, index) in durAlerts" :key="index">
-                    <div class="p-4 rounded-xl border"
+                    <div x-data="{ showFull: false }" class="p-4 rounded-xl border"
                         :class="alert.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' :
                             'bg-amber-50 border-amber-200 text-amber-800'">
-                        <div class="flex items-center gap-2 font-bold mb-1">
+
+                        <div class="flex items-center gap-2 font-bold mb-1.5">
                             <span class="uppercase text-[10px] tracking-wider" x-text="alert.type"></span>
+                            <span x-show="alert.title"
+                                class="text-[11px] font-black px-2 py-0.5 bg-white rounded-md shadow-sm"
+                                x-text="alert.title"></span>
                         </div>
-                        <p class="text-sm" x-text="alert.message"></p>
+
+                        <div class="text-sm font-medium leading-snug">
+                            <p x-show="!showFull && alert.message.length > 150"
+                                x-text="alert.message.substring(0, 150) + '...'"></p>
+                            <p x-show="showFull || alert.message.length <= 150" x-text="alert.message"></p>
+                        </div>
+
+                        <button type="button" x-show="alert.message.length > 150" @click="showFull = !showFull"
+                            class="text-[10px] font-black mt-3 hover:underline uppercase tracking-wider flex items-center gap-1"
+                            :class="alert.severity === 'high' ? 'text-red-600' : 'text-amber-600'">
+                            <span x-text="showFull ? 'See less' : 'Read full FDA Warning'"></span>
+                        </button>
                     </div>
                 </template>
                 <div x-show="durAlerts.length === 0" class="text-center text-sm text-gray-500 italic">No alerts found.
@@ -923,7 +935,6 @@
                     </div>
                 </template>
 
-                </template>
                 <p x-show="!isFetchingRecords && patientRecords && patientRecords.filter(r => activeCategory === 'all' || r.type === activeCategory).length === 0"
                     class="text-sm text-center text-gray-400 italic py-8">
                     No <span x-text="activeCategory === 'all' ? 'records' : activeCategory.replace('_', ' ')"></span> found

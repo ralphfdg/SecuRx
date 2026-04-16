@@ -209,8 +209,6 @@ export default function consultationConsole(config) {
         },
 
         async checkDur(rxcui, drugName) {
-            console.log("DUR INITIATED for drug:", drugName, "RxCUI:", rxcui); // Debug Start
-
             if (!this.patientId) return;
 
             const currentRxcuis = this.medications
@@ -235,16 +233,17 @@ export default function consultationConsole(config) {
                 const data = await response.json();
 
                 // NEW: Print the backend's internal logs to your browser console
-                if (data.debug) {
-                    console.group("--- Backend DUR Debug Logs ---");
-                    data.debug.forEach((log) => console.log(log));
-                    console.groupEnd();
-                }
+                //if (data.debug) {
+                //   console.group("--- Backend DUR Debug Logs ---");
+                //   data.debug.forEach((log) => console.log(log));
+                //   console.groupEnd();
+                //}
 
                 this.durAlerts = data.alerts || [];
 
-                if (data.has_alerts && rxcui) {
-                    console.log("Alerts found! Opening drawer.");
+                // ONLY open the drawer if a NEW interaction/allergy was explicitly matched
+                if (data.trigger_drawer) {
+                    console.log("Critical Alert found! Opening drawer.");
                     this.showDurDrawer = true;
                 }
             } catch (e) {
@@ -418,16 +417,32 @@ export default function consultationConsole(config) {
             else if (freq.includes("Q4H")) fMultiplier = 6;
             else if (freq.includes("Q6H")) fMultiplier = 4;
 
-            // Extract the first number found in the dose input (e.g., "2 caps" -> 2)
-            let doseMatch = (this.newMed.dose || "").match(/[\d\.]+/);
+            // Extract the text and the number
+            let doseString = (this.newMed.dose || "").toLowerCase();
+            let doseMatch = doseString.match(/[\d\.]+/);
             let doseVal = doseMatch ? parseFloat(doseMatch[0]) : 0;
             let durationVal = parseInt(this.newMed.duration) || 0;
 
+            // NEW: Check if the doctor is typing a liquid or bottle-based measurement
+            let isLiquid =
+                doseString.includes("ml") ||
+                doseString.includes("cc") ||
+                doseString.includes("drop") ||
+                doseString.includes("tsp") ||
+                doseString.includes("tbsp") ||
+                doseString.includes("bottle");
+
             // Auto calculate if all vars are found
             if (doseVal > 0 && fMultiplier > 0 && durationVal > 0) {
-                this.newMed.quantity = Math.ceil(
-                    doseVal * fMultiplier * durationVal,
-                );
+                if (isLiquid) {
+                    // If it's a liquid, QTY usually means "Bottles". Default to 1.
+                    this.newMed.quantity = 1;
+                } else {
+                    // If it's tabs, caps, or sachets, calculate the exact total count
+                    this.newMed.quantity = Math.ceil(
+                        doseVal * fMultiplier * durationVal,
+                    );
+                }
             }
 
             // Always attempt to build the Sig
