@@ -20,6 +20,7 @@ export default defineConfig({
                 'resources/js/doctor-staff-manager.js',
                 'resources/js/doctor-directory.js',
                 'resources/js/doctor-calendar.js',
+                'resources/js/doctor-history.js',
             ],
             refresh: true,
         }),

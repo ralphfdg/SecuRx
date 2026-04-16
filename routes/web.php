@@ -174,7 +174,9 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     // Consultation History & Revocation
     Route::get('/history', [HistoryController::class, 'index'])->name('history');
     Route::post('/history/revoke/{id}', [HistoryController::class, 'revoke'])->name('history.revoke');
+    Route::get('/history/export', [HistoryController::class, 'exportCsv'])->name('history.export');
     Route::get('/history/{id}', [HistoryController::class, 'show'])->name('history.show');
+
 
     // Patient Directory & CRUD
     Route::get('/directory', [DoctorController::class, 'directory'])->name('directory');

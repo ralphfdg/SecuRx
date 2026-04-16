@@ -9,7 +9,6 @@ use App\Models\Encounter;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Models\SoapTemplate;
-use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
