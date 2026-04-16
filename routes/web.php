@@ -116,6 +116,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // 2. Dataset Import Engine
     Route::get('/dataset', [AdminController::class, 'datasetView'])->name('dataset');
     Route::post('/dataset/import', [AdminController::class, 'importDataset'])->name('dataset.import');
+    Route::patch('/dataset/{id}', [AdminController::class, 'updateMedication'])->name('dataset.update');
+    Route::delete('/dataset/{id}', [AdminController::class, 'deleteMedication'])->name('dataset.destroy');
 
     // 3. Professional User Management
     Route::get('/users', [AdminController::class, 'users'])->name('users');

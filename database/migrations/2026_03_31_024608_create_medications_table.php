@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('dosage_strength');
             $table->decimal('estimated_price', 8, 2);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

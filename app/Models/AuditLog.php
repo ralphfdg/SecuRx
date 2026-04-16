@@ -8,7 +8,14 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 class AuditLog extends Model
 {
     use HasUuids;
+    
     protected $guarded = [];
 
-    public function user() { return $this->belongsTo(User::class, 'user_id'); } // Can be null for system actions
+    // Tell Laravel not to expect or update an 'updated_at' column
+    const UPDATED_AT = null;
+
+    public function user() 
+    { 
+        return $this->belongsTo(User::class, 'user_id'); 
+    } 
 }
