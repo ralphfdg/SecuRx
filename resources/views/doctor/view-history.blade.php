@@ -263,13 +263,13 @@
 
                                 @if ($rx)
                                     <div
-                                        class="w-16 h-16 bg-white p-0.5 border border-gray-200 flex flex-col items-center justify-center shrink-0">
-                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ $rx->id }}"
+                                        class="w-20 h-20 bg-white p-1 border border-gray-200 flex flex-col items-center justify-center shrink-0">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size200x200&data={{ $rx->id }}"
                                             alt="SecuRx QR" class="w-full h-full object-contain">
                                     </div>
                                 @else
                                     <div
-                                        class="w-16 h-16 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
+                                        class="w-20 h-20 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
                                         <svg class="w-6 h-6 text-gray-300" fill="none" stroke="currentColor"
                                             viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
