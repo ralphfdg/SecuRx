@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes; // <-- 1. We import the trait here
 
 class Medication extends Model
 {
+    use SoftDeletes; // <-- 2. We tell the model to use it here
+
     // NO HasUuids trait here because your SQL dump shows this table uses bigint(20)
     protected $guarded = [];
 

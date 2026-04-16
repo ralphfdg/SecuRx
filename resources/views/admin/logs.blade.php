@@ -41,19 +41,20 @@
                         </td>
                         <td class="p-4">
                             @php
-                                $actionLower = strtolower($log->action ?? '');
-                                $badgeColor = 'bg-gray-100 text-gray-700'; // default
+                                // Use 'action_type' based on the AuditLog Model!
+                                $actionLower = strtolower($log->action_type ?? '');
+                                $badgeColor = 'bg-gray-100 text-gray-700';
                                 
                                 if(str_contains($actionLower, 'login') || str_contains($actionLower, 'approve') || str_contains($actionLower, 'import')) {
                                     $badgeColor = 'bg-green-100 text-green-700';
                                 } elseif (str_contains($actionLower, 'delete') || str_contains($actionLower, 'reject') || str_contains($actionLower, 'failed')) {
                                     $badgeColor = 'bg-red-100 text-red-700';
-                                } elseif (str_contains($actionLower, 'update') || str_contains($actionLower, 'edit')) {
+                                } elseif (str_contains($actionLower, 'update') || str_contains($actionLower, 'edit') || str_contains($actionLower, 'export')) {
                                     $badgeColor = 'bg-securx-cyan/20 text-securx-navy';
                                 }
                             @endphp
                             <span class="px-2.5 py-1 rounded-md text-xs font-bold capitalize {{ $badgeColor }}">
-                                {{ $log->action ?? 'System Event' }}
+                                {{ $log->action_type ?? 'System Event' }}
                             </span>
                         </td>
                         <td class="p-4 text-securx-navy font-medium">
@@ -68,9 +69,11 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="p-10 text-center text-gray-400 font-medium flex flex-col items-center justify-center">
-                            <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                            The ledger is currently empty. System events will appear here automatically.
+                        <td colspan="4" class="p-10">
+                            <div class="flex flex-col items-center justify-center text-center text-gray-400 font-medium">
+                                <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                                The ledger is currently empty. System events will appear here automatically.
+                            </div>
                         </td>
                     </tr>
                     @endforelse
