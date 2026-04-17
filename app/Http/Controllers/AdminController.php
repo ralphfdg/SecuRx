@@ -270,10 +270,24 @@ class AdminController extends Controller
         while (($row = fgetcsv($handle)) !== false) {
             // Ensure exactly 5 columns: Raw Name, Lowest, Median, Highest, Year
             if (count($row) >= 5) {
+                
+                $rawName = trim($row[0]);
+                
+                // --- 5. ATTEMPT TO MAP THE MEDICATION ID ---
+                // Since DOH raw names are like "Paracetamol 500mg tablet", 
+                // we'll grab the first word to do a fuzzy search against your medications table.
+                $nameParts = explode(' ', $rawName);
+                $likelyGenericName = $nameParts[0]; 
+
+                $medication = Medication::where('generic_name', 'LIKE', '%' . $likelyGenericName . '%')->first();
+
+                // 6. Insert the DPRI record with the mapped ID (if found)
                 DpriRecord::updateOrCreate(
                     [
-                        // Match existing records based on the drug name and effective year
-                        'doh_raw_drug_name' => trim($row[0]),
+                        // Map the ID so the relationship works! 
+                        // If $medication is null, medication_id stays null safely.
+                        'medication_id'     => $medication ? $medication->id : null,
+                        'doh_raw_drug_name' => $rawName,
                         'effective_year'    => trim($row[4]),
                     ],
                     [
@@ -289,7 +303,6 @@ class AdminController extends Controller
 
         fclose($handle);
 
-        // Securely log this administrative action
         // Securely log this administrative action
         AuditLog::create([
             'user_id' => auth()->id(),

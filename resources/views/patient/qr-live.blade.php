@@ -67,9 +67,17 @@
                                 <p class="text-lg font-bold text-[#0f172a]">
                                     {{ $index + 1 }}. {{ $item->medication->brand_name ?? $item->medication->generic_name }} {{ $item->dose }}
                                 </p>
-                                <p class="text-base font-bold text-[#0f172a] whitespace-nowrap ml-4">
-                                    #{{ $item->quantity }} {{ Str::plural($item->medication->form ?? 'tabs', $item->quantity) }}
-                                </p>
+                                <div class="text-right ml-4">
+                                    <p class="text-base font-bold text-[#0f172a] whitespace-nowrap">
+                                        #{{ $item->quantity }} {{ Str::plural($item->medication->form ?? 'tabs', $item->quantity) }}
+                                    </p>
+                                    
+                                    @if($item->medication && $item->medication->latestDpriRecord && $item->medication->latestDpriRecord->median_price)
+                                        <p class="text-[11px] text-green-700 font-sans font-semibold mt-0.5 tracking-wide print:text-black">
+                                            DOH Median Price: ₱{{ number_format($item->medication->latestDpriRecord->median_price, 2) }}
+                                        </p>
+                                    @endif
+                                </div>
                             </div>
                             <div class="mt-1">
                                 <p class="text-sm text-gray-700 italic">
@@ -83,7 +91,7 @@
                                         </p>
                                     @endif
                                     @if($item->patient_instructions)
-                                        <p class="text-[13px] text-blue-500 italic pl-3 border-l-2 border-blue-200">
+                                        <p class="text-[13px] text-blue-500 italic pl-3 border-l-2 border-blue-200 print:border-gray-300 print:text-gray-600">
                                             To Pt: {{ $item->patient_instructions }}
                                         </p>
                                     @endif

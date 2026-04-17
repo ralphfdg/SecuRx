@@ -21,4 +21,9 @@ class Medication extends Model
     {
         return $this->hasMany(PatientAllergy::class);
     }
+
+    public function latestDpriRecord()
+    {
+        return $this->hasOne(DpriRecord::class)->orderBy('effective_year', 'desc');
+    }
 }

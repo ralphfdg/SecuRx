@@ -365,7 +365,7 @@ class PatientController extends Controller
         // Fetch the specific prescription, ensuring it actually belongs to the logged-in patient!
         $prescription = Prescription::where('id', $id)
             ->where('patient_id', $user->id)
-            ->with(['doctor.doctorProfile', 'items.medication', 'encounter'])
+            ->with(['doctor.doctorProfile', 'items.medication.latestDpriRecord', 'encounter'])
             ->firstOrFail();
 
         return view('patient.qr-live', compact('user', 'prescription'));
