@@ -271,7 +271,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 border-t border-gray-100 pt-5">
                             <div>
                                 <label
-                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Dose</label>
+                                    class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Form</label>
                                 <input type="text" list="dose-options" x-model="newMed.dose"
                                     @input="calculateSigAndQty()"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500"
@@ -359,7 +359,7 @@
                         </div>
 
                         <div class="pt-2">
-                            <button @click="addMedication()" type="button"
+                            <button @click.stop="addMedication()" type="button"
                                 class="w-full bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-600 hover:text-white font-black py-3 px-8 rounded-xl transition shadow-sm flex items-center justify-center gap-2">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -699,82 +699,17 @@
         </div>
 
         <div x-show="showDurDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col"
-            style="display: none;">
-            <div class="px-6 py-4 bg-amber-50 border-b border-amber-200 flex justify-between items-center">
-                <h2 class="text-lg font-black text-amber-800">DUR Alerts</h2>
-                <button @click="showDurDrawer = false" class="text-amber-600"><svg class="w-6 h-6" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg></button>
-            </div>
-            <div class="p-6 overflow-y-auto space-y-4">
-                <template x-for="(alert, index) in durAlerts" :key="index">
-                    <div x-data="{ showFull: false }" class="p-4 rounded-xl border"
-                        :class="alert.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' :
-                            'bg-amber-50 border-amber-200 text-amber-800'">
+            x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full"
+            x-transition:enter-end="translate-x-0" x-transition:leave="transition ease-in duration-300"
+            x-transition:leave-start="translate-x-0" x-transition:leave-end="translate-x-full" style="display: none;">
 
-                        <div class="flex items-center gap-2 font-bold mb-1.5">
-                            <span class="uppercase text-[10px] tracking-wider" x-text="alert.type"></span>
-                            <span x-show="alert.title"
-                                class="text-[11px] font-black px-2 py-0.5 bg-white rounded-md shadow-sm"
-                                x-text="alert.title"></span>
-                        </div>
-
-                        <div class="text-sm font-medium leading-snug">
-                            <p x-show="!showFull && alert.message.length > 150"
-                                x-text="alert.message.substring(0, 150) + '...'"></p>
-                            <p x-show="showFull || alert.message.length <= 150" x-text="alert.message"></p>
-                        </div>
-
-                        <button type="button" x-show="alert.message.length > 150" @click="showFull = !showFull"
-                            class="text-[10px] font-black mt-3 hover:underline uppercase tracking-wider flex items-center gap-1"
-                            :class="alert.severity === 'high' ? 'text-red-600' : 'text-amber-600'">
-                            <span x-text="showFull ? 'See less' : 'Read full FDA Warning'"></span>
-                        </button>
-                    </div>
-                </template>
-                <div x-show="durAlerts.length === 0" class="text-center text-sm text-gray-500 italic">No alerts found.
+            <div class="px-6 py-4 bg-amber-50 border-b border-amber-200 flex justify-between items-center shrink-0">
+                <div>
+                    <h2 class="text-lg font-black text-amber-800">Clinical Intelligence</h2>
+                    <p class="text-[10px] text-amber-600 font-bold uppercase tracking-widest">DUR Safety Engine</p>
                 </div>
-            </div>
-        </div>
-        <div x-show="showTemplatesDrawer"
-            class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col" style="display: none;">
-            <div class="px-6 py-4 bg-slate-50 border-b border-gray-200 flex justify-between items-center">
-                <h2 class="text-lg font-black text-securx-navy">Templates</h2>
-                <button @click="showTemplatesDrawer = false" class="text-gray-400"><svg class="w-6 h-6" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-                        </path>
-                    </svg></button>
-            </div>
-            <div class="p-4 space-y-3">
-                @forelse($soapTemplates ?? [] as $template)
-                    <button type="button"
-                        @click="
-                subjective_note = `{{ addslashes($template->subjective_text) }}`;
-                objective_note = `{{ addslashes($template->objective_text) }}`;
-                assessment_note = `{{ addslashes($template->assessment_text) }}`;
-                plan_note = `{{ addslashes($template->plan_text) }}`;
-                showTemplatesDrawer = false;
-            "
-                        class="w-full text-left p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition shadow-sm">
-                        <span class="block font-black text-securx-navy">{{ $template->template_name }}</span>
-                        <span class="block text-xs text-gray-500 truncate mt-1">{{ $template->assessment_text }}</span>
-                    </button>
-                @empty
-                    <p class="text-sm text-gray-500 italic text-center py-4">No templates found. Create them in your Doctor
-                        Settings.</p>
-                @endforelse
-            </div>
-        </div>
-        <div x-show="showRecordsDrawer"
-            class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-slate-50 shadow-2xl flex flex-col"
-            style="display: none;" x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="translate-x-full" x-transition:enter-end="translate-x-0" x-data="{ activeCategory: 'all' }">
-            <div class="px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
-                <h2 class="text-xl font-black text-securx-navy uppercase tracking-tight">Full Medical History</h2>
-                <button @click="showRecordsDrawer = false" class="text-gray-400 hover:text-red-500 transition">
+                <button @click="showDurDrawer = false"
+                    class="p-2 hover:bg-amber-100 rounded-lg transition text-amber-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
                         </path>
@@ -782,169 +717,288 @@
                 </button>
             </div>
 
-            <div class="bg-white border-b border-gray-200 px-6 pt-2 shrink-0 overflow-x-auto flex gap-6 custom-scrollbar">
-                <button @click="activeCategory = 'all'"
-                    :class="activeCategory === 'all' ? 'border-securx-navy text-securx-navy' :
-                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
-                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">All Records</button>
-
-                <button @click="activeCategory = 'encounter'"
-                    :class="activeCategory === 'encounter' ? 'border-blue-600 text-blue-600' :
-                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
-                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Encounters</button>
-
-                <button @click="activeCategory = 'lab_result'"
-                    :class="activeCategory === 'lab_result' ? 'border-purple-600 text-purple-600' :
-                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
-                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Labs</button>
-
-                <button @click="activeCategory = 'document'"
-                    :class="activeCategory === 'document' ? 'border-amber-600 text-amber-600' :
-                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
-                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Documents</button>
-
-                <button @click="activeCategory = 'immunization'"
-                    :class="activeCategory === 'immunization' ? 'border-emerald-600 text-emerald-600' :
-                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
-                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Immunizations</button>
-
-                <button @click="activeCategory = 'allergy'"
-                    :class="activeCategory === 'allergy' ? 'border-rose-600 text-rose-600' :
-                        'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
-                    class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Allergies</button>
-            </div>
-
             <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
-                <div x-show="isFetchingRecords" class="text-center py-10 italic text-gray-400">Syncing encrypted
-                    records...</div>
+                <template x-for="(alert, index) in durAlerts" :key="index">
+                    <div x-data="{ showFull: false }" class="p-4 rounded-xl border relative transition-all"
+                        :class="alert.severity === 'high' ? 'bg-red-50 border-red-200 text-red-800' :
+                            'bg-amber-50 border-amber-200 text-amber-800'">
 
-                <template
-                    x-for="(record, index) in patientRecords.filter(r => activeCategory === 'all' || r.type === activeCategory)"
-                    :key="record.id">
-                    <div x-data="{ expanded: false }"
-                        class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all hover:border-blue-400">
+                        <div class="flex flex-col gap-1.5 mb-2">
+                            <div class="flex items-center justify-between">
+                                <span class="uppercase text-[9px] font-black tracking-widest opacity-60"
+                                    x-text="alert.type"></span>
 
-                        <div @click="expanded = !expanded" class="p-4 flex items-center gap-4 cursor-pointer">
-                            <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                                :class="{
-                                    'bg-blue-100 text-blue-600': record.type === 'encounter',
-                                    'bg-purple-100 text-purple-600': record.type === 'lab_result',
-                                    'bg-amber-100 text-amber-600': record.type === 'document',
-                                    'bg-emerald-100 text-emerald-600': record.type === 'immunization',
-                                    'bg-rose-100 text-rose-600': record.type === 'allergy'
-                                }">
-                                <svg x-show="record.type === 'encounter'" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                </svg>
-                                <svg x-show="record.type === 'allergy'" class="w-5 h-5" fill="none"
-                                    stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                                    </path>
-                                </svg>
-                                <svg x-show="['lab_result', 'document', 'immunization'].includes(record.type)"
-                                    class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                    </path>
-                                </svg>
+                                <span
+                                    class="text-[12px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter shadow-sm border"
+                                    :class="alert.source === 'Current Session' ?
+                                        'bg-blue-600 text-white border-blue-700' :
+                                        'bg-slate-700 text-white border-slate-800'"
+                                    x-text="alert.source">
+                                </span>
                             </div>
 
-                            <div class="flex-1 truncate">
-                                <h4 class="font-black text-securx-navy text-xs uppercase" x-text="record.title"></h4>
-                                <p class="text-[10px] text-gray-400 font-bold"
-                                    x-text="new Date(record.date).toLocaleDateString()"></p>
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                <span x-show="record.is_verified == 0"
-                                    class="text-[9px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">PENDING</span>
-                                <span x-show="record.is_verified == 1"
-                                    class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase">Verified</span>
-                            </div>
+                            <span x-show="alert.title"
+                                class="text-[11px] font-black px-2 py-0.5 bg-white rounded-md shadow-sm w-fit border border-inherit"
+                                x-text="alert.title"></span>
                         </div>
 
-                        <div x-show="expanded" x-collapse class="px-4 pb-4 pt-2 bg-slate-50 border-t border-gray-100">
-                            <div class="space-y-3">
-                                <template x-if="record.type === 'encounter'">
-                                    <div class="grid grid-cols-2 gap-2 text-[11px]">
-                                        <div class="bg-white p-2 rounded border border-gray-100"><span
-                                                class="text-blue-500 font-black uppercase block">Subjective</span><span
-                                                x-text="record.subjective_note"></span></div>
-                                        <div class="bg-white p-2 rounded border border-gray-100"><span
-                                                class="text-emerald-500 font-black uppercase block">Objective</span><span
-                                                x-text="record.objective_note"></span></div>
-                                        <div class="bg-white p-2 rounded border border-gray-100"><span
-                                                class="text-purple-500 font-black uppercase block">Assessment</span><span
-                                                x-text="record.assessment_note"></span></div>
-                                        <div class="bg-white p-2 rounded border border-gray-100"><span
-                                                class="text-amber-500 font-black uppercase block">Plan</span><span
-                                                x-text="record.plan_note"></span></div>
-                                    </div>
-                                </template>
+                        <div class="text-sm font-medium leading-snug">
+                            <p x-show="!showFull && alert.message.length > 150"
+                                x-text="alert.message.substring(0, 150) + '...'"></p>
+                            <p x-show="showFull || alert.message.length <= 150" x-text="alert.message"
+                                class="whitespace-pre-line"></p>
+                        </div>
 
-                                <template x-if="record.type === 'lab_result' || record.type === 'document'">
-                                    <div>
-                                        <span class="text-[10px] font-bold text-gray-400 uppercase">Attached File</span>
-                                        <div class="mt-1">
-                                            <a :href="record.file_path ? '/storage/' + record.file_path : '#'"
-                                                target="_blank"
-                                                class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition"
-                                                x-show="record.file_path">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                    viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
-                                                    </path>
-                                                </svg>
-                                                View Attachment
-                                            </a>
-                                            <p x-show="!record.file_path" class="text-gray-500 italic text-xs">No file
-                                                attached.</p>
-                                        </div>
-                                    </div>
-                                </template>
+                    </div>
 
-                                <template x-if="record.type === 'immunization'">
-                                    <div class="grid grid-cols-2 gap-4 text-[11px]">
-                                        <div><span class="text-[10px] font-bold text-gray-400 uppercase">Facility</span>
-                                            <p class="mt-0.5 text-gray-800" x-text="record.facility || 'Not specified'">
-                                            </p>
-                                        </div>
-                                        <div><span class="text-[10px] font-bold text-gray-400 uppercase">Valid Until</span>
-                                            <p class="mt-0.5 text-gray-800"
-                                                x-text="record.valid_until ? new Date(record.valid_until).toLocaleDateString() : 'Lifetime'">
-                                            </p>
-                                        </div>
-                                    </div>
-                                </template>
+                    <button type="button" x-show="alert.message.length > 150" @click="showFull = !showFull"
+                        class="p-1 rounded-md hover:bg-white/50 transition-colors shrink-0"
+                        :class="alert.severity === 'high' ? 'text-red-600' : 'text-amber-600'">
+                        <svg class="w-5 h-5 transition-transform duration-300" :class="showFull ? 'rotate-180' : ''"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7">
+                            </path>
+                        </svg>
+                    </button>
+            </div>
 
-                                <template x-if="record.type === 'allergy'">
-                                    <p class="text-xs text-rose-700 font-bold">Reaction: <span class="font-normal"
-                                            x-text="record.reaction || 'N/A'"></span></p>
-                                </template>
+            <div class="text-sm font-medium leading-relaxed">
+                <div x-show="!showFull && alert.message.length > 150">
+                    <p x-text="alert.message.substring(0, 150) + '...'"></p>
+                    <button @click="showFull = true"
+                        class="text-[10px] font-black uppercase tracking-tighter mt-1 underline decoration-dotted">Show
+                        More Details</button>
+                </div>
 
-                                <div x-show="record.is_verified == 0" class="flex justify-end pt-2">
-                                    <button @click.stop="verifyRecord(record.id, record.type)"
-                                        class="text-[10px] font-black bg-securx-navy text-white px-4 py-1.5 rounded-lg hover:bg-blue-600 transition">
-                                        Officially Verify
-                                    </button>
+                <p x-show="showFull || alert.message.length <= 150" x-text="alert.message" class="whitespace-pre-line">
+                </p>
+
+                <button x-show="showFull && alert.message.length > 150" @click="showFull = false"
+                    class="text-[10px] font-black uppercase tracking-tighter mt-3 underline decoration-dotted">See
+                    Less</button>
+            </div>
+        </div>
+        </template>
+
+        <div x-show="durAlerts.length === 0" class="flex flex-col items-center justify-center py-12 text-center">
+            <div class="w-12 h-12 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mb-3">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7">
+                    </path>
+                </svg>
+            </div>
+            <p class="text-sm text-gray-500 font-bold uppercase tracking-tight">No Safety Conflicts Found</p>
+            <p class="text-[10px] text-gray-400">Clinical Intelligence is clear.</p>
+        </div>
+    </div>
+    </div>
+
+    <div x-show="showTemplatesDrawer"
+        class="fixed inset-y-0 right-0 z-50 w-full max-w-sm bg-white shadow-2xl flex flex-col" style="display: none;">
+        <div class="px-6 py-4 bg-slate-50 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-lg font-black text-securx-navy">Templates</h2>
+            <button @click="showTemplatesDrawer = false" class="text-gray-400"><svg class="w-6 h-6" fill="none"
+                    stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg></button>
+        </div>
+        <div class="p-4 space-y-3">
+            @forelse($soapTemplates ?? [] as $template)
+                <button type="button"
+                    @click="
+                subjective_note = `{{ addslashes($template->subjective_text) }}`;
+                objective_note = `{{ addslashes($template->objective_text) }}`;
+                assessment_note = `{{ addslashes($template->assessment_text) }}`;
+                plan_note = `{{ addslashes($template->plan_text) }}`;
+                showTemplatesDrawer = false;
+            "
+                    class="w-full text-left p-4 border border-gray-200 rounded-xl hover:bg-blue-50 hover:border-blue-300 transition shadow-sm">
+                    <span class="block font-black text-securx-navy">{{ $template->template_name }}</span>
+                    <span class="block text-xs text-gray-500 truncate mt-1">{{ $template->assessment_text }}</span>
+                </button>
+            @empty
+                <p class="text-sm text-gray-500 italic text-center py-4">No templates found. Create them in your Doctor
+                    Settings.</p>
+            @endforelse
+        </div>
+    </div>
+    <div x-show="showRecordsDrawer"
+        class="fixed inset-y-0 right-0 z-50 w-full max-w-2xl bg-slate-50 shadow-2xl flex flex-col" style="display: none;"
+        x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0" x-data="{ activeCategory: 'all' }">
+        <div class="px-6 py-4 bg-white border-b border-gray-200 flex justify-between items-center shrink-0">
+            <h2 class="text-xl font-black text-securx-navy uppercase tracking-tight">Full Medical History</h2>
+            <button @click="showRecordsDrawer = false" class="text-gray-400 hover:text-red-500 transition">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <div class="bg-white border-b border-gray-200 px-6 pt-2 shrink-0 overflow-x-auto flex gap-6 custom-scrollbar">
+            <button @click="activeCategory = 'all'"
+                :class="activeCategory === 'all' ? 'border-securx-navy text-securx-navy' :
+                    'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">All Records</button>
+
+            <button @click="activeCategory = 'encounter'"
+                :class="activeCategory === 'encounter' ? 'border-blue-600 text-blue-600' :
+                    'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Encounters</button>
+
+            <button @click="activeCategory = 'lab_result'"
+                :class="activeCategory === 'lab_result' ? 'border-purple-600 text-purple-600' :
+                    'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Labs</button>
+
+            <button @click="activeCategory = 'document'"
+                :class="activeCategory === 'document' ? 'border-amber-600 text-amber-600' :
+                    'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Documents</button>
+
+            <button @click="activeCategory = 'immunization'"
+                :class="activeCategory === 'immunization' ? 'border-emerald-600 text-emerald-600' :
+                    'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Immunizations</button>
+
+            <button @click="activeCategory = 'allergy'"
+                :class="activeCategory === 'allergy' ? 'border-rose-600 text-rose-600' :
+                    'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'"
+                class="py-3 border-b-2 font-bold text-sm transition whitespace-nowrap">Allergies</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            <div x-show="isFetchingRecords" class="text-center py-10 italic text-gray-400">Syncing encrypted
+                records...</div>
+
+            <template
+                x-for="(record, index) in patientRecords.filter(r => activeCategory === 'all' || r.type === activeCategory)"
+                :key="record.id">
+                <div x-data="{ expanded: false }"
+                    class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden transition-all hover:border-blue-400">
+
+                    <div @click="expanded = !expanded" class="p-4 flex items-center gap-4 cursor-pointer">
+                        <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                            :class="{
+                                'bg-blue-100 text-blue-600': record.type === 'encounter',
+                                'bg-purple-100 text-purple-600': record.type === 'lab_result',
+                                'bg-amber-100 text-amber-600': record.type === 'document',
+                                'bg-emerald-100 text-emerald-600': record.type === 'immunization',
+                                'bg-rose-100 text-rose-600': record.type === 'allergy'
+                            }">
+                            <svg x-show="record.type === 'encounter'" class="w-5 h-5" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            <svg x-show="record.type === 'allergy'" class="w-5 h-5" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                </path>
+                            </svg>
+                            <svg x-show="['lab_result', 'document', 'immunization'].includes(record.type)" class="w-5 h-5"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                        </div>
+
+                        <div class="flex-1 truncate">
+                            <h4 class="font-black text-securx-navy text-xs uppercase" x-text="record.title"></h4>
+                            <p class="text-[10px] text-gray-400 font-bold"
+                                x-text="new Date(record.date).toLocaleDateString()"></p>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <span x-show="record.is_verified == 0"
+                                class="text-[9px] font-black text-rose-500 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">PENDING</span>
+                            <span x-show="record.is_verified == 1"
+                                class="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase">Verified</span>
+                        </div>
+                    </div>
+
+                    <div x-show="expanded" x-collapse class="px-4 pb-4 pt-2 bg-slate-50 border-t border-gray-100">
+                        <div class="space-y-3">
+                            <template x-if="record.type === 'encounter'">
+                                <div class="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div class="bg-white p-2 rounded border border-gray-100"><span
+                                            class="text-blue-500 font-black uppercase block">Subjective</span><span
+                                            x-text="record.subjective_note"></span></div>
+                                    <div class="bg-white p-2 rounded border border-gray-100"><span
+                                            class="text-emerald-500 font-black uppercase block">Objective</span><span
+                                            x-text="record.objective_note"></span></div>
+                                    <div class="bg-white p-2 rounded border border-gray-100"><span
+                                            class="text-purple-500 font-black uppercase block">Assessment</span><span
+                                            x-text="record.assessment_note"></span></div>
+                                    <div class="bg-white p-2 rounded border border-gray-100"><span
+                                            class="text-amber-500 font-black uppercase block">Plan</span><span
+                                            x-text="record.plan_note"></span></div>
                                 </div>
+                            </template>
+
+                            <template x-if="record.type === 'lab_result' || record.type === 'document'">
+                                <div>
+                                    <span class="text-[10px] font-bold text-gray-400 uppercase">Attached File</span>
+                                    <div class="mt-1">
+                                        <a :href="record.file_path ? '/storage/' + record.file_path : '#'" target="_blank"
+                                            class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition"
+                                            x-show="record.file_path">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
+                                                </path>
+                                            </svg>
+                                            View Attachment
+                                        </a>
+                                        <p x-show="!record.file_path" class="text-gray-500 italic text-xs">No file
+                                            attached.</p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template x-if="record.type === 'immunization'">
+                                <div class="grid grid-cols-2 gap-4 text-[11px]">
+                                    <div><span class="text-[10px] font-bold text-gray-400 uppercase">Facility</span>
+                                        <p class="mt-0.5 text-gray-800" x-text="record.facility || 'Not specified'">
+                                        </p>
+                                    </div>
+                                    <div><span class="text-[10px] font-bold text-gray-400 uppercase">Valid Until</span>
+                                        <p class="mt-0.5 text-gray-800"
+                                            x-text="record.valid_until ? new Date(record.valid_until).toLocaleDateString() : 'Lifetime'">
+                                        </p>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <template x-if="record.type === 'allergy'">
+                                <p class="text-xs text-rose-700 font-bold">Reaction: <span class="font-normal"
+                                        x-text="record.reaction || 'N/A'"></span></p>
+                            </template>
+
+                            <div x-show="record.is_verified == 0" class="flex justify-end pt-2">
+                                <button @click.stop="verifyRecord(record.id, record.type)"
+                                    class="text-[10px] font-black bg-securx-navy text-white px-4 py-1.5 rounded-lg hover:bg-blue-600 transition">
+                                    Officially Verify
+                                </button>
                             </div>
                         </div>
                     </div>
-                </template>
+                </div>
+            </template>
 
-                <p x-show="!isFetchingRecords && patientRecords && patientRecords.filter(r => activeCategory === 'all' || r.type === activeCategory).length === 0"
-                    class="text-sm text-center text-gray-400 italic py-8">
-                    No <span x-text="activeCategory === 'all' ? 'records' : activeCategory.replace('_', ' ')"></span> found
-                    for this patient.
-                </p>
+            <p x-show="!isFetchingRecords && patientRecords && patientRecords.filter(r => activeCategory === 'all' || r.type === activeCategory).length === 0"
+                class="text-sm text-center text-gray-400 italic py-8">
+                No <span x-text="activeCategory === 'all' ? 'records' : activeCategory.replace('_', ' ')"></span> found
+                for this patient.
+            </p>
 
-            </div>
         </div>
+    </div>
     </div>
 
     <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">

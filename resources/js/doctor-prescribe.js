@@ -211,9 +211,10 @@ export default function consultationConsole(config) {
         async checkDur(rxcui, drugName) {
             if (!this.patientId) return;
 
+            // This prevents the API from flagging the drug against itself if it's already in the basket.
             const currentRxcuis = this.medications
                 .map((m) => m.rxcui)
-                .filter(Boolean);
+                .filter((existingRx) => existingRx && existingRx !== rxcui);
 
             try {
                 const response = await fetch(`/doctor/api/dur/check`, {
@@ -231,19 +232,10 @@ export default function consultationConsole(config) {
                 });
 
                 const data = await response.json();
-
-                // NEW: Print the backend's internal logs to your browser console
-                //if (data.debug) {
-                //   console.group("--- Backend DUR Debug Logs ---");
-                //   data.debug.forEach((log) => console.log(log));
-                //   console.groupEnd();
-                //}
-
                 this.durAlerts = data.alerts || [];
 
                 // ONLY open the drawer if a NEW interaction/allergy was explicitly matched
                 if (data.trigger_drawer) {
-                    console.log("Critical Alert found! Opening drawer.");
                     this.showDurDrawer = true;
                 }
             } catch (e) {
@@ -314,26 +306,44 @@ export default function consultationConsole(config) {
         },
 
         addMedication() {
-            if (this.newMed.name) {
-                this.medications.push({ ...this.newMed });
-                this.newMed = {
-                    medication_id: 1,
-                    rxcui: "",
-                    name: "",
-                    dose: "",
-                    dosage_strength: "",
-                    form: "",
-                    frequency: "",
-                    duration: "",
-                    pharmacist_instructions: "",
-                    patient_instructions: "",
-                    sig: "",
-                    quantity: null,
-                    est_price: null,
-                };
-                if (this.ts) {
-                    this.ts.clear();
-                }
+            // 1. Validation: Ensure we have at least a name and RxCUI
+            if (!this.newMed.name || !this.newMed.rxcui) return;
+
+            // 2. THE FIX: Check if this exact medication is already in the basket
+            // This prevents the "Double Push" even if the button is clicked twice
+            const isAlreadyAdded = this.medications.some(
+                (m) => m.rxcui === this.newMed.rxcui,
+            );
+
+            if (isAlreadyAdded) {
+                // Optional: Alert the doctor or just ignore the second click
+                alert("Medication already in list.");
+                return;
+            }
+
+            // 3. Add to the prescription list
+            this.medications.push({ ...this.newMed });
+
+            // 4. Reset the form COMPLETELY
+            this.newMed = {
+                medication_id: 1,
+                rxcui: "",
+                name: "",
+                dose: "",
+                dosage_strength: "", // Reset these specifically
+                form: "", // Reset these specifically
+                frequency: "",
+                duration: "",
+                pharmacist_instructions: "",
+                patient_instructions: "",
+                sig: "",
+                quantity: null,
+                est_price: null,
+            };
+
+            // 5. Clear the Search UI
+            if (this.ts) {
+                this.ts.clear();
             }
         },
 

@@ -2,25 +2,75 @@
 
 @section('page_title', 'Clinic Queue & Schedule')
 @vite(['resources/css/app.css', 'resources/js/app.js'])
-
 @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/doctor-calendar.js'])
 
 @section('content')
-    <div x-data="{ activeTab: 'queue' }" class="max-w-6xl mx-auto space-y-6">
+    <div x-data="queueManager()" class="max-w-6xl mx-auto space-y-6">
 
         <div
-            class="p-6 bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+            class="p-6 bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl shadow-sm flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+
             <div>
                 <h2 class="text-2xl font-extrabold text-securx-navy">Clinic Queue & Schedule</h2>
-                <p class="text-sm text-gray-500 mt-1">Manage your active patients and upcoming appointments.</p>
+                <div x-data="{
+                    time: '',
+                    init() {
+                        setInterval(() => { this.time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }); }, 1000);
+                        this.time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                    }
+                }" class="text-sm text-gray-500 mt-1.5 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <span x-text="time" class="font-bold text-gray-700 w-20"></span>
+                    <span class="text-gray-300">|</span>
+                    <span>{{ \Carbon\Carbon::now()->format('l, F j, Y') }}</span>
+                </div>
             </div>
 
-            <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
-                <div class="flex p-1.5 bg-slate-100 rounded-xl border border-gray-200">
+            <div class="flex flex-col md:flex-row items-center gap-4 w-full xl:w-auto">
+
+                <div x-show="activeTab === 'queue'" x-transition class="flex items-center gap-2 w-full md:w-auto">
+                    <div class="relative w-full md:w-56">
+                        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <div class="relative w-full md:w-56">
+                            <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+
+                            <input type="text" x-model="search" @input.debounce.500ms="updateQueue"
+                                placeholder="Search patient..."
+                                class="w-full pl-9 pr-10 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+
+                            <button x-show="search.length > 0" @click="search = ''; updateQueue()" style="display: none;"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors focus:outline-none">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <select x-model="sort" @change="updateQueue"
+                        class="border border-gray-200 rounded-xl py-2 pl-3 pr-8 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-600 bg-white">
+                        <option value="asc">Earliest</option>
+                        <option value="desc">Latest</option>
+                    </select>
+                </div>
+
+                <div class="flex p-1 bg-slate-100 rounded-xl border border-gray-200 w-full md:w-auto justify-center">
                     <button @click="activeTab = 'queue'"
                         :class="activeTab === 'queue' ? 'bg-white text-blue-600 shadow-sm' :
                             'text-gray-500 hover:text-blue-600'"
-                        class="px-5 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2">
+                        class="px-5 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 w-1/2 md:w-auto">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
@@ -29,16 +79,16 @@
                     </button>
 
                     <button
-                        @click="activeTab = 'calendar'; setTimeout(() => { if(typeof window.initDoctorCalendar === 'function') window.initDoctorCalendar(); }, 100)"
+                        @click="activeTab = 'calendar'; setTimeout(() => { if(typeof window.initDoctorCalendar === 'function') window.initDoctorCalendar(); }, 50)"
                         :class="activeTab === 'calendar' ? 'bg-white text-blue-600 shadow-sm' :
                             'text-gray-500 hover:text-blue-600'"
-                        class="px-5 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-2">
+                        class="px-5 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center justify-center gap-2 w-1/2 md:w-auto">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
                             </path>
                         </svg>
-                        Master Calendar
+                        Calendar
                     </button>
                 </div>
             </div>
@@ -46,160 +96,91 @@
 
         <div x-show="activeTab === 'queue'" x-transition:enter="transition ease-out duration-300"
             x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0"
-            class="space-y-4">
+            class="space-y-4 relative">
 
-            @forelse($queue as $index => $appt)
-                @php
-                    $patient = $appt->patient;
-                    $age = $patient->dob ? \Carbon\Carbon::parse($patient->dob)->age : '--';
-                    $hasVitals = !empty($appt->triage_vitals);
+            <div id="queue-list-container" class="space-y-4">
+                @include('doctor.partials.queue-list')
+            </div>
 
-                    $bp =
-                        $hasVitals && isset($appt->triage_vitals['blood_pressure'])
-                            ? $appt->triage_vitals['blood_pressure']
-                            : '--/--';
-                    $temp =
-                        $hasVitals && isset($appt->triage_vitals['temperature'])
-                            ? $appt->triage_vitals['temperature'] . '°C'
-                            : '--';
-                    $weight =
-                        $hasVitals && isset($appt->triage_vitals['weight'])
-                            ? $appt->triage_vitals['weight'] . 'kg'
-                            : '--';
-
-                    $queueNum = str_pad($index + 1, 2, '0', STR_PAD_LEFT);
-                    $shortId = strtoupper(substr($patient->id, 0, 8));
-                    $reason = $appt->reason_for_visit ?? 'Routine checkup / No reason provided';
-                @endphp
-
-                @if ($hasVitals)
-                    <div
-                        class="bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl shadow-sm overflow-hidden relative group hover:border-blue-300 transition-colors">
-                        <div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                            <div
-                                class="flex items-start gap-4 text-gray-400 group-hover:text-securx-navy transition-colors">
-                                <div
-                                    class="w-14 h-14 rounded-2xl bg-slate-100 group-hover:bg-blue-50 flex flex-col items-center justify-center text-slate-500 group-hover:text-blue-600 font-bold shrink-0 transition-colors">
-                                    <span class="text-xl font-black leading-none">{{ $queueNum }}</span>
-                                </div>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="text-lg font-bold text-securx-navy">{{ $patient->last_name }},
-                                            {{ $patient->first_name }}</h3>
-                                        <span
-                                            class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-600 uppercase tracking-widest border border-emerald-200">Triaged
-                                            • Ready</span>
-                                    </div>
-                                    <p class="text-sm text-gray-500 font-medium">{{ $age }} yrs •
-                                        {{ $patient->gender ?? 'N/A' }} • ID: {{ $shortId }}</p>
-                                    <p class="text-xs text-gray-400 mt-1 group-hover:text-securx-navy transition-colors">
-                                        {{ ucfirst($appt->appointment_type) }}: {{ $reason }}</p>
-                                </div>
-                            </div>
-
-                            <div
-                                class="flex items-center gap-8 px-6 py-3 bg-white/50 rounded-xl border border-gray-100 group-hover:bg-white transition-colors">
-                                <div class="text-center">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase">BP</p>
-                                    <p class="text-sm font-black text-emerald-600">{{ $bp }}</p>
-                                </div>
-                                <div class="text-center border-x border-gray-200 px-8">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Temp</p>
-                                    <p class="text-sm font-black text-securx-navy">{{ $temp }}</p>
-                                </div>
-                                <div class="text-center">
-                                    <p class="text-[10px] font-bold text-gray-400 uppercase">Weight</p>
-                                    <p class="text-sm font-black text-securx-navy">{{ $weight }}</p>
-                                </div>
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                <a href="{{ route('doctor.consultation.show', ['appointment' => $appt->id]) }}"
-                                    class="bg-white border-2 border-gray-200 text-securx-navy hover:border-blue-600 hover:text-blue-600 font-bold py-2.5 px-6 rounded-xl transition text-sm shadow-sm flex items-center gap-2 whitespace-nowrap">
-                                    Start Consultation
-                                    <svg class="w-4 h-4 opacity-70" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1">
-                                        </path>
-                                    </svg>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <div class="bg-white/40 border border-dashed border-gray-300 rounded-2xl overflow-hidden opacity-70">
-                        <div class="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                            <div class="flex items-start gap-4">
-                                <div
-                                    class="w-14 h-14 rounded-2xl bg-slate-50 border border-gray-200 flex items-center justify-center text-slate-300 font-bold shrink-0">
-                                    <span class="text-xl font-black leading-none">{{ $queueNum }}</span>
-                                </div>
-                                <div>
-                                    <div class="flex items-center gap-2">
-                                        <h3 class="text-lg font-bold text-gray-400">{{ $patient->last_name }},
-                                            {{ $patient->first_name }}</h3>
-                                        <span
-                                            class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-100 text-gray-400 uppercase tracking-widest">Front
-                                            Desk Waiting</span>
-                                    </div>
-                                    <p class="text-sm text-gray-400">{{ $age }} yrs •
-                                        {{ $patient->gender ?? 'N/A' }}</p>
-                                </div>
-                            </div>
-
-                            <div class="flex-1 text-center py-2 italic text-xs text-gray-400">
-                                Awaiting triage vitals from Secretary...
-                            </div>
-
-                            <div class="flex items-center gap-3">
-                                <button disabled
-                                    class="bg-gray-100 text-gray-400 font-bold py-2.5 px-6 rounded-xl text-sm cursor-not-allowed border border-gray-200 flex items-center gap-2">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
-                                        </path>
-                                    </svg>
-                                    Awaiting Vitals
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            @empty
-                <div class="text-center py-10 bg-white rounded-2xl border border-gray-200 shadow-sm">
-                    <p class="text-gray-500 font-medium">No patients currently in the queue.</p>
-                </div>
-            @endforelse
-
-            @if ($queue->total() > 0)
-                <div
-                    class="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mt-6">
-                    <p class="text-xs text-gray-500 font-medium">
-                        Showing <span class="font-bold text-securx-navy">{{ $queue->firstItem() }}</span> to <span
-                            class="font-bold text-securx-navy">{{ $queue->lastItem() }}</span> of <span
-                            class="font-bold text-securx-navy">{{ $queue->total() }}</span> patients in queue
-                    </p>
-                    <div class="flex items-center gap-1.5">
-                        {{ $queue->links('pagination::tailwind') }}
-                    </div>
-                </div>
-            @endif
+            <div x-show="loading" style="display: none;"
+                class="absolute inset-0 bg-white/50 backdrop-blur-sm z-10 flex items-center justify-center rounded-2xl">
+                <svg class="animate-spin h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                    </circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+            </div>
         </div>
 
         <div x-show="activeTab === 'calendar'" style="display: none;"
             class="bg-white/90 backdrop-blur-md border border-gray-200 rounded-2xl p-6 shadow-sm min-h-[600px]">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-bold text-securx-navy border-l-4 border-blue-600 pl-3">Appointment Schedule</h3>
-                <span
-                    class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold border border-emerald-200">Accepting
-                    Appointments</span>
-            </div>
-            <div id="doctorCalendar" class="w-full min-h-[600px]" data-events="{{ json_encode($calendarEvents) }}">
-            </div>
-        </div>
 
+            <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+                <div class="flex items-center gap-3">
+                    <h3 class="text-lg font-bold text-securx-navy border-l-4 border-blue-600 pl-3">Appointment Schedule
+                    </h3>
+                    <span
+                        class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold border border-emerald-200">Accepting
+                        Appointments</span>
+                </div>
+
+                <div
+                    class="flex flex-wrap items-center gap-4 text-xs font-bold text-gray-500 bg-slate-50 px-4 py-2 rounded-xl border border-gray-100">
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#2563eb]"></span>
+                        Confirmed
+                    </div>
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#f59e0b]"></span> Pending
+                    </div>
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#10b981]"></span>
+                        Completed
+                    </div>
+                    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-[#ef4444]"></span>
+                        Cancelled
+                    </div>
+                </div>
+            </div>
+
+            <div id="doctorCalendar" class="w-full min-h-[600px]" data-events="{{ json_encode($calendarEvents) }}"></div>
+        </div>
     </div>
 
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('queueManager', () => ({
+                activeTab: 'queue',
+                search: '{{ request('search') }}',
+                sort: '{{ request('sort', 'asc') }}',
+                loading: false,
 
+                updateQueue() {
+                    this.loading = true;
+
+                    let url = new URL(window.location.href);
+                    if (this.search) {
+                        url.searchParams.set('search', this.search);
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+                    url.searchParams.set('sort', this.sort);
+
+                    window.history.pushState({}, '', url);
+
+                    fetch(url, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.text())
+                        .then(html => {
+                            document.getElementById('queue-list-container').innerHTML = html;
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                }
+            }));
+        });
+    </script>
 @endsection

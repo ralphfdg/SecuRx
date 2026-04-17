@@ -22,6 +22,7 @@ export default defineConfig({
                 'resources/js/doctor-calendar.js',
                 'resources/js/dataset-management.js',
                 'resources/js/specializations.js',
+                'resources/js/doctor-history.js',
             ],
             refresh: true,
         }),
