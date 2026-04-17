@@ -447,15 +447,16 @@ class DoctorController extends Controller
 
         $alerts = [];
         $debug_logs = [];
-        $trigger_drawer = false; // NEW: Controls if the drawer forcefully opens
+        $trigger_drawer = false;
 
-        // 1. Baseline Allergies (Does NOT trigger the drawer to open, just populates the badge)
+        // 1. Baseline Allergies
         $allergies = DB::table('patient_allergies')->where('patient_id', $patientId)->get();
         foreach ($allergies as $allergy) {
             $alerts[] = [
                 'type' => 'allergy',
                 'severity' => 'high',
                 'title' => 'Baseline Patient Allergy',
+                'source' => 'Medical History',
                 'message' => "Documented baseline allergy to {$allergy->allergen_name}.",
             ];
         }
@@ -463,18 +464,23 @@ class DoctorController extends Controller
         if ($rxcui) {
             // Grab the generic name of the NEW drug
             $newMedication = DB::table('medications')->where('rxcui', $rxcui)->first();
-            $newMedName = $newMedication ? preg_replace('/[^A-Za-z]/', '', explode(' ', $newMedication->generic_name)[0]) : '';
 
-            // 2. Direct Allergy Match (DOES trigger the drawer)
+            // --- CLEAN TARGET NAME ---
+            // We get the first word (e.g., "Amoxicillin") and strip non-alpha chars
+            $targetGenericName = $newMedication ? explode(' ', $newMedication->generic_name)[0] : '';
+            $newMedName = preg_replace('/[^A-Za-z]/', '', $targetGenericName);
+
+            // 2. Direct Allergy Match
             foreach ($allergies as $allergy) {
                 if (stripos($newMedName, $allergy->allergen_name) !== false || stripos($allergy->allergen_name, $newMedName) !== false) {
                     $alerts[] = [
                         'type' => 'allergy',
                         'severity' => 'high',
                         'title' => "ALLERGY CONFLICT: {$newMedName}",
+                        'source' => 'Patient Profile',
                         'message' => "CRITICAL: The patient has a documented allergy to the drug you just selected ({$allergy->allergen_name}).",
                     ];
-                    $trigger_drawer = true; // Force open!
+                    $trigger_drawer = true;
                 }
             }
 
@@ -487,17 +493,39 @@ class DoctorController extends Controller
                 ->pluck('medications.generic_name')
                 ->toArray();
 
-            $cartMeds = DB::table('medications')->whereIn('rxcui', $currentRxcuis)->pluck('generic_name')->toArray();
-            $allExistingNames = array_unique(array_merge($activeMeds, $cartMeds));
+            $cartMeds = DB::table('medications')
+                ->whereIn('rxcui', $currentRxcuis)
+                ->pluck('generic_name')
+                ->toArray();
+
+            $sourceMap = [];
+            foreach ($activeMeds as $name) {
+                $sourceMap[$name] = 'Active Prescription';
+            }
+            foreach ($cartMeds as $name) {
+                $sourceMap[$name] = 'Current Session';
+            }
+
+            // --- THE CRITICAL FIX: EXCLUSION LOGIC ---
+            // Merge all names, make them unique, and filter out the one we are currently checking
+            $allExistingNames = array_filter(
+                array_unique(array_merge($activeMeds, $cartMeds)),
+                function ($existingName) use ($newMedName) {
+                    // Remove if the existing name starts with the same word as our target (e.g., Amoxicillin)
+                    $cleanedExisting = preg_replace('/[^A-Za-z]/', '', explode(' ', $existingName)[0]);
+
+                    return strcasecmp($cleanedExisting, $newMedName) !== 0;
+                }
+            );
 
             $client = new Client(['verify' => false, 'timeout' => 5]);
             $apiKey = env('OPENFDA_API_KEY', '');
             $authParam = $apiKey ? "api_key={$apiKey}&" : '';
 
             foreach ($allExistingNames as $existingDrugName) {
-
                 $cleanedName = preg_replace('/[^A-Za-z]/', '', explode(' ', $existingDrugName)[0]);
 
+                // Interaction Check URL 1 & 2
                 $query1 = "openfda.rxcui:\"{$rxcui}\"+AND+drug_interactions:{$cleanedName}";
                 $url1 = "https://api.fda.gov/drug/label.json?{$authParam}search={$query1}&limit=1";
 
@@ -517,22 +545,20 @@ class DoctorController extends Controller
                         if ($response->getStatusCode() == 200) {
                             $data = json_decode($response->getBody(), true);
                             if (isset($data['results'][0]['drug_interactions'])) {
-
+                                $origin = $sourceMap[$existingDrugName] ?? 'Active Record';
                                 $alerts[] = [
                                     'type' => 'interaction',
                                     'severity' => 'high',
-                                    // NEW: Explicitly name the two drugs clashing
                                     'title' => "{$newMedName} + {$cleanedName}",
-                                    // NEW: Pass the ENTIRE text to the frontend
+                                    'source' => $origin,
                                     'message' => $data['results'][0]['drug_interactions'][0],
                                 ];
-
-                                $trigger_drawer = true; // Force open!
+                                $trigger_drawer = true;
                                 $interactionFound = true;
                             }
                         }
                     } catch (\Exception $e) {
-                        // 404 No interaction found
+                        // Log or ignore 404/Network errors
                     }
                 }
             }
@@ -540,7 +566,7 @@ class DoctorController extends Controller
 
         return response()->json([
             'has_alerts' => count($alerts) > 0,
-            'trigger_drawer' => $trigger_drawer, // Tell the frontend if it should pop open
+            'trigger_drawer' => $trigger_drawer,
             'alerts' => $alerts,
             'debug' => $debug_logs,
         ]);
