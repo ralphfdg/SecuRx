@@ -646,8 +646,18 @@ class AdminController extends Controller
     public function destroySpecialization($id)
     {
         $specialization = \App\Models\Specialization::findOrFail($id);
+        $name = $specialization->name;
+        
+        // Because of the SoftDeletes trait, this now archives the record safely
         $specialization->delete();
 
-        return redirect()->back()->with('success', 'Specialization removed from registry.');
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action_type' => 'System Update',
+            'description' => "Archived medical specialization: {$name}", // Updated wording
+            'ip_address' => request()->ip()
+        ]);
+
+        return redirect()->back()->with('success', "Specialization '{$name}' safely archived."); // Updated wording
     }
 }
