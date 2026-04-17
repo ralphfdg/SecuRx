@@ -20,15 +20,21 @@
         </div>
     </div>
 
-    <form method="GET" action="{{ route('doctor.templates') }}" class="flex flex-col md:flex-row gap-4">
-        <div class="relative flex-1">
-            <input type="text" name="search" value="{{ request('search') }}" class="w-full bg-white border border-gray-200 text-base rounded-xl p-3.5 pl-12 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition font-medium text-securx-navy" placeholder="Search templates by name or content...">
-            <svg class="w-5 h-5 text-gray-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        </div>
-        <div class="w-full md:w-auto flex gap-2">
+    <form method="GET" action="{{ route('doctor.templates') }}" class="flex flex-col md:flex-row gap-4" x-data x-ref="templateSearchForm">
+    <div class="relative flex-1">
+        <input type="text" name="search" value="{{ request('search') }}" 
+            x-on:input.debounce.500ms="$refs.templateSearchForm.submit()"
+            autofocus onfocus="this.setSelectionRange(this.value.length, this.value.length);"
+            class="w-full bg-white border border-gray-200 text-base rounded-xl p-3.5 pl-12 focus:ring-blue-500 focus:border-blue-500 shadow-sm transition font-medium text-securx-navy" 
+            placeholder="Search templates by name or content...">
+        <svg class="w-5 h-5 text-gray-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </div>
+    <div class="w-full md:w-auto flex gap-2">
+        <noscript>
             <button type="submit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3.5 px-6 rounded-xl transition h-full text-sm">Search</button>
-        </div>
-    </form>
+        </noscript>
+    </div>
+</form>
 
     @if(session('success'))
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl font-bold text-sm">
