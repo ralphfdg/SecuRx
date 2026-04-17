@@ -33,6 +33,7 @@ return new class extends Migration
             $table->year('effective_year');
             
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

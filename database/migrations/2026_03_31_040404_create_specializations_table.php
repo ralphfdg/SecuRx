@@ -14,7 +14,9 @@ return new class extends Migration
         Schema::create('specializations', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // e.g., 'Pediatrics', 'Cardiology'
+            $table->text('description')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

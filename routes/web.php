@@ -115,7 +115,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // 2. Dataset Import Engine
     Route::get('/dataset', [AdminController::class, 'datasetView'])->name('dataset');
+    Route::patch('/users/{id}', [\App\Http\Controllers\AdminController::class, 'updateUser'])->name('users.update');
+    Route::delete('/users/{id}', [\App\Http\Controllers\AdminController::class, 'destroyUser'])->name('users.destroy');
     Route::post('/dataset/import', [AdminController::class, 'importDataset'])->name('dataset.import');
+    Route::post('/dataset/import-dpri', [AdminController::class, 'importDpriDataset'])->name('dataset.import-dpri');
+    Route::patch('/dataset/dpri/{id}', [AdminController::class, 'updateDpri'])->name('dataset.dpri.update');
+    Route::delete('/dataset/dpri/{id}', [AdminController::class, 'destroyDpri'])->name('dataset.dpri.destroy');
     Route::patch('/dataset/{id}', [AdminController::class, 'updateMedication'])->name('dataset.update');
     Route::delete('/dataset/{id}', [AdminController::class, 'deleteMedication'])->name('dataset.destroy');
 
@@ -124,12 +129,18 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::patch('/users/{id}/approve', [AdminController::class, 'approveUser'])->name('users.approve');
     Route::patch('/users/{id}/reject', [AdminController::class, 'rejectUser'])->name('users.reject');
 
+    Route::get('/specializations', [AdminController::class, 'specializationsView'])->name('specializations');
+    Route::post('/specializations', [AdminController::class, 'storeSpecialization'])->name('specializations.store');
+    Route::patch('/specializations/{id}', [AdminController::class, 'updateSpecialization'])->name('specializations.update');
+    Route::delete('/specializations/{id}', [AdminController::class, 'destroySpecialization'])->name('specializations.destroy');
+
     // 4. Immutable Audit Logs
     Route::get('/logs', [AdminController::class, 'logs'])->name('logs');
 
     // 5. System Backup & Export
     Route::get('/backup', [AdminController::class, 'backupView'])->name('backup');
     Route::post('/backup/export', [AdminController::class, 'exportBackup'])->name('backup.export');
+    Route::get('/backup/export-dpri', [\App\Http\Controllers\AdminController::class, 'exportDpriDataset'])->name('backup.export-dpri');
 
     // 6. Global Platform Settings
     Route::get('/settings', [AdminController::class, 'settingsView'])->name('settings');

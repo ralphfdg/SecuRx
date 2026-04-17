@@ -122,3 +122,56 @@ window.closeDeleteModal = function() {
     const modal = document.getElementById('delete-modal');
     if(modal) modal.classList.add('hidden');
 };
+
+// ==========================================
+// DATASET MANAGEMENT MODALS
+// ==========================================
+
+// Medication Handlers
+window.openEditModal = function(id, name, form, strength, price) {
+    document.getElementById('edit-form').action = `/admin/dataset/${id}`;
+    document.getElementById('edit-name').value = name;
+    document.getElementById('edit-form-input').value = form;
+    document.getElementById('edit-strength').value = strength;
+    document.getElementById('edit-price').value = price;
+    document.getElementById('edit-modal').classList.remove('hidden');
+};
+
+window.closeEditModal = function() {
+    document.getElementById('edit-modal').classList.add('hidden');
+};
+
+window.openDeleteModal = function(id, name) {
+    document.getElementById('delete-form').action = `/admin/dataset/${id}`;
+    document.getElementById('delete-drug-name').textContent = name;
+    document.getElementById('delete-modal').classList.remove('hidden');
+};
+
+window.closeDeleteModal = function() {
+    document.getElementById('delete-modal').classList.add('hidden');
+};
+
+// DPRI Handlers
+window.openDpriEditModal = function(id, name, lowest, median, highest, year) {
+    document.getElementById('edit-dpri-form').action = `/admin/dataset/dpri/${id}`;
+    document.getElementById('edit-dpri-name').value = name;
+    document.getElementById('edit-dpri-lowest').value = lowest;
+    document.getElementById('edit-dpri-median').value = median;
+    document.getElementById('edit-dpri-highest').value = highest;
+    document.getElementById('edit-dpri-year').value = year;
+    document.getElementById('edit-dpri-modal').classList.remove('hidden');
+};
+
+window.closeDpriEditModal = function() {
+    document.getElementById('edit-dpri-modal').classList.add('hidden');
+};
+
+window.openDpriDeleteModal = function(id, name) {
+    document.getElementById('delete-dpri-form').action = `/admin/dataset/dpri/${id}`;
+    document.getElementById('delete-dpri-name').textContent = name;
+    document.getElementById('delete-dpri-modal').classList.remove('hidden');
+};
+
+window.closeDpriDeleteModal = function() {
+    document.getElementById('delete-dpri-modal').classList.add('hidden');
+};

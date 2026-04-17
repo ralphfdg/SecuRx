@@ -9,12 +9,10 @@ use App\Models\User;
 use App\Models\Medication;
 use App\Models\Prescription;
 use App\Models\AuditLog;
+use App\Models\DpriRecord;
 
 class AdminController extends Controller
 {
-    // ==========================================
-    // 1. DASHBOARD
-    // ==========================================
     // ==========================================
     // 1. DASHBOARD
     // ==========================================
@@ -64,6 +62,60 @@ class AdminController extends Controller
         return redirect()->back()->with('success', "{$user->name}'s application has been rejected.");
     }
 
+    public function updateUser(Request $request, $id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'role' => 'required|in:admin,doctor,pharmacist,secretary',
+            'status' => 'required|in:active,pending', // <-- Changed 'suspended' to 'pending'
+        ]);
+
+        // Prevent an admin from accidentally setting their own account to pending
+        if ($user->id === auth()->id() && $request->status === 'pending') {
+            return redirect()->back()->withErrors(['You cannot set your own active session to pending.']);
+        }
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+            'role' => $request->role,
+            'status' => $request->status, 
+        ]);
+
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action_type' => 'User Update',
+            'description' => "Updated credentials/status for user: {$user->email}",
+            'ip_address' => request()->ip()
+        ]);
+
+        return redirect()->back()->with('success', 'Staff member updated successfully.');
+    }
+
+    public function destroyUser($id)
+    {
+        $user = \App\Models\User::findOrFail($id);
+        
+        // Prevent an admin from accidentally archiving themselves
+        if ($user->id === auth()->id()) {
+            return redirect()->back()->withErrors(['Cannot archive your own active session.']);
+        }
+
+        $user->delete(); // Executes a soft delete to maintain clinical audit trails
+
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action_type' => 'User Archived',
+            'description' => "Archived user account: {$user->email}",
+            'ip_address' => request()->ip()
+        ]);
+
+        return redirect()->back()->with('success', "Archived {$user->name} from the active registry.");
+    }
+
     // ==========================================
     // 3. DATASET IMPORT ENGINE & MANAGEMENT
     // ==========================================
@@ -71,19 +123,67 @@ class AdminController extends Controller
     {
         $search = $request->input('search');
 
-        // Start the query
-        $query = Medication::query();
+        // ==========================================
+        // 1. Fetch Medications 
+        // ==========================================
+        $medQuery = \App\Models\Medication::query();
 
-        // If the user typed something in the search bar, filter the results
         if ($search) {
-            $query->where('generic_name', 'LIKE', "%{$search}%")
-                  ->orWhere('form', 'LIKE', "%{$search}%");
+            $medQuery->where('generic_name', 'LIKE', "%{$search}%")
+                     ->orWhere('form', 'LIKE', "%{$search}%");
         }
 
-        // Fetch paginated results (15 per page) and keep the search query in the pagination links
-        $medications = $query->orderBy('updated_at', 'desc')->paginate(15)->appends(['search' => $search]);
+        // Scoped pagination using 'med_page'
+        $medications = $medQuery->orderBy('updated_at', 'desc')
+            ->paginate(15, ['*'], 'med_page')
+            ->appends(request()->except('med_page'));
 
-        return view('admin.dataset', compact('medications', 'search'));
+
+        // ==========================================
+        // 2. Fetch DPRI Records
+        // ==========================================
+        $dpriQuery = \App\Models\DpriRecord::query();
+
+        if ($search) {
+            $dpriQuery->where('doh_raw_drug_name', 'LIKE', "%{$search}%")
+                      ->orWhere('effective_year', 'LIKE', "%{$search}%");
+        }
+
+        // Scoped pagination using 'dpri_page'
+        $dpriRecords = $dpriQuery->orderBy('updated_at', 'desc')
+            ->paginate(15, ['*'], 'dpri_page')
+            ->appends(request()->except('dpri_page'));
+
+
+        return view('admin.dataset', compact('medications', 'dpriRecords', 'search'));
+    }
+
+    // ==========================================
+    // DPRI CRUD OPERATIONS
+    // ==========================================
+    
+    public function updateDpri(Request $request, $id)
+    {
+        $request->validate([
+            'doh_raw_drug_name' => 'required|string|max:255',
+            'lowest_price' => 'nullable|numeric',
+            'median_price' => 'nullable|numeric',
+            'highest_price' => 'nullable|numeric',
+            'effective_year' => 'required|integer',
+        ]);
+
+        $dpri = \App\Models\DpriRecord::findOrFail($id);
+        $dpri->update($request->all());
+
+        return redirect()->back()->with('success', 'DPRI Record updated successfully.');
+    }
+
+    public function destroyDpri($id)
+    {
+        $dpri = \App\Models\DpriRecord::findOrFail($id);
+        $dpri->delete(); // Executes a soft delete to maintain audit history
+
+        return redirect()->back()->with('success', "Archived {$dpri->doh_raw_drug_name} from the active DPRI index.");
     }
 
     public function importDataset(Request $request)
@@ -146,6 +246,61 @@ class AdminController extends Controller
             return redirect()->route('admin.dataset')
                 ->with('error', 'A structural error occurred while processing the file. Please ensure it is a properly formatted CSV.');
         }
+    }
+
+    // NEW: DPRI Import Engine
+    public function importDpriDataset(Request $request)
+    {
+        // 1. Validate the file upload
+        $request->validate([
+            'dpri_dataset' => 'required|file|mimes:csv,txt|max:10240',
+        ]);
+
+        $file = $request->file('dpri_dataset');
+        
+        // 2. Open file for reading
+        $handle = fopen($file->path(), 'r');
+        
+        // 3. Skip header row
+        fgetcsv($handle);
+        
+        $importedCount = 0;
+
+        // 4. Process each row into the DPRI format
+        while (($row = fgetcsv($handle)) !== false) {
+            // Ensure exactly 5 columns: Raw Name, Lowest, Median, Highest, Year
+            if (count($row) >= 5) {
+                DpriRecord::updateOrCreate(
+                    [
+                        // Match existing records based on the drug name and effective year
+                        'doh_raw_drug_name' => trim($row[0]),
+                        'effective_year'    => trim($row[4]),
+                    ],
+                    [
+                        // Safely parse decimals and handle empty values
+                        'lowest_price'  => $row[1] !== '' ? (float) str_replace(',', '', $row[1]) : null,
+                        'median_price'  => $row[2] !== '' ? (float) str_replace(',', '', $row[2]) : null,
+                        'highest_price' => $row[3] !== '' ? (float) str_replace(',', '', $row[3]) : null,
+                    ]
+                );
+                $importedCount++;
+            }
+        }
+
+        fclose($handle);
+
+        // Securely log this administrative action
+        // Securely log this administrative action
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'action_type' => 'System Update',
+            'description' => "Admin imported a DPRI dataset. Updated/added {$importedCount} records.",
+            'ip_address' => request()->ip()
+        ]);
+
+        // Redirect back to the dataset page instead:
+        return redirect()->back()
+            ->with('success', "DPRI Dataset pipeline successful! {$importedCount} records synced.");
     }
 
     public function updateMedication(Request $request, $id)
@@ -308,6 +463,67 @@ class AdminController extends Controller
         return redirect()->back()->with('error', 'Invalid export type selected.');
     }
 
+    public function exportDpriDataset()
+    {
+        $fileName = 'securx_dpri_backup_' . date('Y_m_d_His') . '.csv';
+
+        // 1. Securely log the data extraction
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action_type' => 'System Backup',
+            'description' => 'Admin exported the complete DOH DPRI Registry as CSV.',
+            'ip_address' => request()->ip()
+        ]);
+
+        // 2. Define HTTP headers for direct file download
+        $headers = [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename={$fileName}",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ];
+
+        // 3. Define the CSV Header columns
+        $columns = [
+            'Record ID', 
+            'Linked Medication ID', 
+            'DOH Raw Drug Name', 
+            'Lowest Price (PHP)', 
+            'Median Price (PHP)', 
+            'Highest Price (PHP)', 
+            'Effective Year', 
+            'Status (Deleted At)'
+        ];
+
+        // 4. Stream the data directly to the browser
+        $callback = function() use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            // Use chunking to prevent memory exhaustion on massive datasets
+            // withTrashed() ensures we backup archived records too
+            \App\Models\DpriRecord::withTrashed()->chunk(1000, function ($records) use ($file) {
+                foreach ($records as $record) {
+                    fputcsv($file, [
+                        $record->id,
+                        $record->medication_id ?? 'Unlinked',
+                        $record->doh_raw_drug_name,
+                        $record->lowest_price,
+                        $record->median_price,
+                        $record->highest_price,
+                        $record->effective_year,
+                        $record->deleted_at ? 'Archived: ' . $record->deleted_at : 'Active'
+                    ]);
+                }
+            });
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     // ==========================================
     // 6. GLOBAL PLATFORM SETTINGS
     // ==========================================
@@ -383,5 +599,65 @@ class AdminController extends Controller
         ]);
 
         return redirect()->back()->with('success', 'Your personal details have been securely updated.');
+    }
+
+// ==========================================
+    // SPECIALIZATION MANAGEMENT
+    // ==========================================
+
+    public function specializationsView(Request $request)
+    {
+        $search = $request->input('search');
+
+        $specializations = \App\Models\Specialization::when($search, function($query) use ($search) {
+            return $query->where('name', 'LIKE', "%{$search}%")
+                         ->orWhere('description', 'LIKE', "%{$search}%");
+        })->orderBy('name', 'asc')->paginate(15);
+
+        return view('admin.specializations', compact('specializations', 'search'));
+    }
+
+    public function storeSpecialization(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:specializations,name',
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        \App\Models\Specialization::create($request->only(['name', 'description']));
+
+        return redirect()->back()->with('success', 'New specialization added to registry.');
+    }
+
+    public function updateSpecialization(Request $request, $id)
+    {
+        $specialization = \App\Models\Specialization::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255|unique:specializations,name,' . $id,
+            'description' => 'nullable|string|max:1000',
+        ]);
+
+        $specialization->update($request->only(['name', 'description']));
+
+        return redirect()->back()->with('success', 'Specialization updated successfully.');
+    }
+
+    public function destroySpecialization($id)
+    {
+        $specialization = \App\Models\Specialization::findOrFail($id);
+        $name = $specialization->name;
+        
+        // Because of the SoftDeletes trait, this now archives the record safely
+        $specialization->delete();
+
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action_type' => 'System Update',
+            'description' => "Archived medical specialization: {$name}", // Updated wording
+            'ip_address' => request()->ip()
+        ]);
+
+        return redirect()->back()->with('success', "Specialization '{$name}' safely archived."); // Updated wording
     }
 }

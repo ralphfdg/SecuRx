@@ -166,6 +166,7 @@ class DatabaseSeeder extends Seeder
             DoctorScheduleSeeder::class,
             PrescriptionSeeder::class,
             PharmacistSeeder::class,
+            SpecializationSeeder::class,
         ]);
 
         $this->command->info('Success! Schedule is now congested. Check your Secretary Calendar.');
