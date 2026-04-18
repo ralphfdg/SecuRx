@@ -18,6 +18,7 @@ return new class extends Migration
         
             // This links to your public DOH/NIH database. It is an unsignedBigInteger because the medications table uses standard IDs. 
             $table->foreignId('medication_id')->constrained('medications')->cascadeOnDelete(); 
+            $table->boolean('is_maintenance')->default(false);
         
             $table->string('sig'); // Instructions: Dosage, frequency, duration 
             $table->integer('quantity'); 
