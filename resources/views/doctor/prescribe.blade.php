@@ -328,6 +328,29 @@
                             </div>
                         </div>
 
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-gray-100 pt-4 mt-2">
+                            <label
+                                class="flex items-center gap-3 cursor-pointer p-3 border border-emerald-100 bg-emerald-50/30 rounded-xl hover:bg-emerald-50 transition">
+                                <input type="checkbox" x-model="newMed.is_maintenance"
+                                    class="w-5 h-5 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300 shadow-sm"
+                                    @change="if(!newMed.is_maintenance) newMed.max_refills = 0">
+                                <div>
+                                    <span class="block text-sm font-bold text-securx-navy">Maintenance Drug</span>
+                                    <span class="block text-[10px] text-gray-500 mt-0.5">Allows automated
+                                        multi-refills</span>
+                                </div>
+                            </label>
+
+                            <div x-show="newMed.is_maintenance" x-collapse>
+                                <label
+                                    class="block text-[11px] font-bold text-emerald-600 uppercase tracking-wider mb-1.5">Max
+                                    Refills Allowed</label>
+                                <input type="number" min="1" max="12" x-model="newMed.max_refills"
+                                    class="w-full bg-white border border-emerald-200 text-sm rounded-xl p-3 focus:border-emerald-500 focus:ring-emerald-500"
+                                    placeholder="e.g. 5">
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <div class="flex justify-between items-end mb-1.5">
@@ -407,6 +430,27 @@
                                     Appointment Date</label>
                                 <input type="date" x-model="nextAppointment"
                                     class="w-full bg-slate-50 border border-gray-200 text-sm rounded-xl p-3 focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            <div class="col-span-1 md:col-span-2 border-t border-gray-100 pt-4 mt-2">
+                                <label
+                                    class="flex items-center gap-3 cursor-pointer p-4 border border-blue-100 bg-blue-50/30 rounded-xl hover:bg-blue-50 transition mb-3">
+                                    <input type="checkbox" x-model="overrideExpiry"
+                                        class="w-5 h-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300 shadow-sm">
+                                    <div>
+                                        <span class="block text-sm font-bold text-securx-navy">Set Custom Prescription
+                                            Expiry</span>
+                                        <span class="block text-[10px] text-gray-500 mt-0.5">Leave unchecked to use smart
+                                            defaults (30 Days Acute / 6 Months Maintenance)</span>
+                                    </div>
+                                </label>
+
+                                <div x-show="overrideExpiry" x-collapse>
+                                    <label
+                                        class="block text-[11px] font-bold text-red-500 uppercase tracking-wider mb-1.5">Manual
+                                        Expiry Date</label>
+                                    <input type="date" x-model="customExpiryDate"
+                                        class="w-full bg-white border border-red-200 text-sm rounded-xl p-3 focus:border-red-500 focus:ring-red-500">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -516,6 +560,18 @@
                                         <span x-show="med.dosage_strength"
                                             class="bg-red-100 text-red-700 border border-red-200 font-black px-1 py-0.5 rounded text-[9px] uppercase tracking-wider shadow-sm"
                                             x-text="med.dosage_strength"></span>
+
+                                        <span x-show="med.is_maintenance"
+                                            class="bg-emerald-100 text-emerald-800 border border-emerald-200 font-black px-1 py-0.5 rounded text-[9px] uppercase tracking-wider shadow-sm flex items-center gap-1">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor"
+                                                viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15">
+                                                </path>
+                                            </svg>
+                                            Maintenance (Refills: <span x-text="med.max_refills"></span>)
+                                        </span>
+
                                         <span x-show="med.form" class="text-[10px] text-gray-500 font-medium"
                                             x-text="med.form"></span>
                                     </p>

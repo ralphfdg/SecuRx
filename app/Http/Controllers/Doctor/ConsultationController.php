@@ -56,9 +56,13 @@ class ConsultationController extends Controller
             'medications.*.patient_instructions' => 'nullable|string',
             'medications.*.sig' => 'nullable|string',
             'medications.*.quantity' => 'nullable|integer',
+            // --- NEW SECURX VALIDATION RULES ---
+            'medications.*.is_maintenance' => 'boolean',
+            'medications.*.max_refills' => 'required_if:medications.*.is_maintenance,true|integer|min:0',
+            'override_expiry' => 'boolean',
+            'custom_expiry_date' => 'nullable|required_if:override_expiry,true|date|after_or_equal:today',
         ]);
 
-        // Initialize a variable to capture the UUID outside the transaction scope
         $prescriptionId = null;
 
         DB::transaction(function () use ($request, $appointment, &$prescriptionId) {
@@ -75,8 +79,25 @@ class ConsultationController extends Controller
                 'next_appointment_date' => $request->next_appointment_date,
             ]);
 
-            // 2. Create Prescription record
-            // Even if no medications, we might still have a prescription if there are general instructions
+            // 2. Pre-calculate Expiry Date
+            if ($request->override_expiry && $request->filled('custom_expiry_date')) {
+                // If doctor manually overrode the system, use their exact date (end of day)
+                $expiresAt = \Carbon\Carbon::parse($request->custom_expiry_date)->endOfDay();
+            } else {
+                // Otherwise, fallback to the SecuRx Safety Engine defaults
+                $expiresAt = now()->addDays(30); 
+                
+                if ($request->has('medications') && is_array($request->medications)) {
+                    foreach ($request->medications as $med) {
+                        if (isset($med['is_maintenance']) && $med['is_maintenance'] == true) {
+                            $expiresAt = now()->addMonths(6); 
+                            break; 
+                        }
+                    }
+                }
+            }
+
+            // 3. Create Prescription record
             if (($request->has('medications') && count($request->medications) > 0) || $request->filled('general_instructions')) {
                 $prescription = Prescription::create([
                     'encounter_id' => $encounter->id,
@@ -85,14 +106,19 @@ class ConsultationController extends Controller
                     'print_patient_name' => $request->print_patient_name ?? false,
                     'general_instructions' => $request->general_instructions,
                     'status' => 'active',
+                    'expires_at' => $expiresAt, // Inject dynamic expiry
                 ]);
 
-                // Capture the newly generated UUID (char(36))
                 $prescriptionId = $prescription->id;
 
-                // 3. Loop and save PrescriptionItem records
+                // 4. Loop and save PrescriptionItem records
                 if ($request->has('medications') && is_array($request->medications)) {
                     foreach ($request->medications as $medication) {
+                        
+                        // Enforce max_refills to 0 if not maintenance (Safety Fallback)
+                        $isMaintenance = $medication['is_maintenance'] ?? false;
+                        $maxRefills = $isMaintenance ? ($medication['max_refills'] ?? 0) : 0;
+
                         PrescriptionItem::create([
                             'prescription_id' => $prescription->id,
                             'medication_id' => $medication['medication_id'],
@@ -103,29 +129,28 @@ class ConsultationController extends Controller
                             'patient_instructions' => $medication['patient_instructions'] ?? null,
                             'sig' => $medication['sig'] ?? null,
                             'quantity' => $medication['quantity'] ?? null,
+                            // --- NEW COLUMNS ---
+                            'is_maintenance' => $isMaintenance,
+                            'max_refills' => $maxRefills,
                         ]);
                     }
                 }
             }
 
-            // 4. Update Appointment status
+            // 5. Update Appointment status
             $appointment->update([
                 'status' => 'completed',
             ]);
         });
 
-        // 5. Build the dynamic response payload for the frontend
         $responseData = [
             'success' => true,
             'message' => 'Consultation completed successfully.',
         ];
 
-        // If a prescription was generated, pass the UUID and future PDF URL
         if ($prescriptionId) {
             $responseData['has_prescription'] = true;
             $responseData['prescription_id'] = $prescriptionId;
-
-            // IMPORTANT: This uses a named route. Ensure this route exists in your web.php
             $responseData['pdf_url'] = route('doctor.prescription.print', ['id' => $prescriptionId]);
         } else {
             $responseData['has_prescription'] = false;
