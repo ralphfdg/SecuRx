@@ -157,7 +157,13 @@ class SecretaryController extends Controller
             ->select('users.*') // Ensure we only grab user data to avoid ID conflicts
             ->get();
 
-        $patients = User::where('role', 'patient')->get();
+        // 3. STRICT ROSTER (Option A): Fetch ONLY patients assigned to this clinic
+        $patients = User::where('role', 'patient')
+            ->whereHas('patientProfile', function ($q) use ($clinicId) {
+                $q->where('clinic_id', $clinicId);
+            })
+            ->orderBy('last_name', 'asc')
+            ->get();
 
         return view('secretary.appointments-create', compact('user', 'doctors', 'patients'));
     }
@@ -274,18 +280,12 @@ public function patients(Request $request)
         $user = Auth::user();
         $assignedClinicId = $user->secretaryProfile->clinic_id;
 
+        // STRICT ROSTER (Option A): Filter strictly by the patient's assigned clinic_id
         $query = User::where('role', 'patient')
-            ->with('patientProfile')
-            ->where(function ($mainQuery) use ($assignedClinicId) {
-                // Check A: Direct Clinic Link
-                $mainQuery->whereHas('patientProfile', function ($q) use ($assignedClinicId) {
-                    $q->where('clinic_id', $assignedClinicId);
-                })
-                // Check B: Linked by patient appointment history (Fixed relationship name)
-                ->orWhereHas('patientAppointments.doctor.doctorProfile', function ($q) use ($assignedClinicId) {
-                    $q->where('clinic_id', $assignedClinicId);
-                });
-            });
+            ->whereHas('patientProfile', function ($q) use ($assignedClinicId) {
+                $q->where('clinic_id', $assignedClinicId);
+            })
+            ->with('patientProfile');
 
         // Simple Search functionality
         if ($request->has('search') && $request->search != '') {
@@ -374,6 +374,68 @@ public function patients(Request $request)
         ]);
 
         return back()->with('success', 'Patient profile successfully created and linked to this clinic.');
+    }
+
+    public function storePatientAjax(Request $request)
+    {
+        $validated = $request->validate([
+            // User Table Data
+            'first_name'     => ['required', 'string', 'max:255'],
+            'last_name'      => ['required', 'string', 'max:255'],
+            'email'          => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            
+            // Patient Profile Data
+            'middle_name'    => ['nullable', 'string', 'max:255'],
+            'suffix'         => ['nullable', 'string', 'max:50'],
+            'date_of_birth'  => ['required', 'date', 'before_or_equal:today'],
+            'sex'            => ['required', 'in:Male,Female'],
+            'contact_number' => ['required', 'string', 'max:20'],
+            'address'        => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $patient = DB::transaction(function () use ($validated) {
+                // 1. Create the base User
+                $user = User::create([
+                    'first_name' => $validated['first_name'],
+                    'last_name'  => $validated['last_name'],
+                    'email'      => $validated['email'],
+                    'password'   => Hash::make(Str::random(16)), // Auto-generated secure password
+                    'role'       => 'patient', 
+                ]);
+
+                // 2. Create the associated PatientProfile
+                PatientProfile::create([
+                    'user_id'        => $user->id,
+                    'middle_name'    => $validated['middle_name'] ?? null,
+                    'suffix'         => $validated['suffix'] ?? null,
+                    'date_of_birth'  => $validated['date_of_birth'],
+                    'sex'            => $validated['sex'],
+                    'contact_number' => $validated['contact_number'],
+                    'address'        => $validated['address'] ?? null,
+                ]);
+
+                return $user;
+            });
+
+            // Format name for the dropdown: e.g., "Doe, John" or "John Doe"
+            $fullName = trim($patient->first_name . ' ' . $patient->last_name);
+
+            return response()->json([
+                'success' => true,
+                'patient' => [
+                    'id'   => $patient->id,
+                    'name' => $fullName,
+                ]
+            ], 201);
+
+        } catch (\Exception $e) {
+            \Log::error('AJAX Patient Creation Failed: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create patient record. Please check the logs.'
+            ], 500);
+        }
     }
 
     /**

@@ -95,6 +95,7 @@ class MassiveUserSeeder extends Seeder
             DB::table('patient_profiles')->insert([
                 'id' => Str::uuid()->toString(),
                 'user_id' => $patId,
+                'clinic_id' => $faker->randomElement($clinics),
                 'height' => $faker->randomFloat(2, 140, 190),
                 'weight' => $faker->randomFloat(2, 45, 100),
                 'address' => $faker->address,
