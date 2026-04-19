@@ -9,6 +9,7 @@ use App\Http\Controllers\Doctor\QueueController;
 use App\Http\Controllers\Doctor\TemplateController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
+use App\Http\Controllers\PharmacistController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecretaryController;
 use Illuminate\Support\Facades\Route;
@@ -115,8 +116,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
     // 2. Dataset Import Engine
     Route::get('/dataset', [AdminController::class, 'datasetView'])->name('dataset');
-    Route::patch('/users/{id}', [\App\Http\Controllers\AdminController::class, 'updateUser'])->name('users.update');
-    Route::delete('/users/{id}', [\App\Http\Controllers\AdminController::class, 'destroyUser'])->name('users.destroy');
+    Route::patch('/users/{id}', [AdminController::class, 'updateUser'])->name('users.update');
+    Route::delete('/users/{id}', [AdminController::class, 'destroyUser'])->name('users.destroy');
     Route::post('/dataset/import', [AdminController::class, 'importDataset'])->name('dataset.import');
     Route::post('/dataset/import-dpri', [AdminController::class, 'importDpriDataset'])->name('dataset.import-dpri');
     Route::patch('/dataset/dpri/{id}', [AdminController::class, 'updateDpri'])->name('dataset.dpri.update');
@@ -140,7 +141,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     // 5. System Backup & Export
     Route::get('/backup', [AdminController::class, 'backupView'])->name('backup');
     Route::post('/backup/export', [AdminController::class, 'exportBackup'])->name('backup.export');
-    Route::get('/backup/export-dpri', [\App\Http\Controllers\AdminController::class, 'exportDpriDataset'])->name('backup.export-dpri');
+    Route::get('/backup/export-dpri', [AdminController::class, 'exportDpriDataset'])->name('backup.export-dpri');
 
     // 6. Global Platform Settings
     Route::get('/settings', [AdminController::class, 'settingsView'])->name('settings');
@@ -174,7 +175,7 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     // 5. Prescription Viewing & PDF Generation
     Route::get('/prescription/{id}', [ConsultationController::class, 'showPrescription'])->name('prescription.show');
     Route::get('/prescription/{id}/print', [ConsultationController::class, 'printPrescription'])->name('prescription.print');
-    
+
     // API Endpoint for dynamic QR code loading in your Vue/Alpine Modal
     Route::get('/api/qr/{id}', [ConsultationController::class, 'renderQr'])->name('api.qr');
 
@@ -187,7 +188,6 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
     Route::post('/history/revoke/{id}', [HistoryController::class, 'revoke'])->name('history.revoke');
     Route::get('/history/export', [HistoryController::class, 'exportCsv'])->name('history.export');
     Route::get('/history/{id}', [HistoryController::class, 'show'])->name('history.show');
-
 
     // Patient Directory & CRUD
     Route::get('/directory', [DoctorController::class, 'directory'])->name('directory');
@@ -225,21 +225,23 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
 | 6. PHARMACIST PORTAL ROUTES
 |--------------------------------------------------------------------------
 */
-Route::prefix('pharmacist')->name('pharmacist.')->group(function () {
+Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('pharmacist.')->group(function () {
     Route::get('/dashboard', function () {
         return view('pharmacist.dashboard');
     })->name('dashboard');
 
-    Route::get('/scanner', function () {
-        return view('pharmacist.scanner');
-    })->name('scanner');
+    // Scanner
+    Route::get('/scanner', [PharmacistController::class, 'scanner'])->name('scanner');
+    Route::get('/dispense/{prescription_id}', [PharmacistController::class, 'dispense'])->name('dispense');
 
-    Route::get('/dispense', function () {
-        return view('pharmacist.dispense');
-    })->name('dispense');
+    // API Endpoints for Axios (Inside web.php to use session/CSRF)
+    Route::middleware(['auth', 'role:pharmacist'])->prefix('api')->group(function () {
+        Route::post('/scan', [PharmacistController::class, 'processScan'])->name('api.scan');
+        Route::post('/dispense/{prescription_id}', [PharmacistController::class, 'processDispense'])->name('api.dispense');
+    });
 
-    Route::get('/logs', function () {
-        return view('pharmacist.logs');
+    Route::get('/', function () {
+        return view('logs');
     })->name('logs');
 
     Route::get('/settings', function () {
@@ -260,7 +262,7 @@ Route::middleware(['auth', 'role:patient'])->prefix('patient')->name('patient.')
     // NEW: The missing routes from your demo flow
     Route::get('/appointments/book', [PatientController::class, 'bookAppointment'])->name('appointments.book');
     Route::post('/appointments', [PatientController::class, 'storeAppointment'])->name('appointments.store');
-// Appointment Management Routes
+    // Appointment Management Routes
     Route::post('/appointments/{id}/cancel', [PatientController::class, 'cancelAppointment'])->name('appointments.cancel');
     Route::post('/appointments/{id}/reschedule', [PatientController::class, 'rescheduleAppointment'])->name('appointments.reschedule');
 

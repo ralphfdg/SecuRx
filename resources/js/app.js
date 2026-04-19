@@ -1,11 +1,13 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import collapse from '@alpinejs/collapse';
 import consultationConsole from './doctor-prescribe.js';
 import templateManager from './doctor-templates.js';
 import staffManager from './doctor-staff-manager.js';
 import patientDirectory from './doctor-directory.js';
 
-
+// 2. Register the plugin BEFORE starting Alpine
+Alpine.plugin(collapse);
 
 // Make the consultation console available globally for the Blade view
 window.consultationConsole = consultationConsole;
@@ -15,6 +17,11 @@ Alpine.data('templateManager', templateManager);
 Alpine.data('staffManager', staffManager);
 // Make the directory manager available globally for the Blade view
 Alpine.data('patientDirectory', patientDirectory);
+
+
+// 2. Import our Custom Controllers BEFORE Alpine starts
+import './pharmacist-scanner';
+import './pharmacist-dispense';
 
 // Initialize Alpine
 window.Alpine = Alpine;
