@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     
-    window.selectPatient = function(id, name, time, provider) {
+    // Add height and weight to the accepted parameters
+    window.selectPatient = function(id, name, time, provider, height, weight) {
         // 1. Update the display text in the header
         document.getElementById('display_name').innerText = name;
         document.getElementById('display_time').innerText = time;
@@ -9,6 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // 2. Inject the UUID into both the Triage form AND the No-Show form
         document.getElementById('form_appointment_id').value = id;
         document.getElementById('no_show_appointment_id').value = id;
+
+        // NEW: Populate the pre-existing height and weight
+        document.getElementById('form_height').value = height || '';
+        document.getElementById('form_weight').value = weight || '';
         
         // 3. Swap the views
         document.getElementById('empty_state').classList.add('hidden');
@@ -24,5 +29,4 @@ document.addEventListener('DOMContentLoaded', function() {
         // Reset the form so previous patient data isn't accidentally submitted
         document.getElementById('triage_form').reset();
     };
-
 });

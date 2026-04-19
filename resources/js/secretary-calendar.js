@@ -38,19 +38,19 @@ document.addEventListener("DOMContentLoaded", function () {
                 "cursor-pointer shadow-sm rounded-md px-1 py-0.5 text-xs font-medium border-0",
 
             eventClick: function (info) {
-                // In a production app, this triggers a modal.
+                // Displays the newly fetched extended properties and fixed DateTime
                 alert(
-                    "Appointment Status: " +
-                        info.event.extendedProps.status +
-                        "\n" +
-                        "Patient: " +
-                        info.event.extendedProps.patientName +
-                        "\n" +
-                        "Doctor: " +
-                        info.event.extendedProps.doctorName +
-                        "\n" +
-                        "Time: " +
-                        info.event.start.toLocaleString(),
+                    "Context: " + (info.event.extendedProps.type || 'Standard') + "\n" +
+                    "Status: " + (info.event.extendedProps.status || 'Pending') + "\n" +
+                    "Patient: " + (info.event.extendedProps.patientName || 'Unknown') + "\n" +
+                    "Doctor: " + (info.event.extendedProps.doctorName || 'Unknown') + "\n" +
+                    "Time: " + info.event.start.toLocaleString([], {
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: '2-digit', 
+                        minute: '2-digit'
+                    })
                 );
             },
         });

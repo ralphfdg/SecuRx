@@ -50,6 +50,9 @@ class SecretaryController extends Controller
     /**
      * API Endpoint for FullCalendar to fetch dynamic appointments
      */
+    /**
+     * API Endpoint for FullCalendar to fetch dynamic appointments
+     */
     public function getAppointments(Request $request)
     {
         // Fetch all appointments dynamically
@@ -58,29 +61,48 @@ class SecretaryController extends Controller
         $events = [];
 
         foreach ($appointments as $appointment) {
-            // Dynamically assign colors based on your database ENUM status
-            $color = match ($appointment->status) {
-                'pending' => '#f97316',   // Orange
-                'confirmed' => '#10b981', // Green
-                'completed' => '#64748b', // Slate/Gray
-                'cancelled' => '#ef4444', // Red
-                default => '#3b82f6',     // Blue
-            };
+            // 1. FIX DATE AND TIME 
+            // Combine the split date and time columns for FullCalendar parsing
+            $date = \Carbon\Carbon::parse($appointment->appointment_date)->format('Y-m-d');
+            $time = $appointment->appointment_time ? $appointment->appointment_time : '00:00:00';
+            $startDateTime = $date . 'T' . $time;
 
-            // Safely grab names, fallback if null
+            // 2. SEPARATE APPOINTMENT CONTEXTS VISUALLY
+            if ($appointment->is_rescheduled) {
+                $color = '#8b5cf6'; // Purple for Rescheduled
+                $typeLabel = 'Rescheduled';
+            } elseif ($appointment->appointment_type === 'walk-in') {
+                $color = '#f59e0b'; // Amber for Walk-in
+                $typeLabel = 'Walk-In';
+            } elseif ($appointment->appointment_type === 'online') {
+                $color = '#10b981'; // Green for New Appointment
+                $typeLabel = 'New Appointment';
+            } else {
+                $color = '#3b82f6'; // Blue for Follow-ups
+                $typeLabel = ucfirst($appointment->appointment_type);
+            }
+
+            // Override color if cancelled
+            if ($appointment->status === 'cancelled') {
+                $color = '#ef4444'; // Red
+                $typeLabel .= ' (Cancelled)';
+            }
+
+            // Safely grab names
             $doctorName = $appointment->doctor ? 'Dr. '.$appointment->doctor->last_name : 'Unknown Doctor';
             $patientName = $appointment->patient ? $appointment->patient->first_name.' '.$appointment->patient->last_name : 'Unknown Patient';
 
             $events[] = [
                 'id' => $appointment->id,
-                'title' => $doctorName.' - '.$patientName,
-                'start' => Carbon::parse($appointment->appointment_date)->format('Y-m-d\TH:i:s'),
+                'title' => "[$typeLabel] $patientName", // Better calendar visibility
+                'start' => $startDateTime,
                 'backgroundColor' => $color,
                 'borderColor' => $color,
                 'extendedProps' => [
                     'status' => ucfirst($appointment->status),
                     'patientName' => $patientName,
                     'doctorName' => $doctorName,
+                    'type' => $typeLabel
                 ],
             ];
         }
@@ -91,12 +113,25 @@ class SecretaryController extends Controller
     /**
      * Show the form for creating a new Walk-in Appointment
      */
+    /**
+     * Show the form for creating a new Walk-in Appointment
+     */
     public function createAppointment()
     {
         $user = Auth::user();
 
-        // Fetch all doctors and patients for the selection dropdowns
-        $doctors = User::where('role', 'doctor')->get();
+        // 1. Get the secretary's assigned clinic ID safely
+        $clinicId = DB::table('secretary_profiles')
+            ->where('user_id', $user->id)
+            ->value('clinic_id');
+
+        // 2. Fetch ONLY doctors assigned to the same clinic
+        $doctors = User::where('role', 'doctor')
+            ->join('doctor_profiles', 'users.id', '=', 'doctor_profiles.user_id')
+            ->where('doctor_profiles.clinic_id', $clinicId)
+            ->select('users.*') // Ensure we only grab user data to avoid ID conflicts
+            ->get();
+
         $patients = User::where('role', 'patient')->get();
 
         return view('secretary.appointments-create', compact('user', 'doctors', 'patients'));
@@ -114,22 +149,22 @@ class SecretaryController extends Controller
             'appointment_time' => 'required',
         ]);
 
-        // 2. Combine "Today" with the selected time
-        $appointmentDate = Carbon::today()->format('Y-m-d').' '.$request->appointment_time.':00';
-
-        // 3. Insert into the database using your UUID structure
+        // 2. Insert into the database using your UUID structure
         DB::table('appointments')->insert([
             'id' => (string) Str::uuid(),
             'patient_id' => $request->patient_id,
             'doctor_id' => $request->doctor_id,
             'secretary_id' => Auth::id(),
-            'appointment_date' => $appointmentDate,
+            // Map the date and time correctly to their respective columns
+            'appointment_date' => now()->format('Y-m-d'),
+            'appointment_time' => $request->appointment_time, 
+            'appointment_type' => 'walk-in', // Explicitly set it to walk-in
             'status' => 'confirmed', // Walk-ins are instantly confirmed
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // 4. Redirect back to the calendar with a success message
+        // 3. Redirect back to the calendar with a success message
         return redirect()->route('secretary.calendar')->with('success', 'Walk-in appointment successfully logged and confirmed!');
     }
 
@@ -151,18 +186,19 @@ class SecretaryController extends Controller
     /**
      * Display the Daily Queue & Triage Console
      */
+    // app/Http/Controllers/SecretaryController.php
+
     public function triage()
     {
         $user = Auth::user();
 
-        // Fetch all of TODAY'S confirmed appointments
-        $queue = Appointment::with(['patient', 'doctor'])
+        // Eager load patient.patientProfile to get registration height/weight
+        $queue = Appointment::with(['patient.patientProfile', 'doctor'])
             ->whereDate('appointment_date', Carbon::today())
             ->where('status', 'confirmed')
             ->orderBy('appointment_date', 'asc')
             ->get();
 
-        // Split the queue based on whether the JSON vitals column is empty or filled
         $needsTriage = $queue->whereNull('triage_vitals');
         $readyForDoctor = $queue->whereNotNull('triage_vitals');
 
@@ -172,35 +208,37 @@ class SecretaryController extends Controller
     /**
      * Store the Patient's Vitals into the JSON column
      */
+    // app/Http/Controllers/SecretaryController.php
+
     public function storeTriage(Request $request)
     {
         $request->validate([
             'appointment_id' => 'required|exists:appointments,id',
             'blood_pressure' => 'required|string',
-            'temperature' => 'required|numeric',
-            'weight' => 'required|numeric',
-            'heart_rate' => 'nullable|numeric',
-            'notes' => 'nullable|string',
+            'temperature'    => 'required|numeric',
+            'weight'         => 'nullable|numeric', // Changed to optional
+            'height'         => 'nullable|numeric', // Added as optional
+            'heart_rate'     => 'nullable|numeric',
+            'notes'          => 'nullable|string',
         ]);
 
-        // Construct the JSON payload
         $vitals = [
             'blood_pressure' => $request->blood_pressure,
-            'temperature' => $request->temperature,
-            'weight' => $request->weight,
-            'heart_rate' => $request->heart_rate,
-            'notes' => $request->notes,
-            'logged_at' => now()->toDateTimeString(),
-            'logged_by' => Auth::user()->name,
+            'temperature'    => $request->temperature,
+            'weight'         => $request->weight,
+            'height'         => $request->height,
+            'heart_rate'     => $request->heart_rate,
+            'notes'          => $request->notes,
+            'logged_at'      => now()->toDateTimeString(),
+            'logged_by'      => Auth::user()->name,
         ];
 
-        // Update the appointment record
         DB::table('appointments')->where('id', $request->appointment_id)->update([
             'triage_vitals' => json_encode($vitals),
-            'updated_at' => now(),
+            'updated_at'    => now(),
         ]);
 
-        return redirect()->route('secretary.triage')->with('success', 'Vitals successfully logged. Patient is ready for the doctor.');
+        return redirect()->route('secretary.triage')->with('success', 'Vitals logged successfully.');
     }
 
     /**
