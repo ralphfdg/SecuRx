@@ -53,7 +53,6 @@
                     </svg>
                     Master Calendar
                 </div>
-                <span class="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">2</span>
             </a>
 
             <a href="{{ route('secretary.triage') }}"
