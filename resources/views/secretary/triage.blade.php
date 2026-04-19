@@ -49,18 +49,35 @@
                     </div>
 
                     <div class="overflow-y-auto flex-1 p-3 space-y-2 custom-scrollbar">
+                       {{-- resources/views/secretary/triage.blade.php --}}
+
                         @forelse($needsTriage as $apt)
-                            <div onclick="selectPatient('{{ $apt->id }}', '{{ $apt->patient->first_name ?? '' }} {{ $apt->patient->last_name ?? '' }}', '{{ \Carbon\Carbon::parse($apt->appointment_date)->format('h:i A') }}', 'Dr. {{ $apt->doctor->last_name ?? '' }}')"
-                                class="p-4 rounded-xl border border-gray-200 bg-white hover:border-securx-cyan hover:shadow-md cursor-pointer transition-all group">
-                                <div class="flex justify-between items-start mb-1">
-                                    <p class="font-bold text-securx-navy group-hover:text-securx-cyan transition">
-                                        {{ $apt->patient->first_name ?? 'Unknown' }} {{ $apt->patient->last_name ?? '' }}
-                                    </p>
-                                    <span
-                                        class="text-xs font-bold text-gray-500 bg-gray-100 px-2 py-1 rounded-md">{{ \Carbon\Carbon::parse($apt->appointment_date)->format('h:i A') }}</span>
+                            <div onclick="selectPatient(
+                                    '{{ $apt->id }}', 
+                                    '{{ $apt->patient->first_name ?? '' }} {{ $apt->patient->last_name ?? '' }}', 
+                                    '{{ \Carbon\Carbon::parse($apt->appointment_time ?? $apt->appointment_date)->format('h:i A') }}', 
+                                    'Dr. {{ $apt->doctor->last_name ?? '' }}',
+                                    '{{ $apt->patient->patientProfile->height ?? '' }}', 
+                                    '{{ $apt->patient->patientProfile->weight ?? '' }}'
+                                )"
+                                class="p-4 mb-3 rounded-xl border border-gray-200 bg-white hover:border-[#008080] hover:shadow-md cursor-pointer transition-all group">
+                                
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-gray-800 text-base group-hover:text-[#008080] transition-colors">
+                                            {{ $apt->patient->first_name ?? '' }} {{ $apt->patient->last_name ?? '' }}
+                                        </h3>
+                                        <p class="text-sm text-gray-500 mt-1">
+                                            Dr. {{ $apt->doctor->last_name ?? '' }}
+                                        </p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="inline-flex items-center rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-800">
+                                            {{ \Carbon\Carbon::parse($apt->appointment_time ?? $apt->appointment_date)->format('h:i A') }}
+                                        </span>
+                                    </div>
                                 </div>
-                                <p class="text-xs text-gray-500">Provider: Dr. {{ $apt->doctor->last_name ?? '' }}</p>
-                            </div>
+                                </div>
                         @empty
                             <div class="text-center py-10 text-gray-400 text-sm">No patients waiting for triage.</div>
                         @endforelse
@@ -148,8 +165,13 @@
                                     class="w-full rounded-xl border-gray-300 shadow-sm focus:border-securx-cyan bg-slate-50 py-3 pl-4 font-mono text-lg">
                             </div>
                             <div class="space-y-2">
+                                <label class="flex items-center gap-2 text-sm font-bold text-gray-700">Height (cm)</label>
+                                <input type="number" step="0.1" name="height" id="form_height" placeholder="Registration: N/A"
+                                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-securx-cyan bg-slate-50 py-3 pl-4 font-mono text-lg">
+                            </div>
+                            <div class="space-y-2">
                                 <label class="flex items-center gap-2 text-sm font-bold text-gray-700">Weight (kg)</label>
-                                <input type="number" step="0.1" name="weight" placeholder="65.0" required
+                                <input type="number" step="0.1" name="weight" id="form_weight" placeholder="Registration: N/A"
                                     class="w-full rounded-xl border-gray-300 shadow-sm focus:border-securx-cyan bg-slate-50 py-3 pl-4 font-mono text-lg">
                             </div>
                         </div>
@@ -190,4 +212,28 @@
             </div>
         </div>
     </div>
+
+    <script>// resources/js/secretary-triage.js
+
+        window.selectPatient = function(id, name, time, provider, height, weight) {
+            // Show form, hide empty state
+            document.getElementById('empty_state').classList.add('hidden');
+            document.getElementById('triage_form_container').classList.remove('hidden');
+            document.getElementById('triage_form_container').classList.add('flex');
+
+            // Populate header info
+            document.getElementById('display_name').innerText = name;
+            document.getElementById('display_time').innerText = time;
+            document.getElementById('display_provider').innerText = provider;
+            
+            // Populate hidden ID
+            document.getElementById('form_appointment_id').value = id;
+            document.getElementById('no_show_appointment_id').value = id;
+
+            // AUTO-FILL REGISTRATION DATA
+            // The secretary can still edit these before saving
+            document.getElementById('form_height').value = height || '';
+            document.getElementById('form_weight').value = weight || '';
+        };
+    </script>
 @endsection

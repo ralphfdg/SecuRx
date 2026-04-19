@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PatientProfile extends Model
 {
-    use HasUuids, SoftDeletes;
+    use HasUuids, SoftDeletes;    
 
     protected $guarded = [];
 
@@ -16,10 +16,19 @@ class PatientProfile extends Model
         'data_consent' => 'boolean',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
+    public function user() 
+    { 
+        return $this->belongsTo(User::class, 'user_id'); 
     }
+
+    /**
+     * Link the patient profile directly to the facility they registered at.
+     */
+    public function clinic()
+    {
+        return $this->belongsTo(Clinic::class, 'clinic_id');
+    }
+}
 
     public function authorizedRepresentatives()
     {

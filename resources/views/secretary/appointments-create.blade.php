@@ -44,7 +44,18 @@
 
                 <div class="space-y-2">
                     <label for="appointment_time" class="block text-sm font-bold text-gray-700">Time of Arrival (Today)</label>
-                    <input type="time" id="appointment_time" name="appointment_time" required class="w-full rounded-xl border-gray-300 shadow-sm focus:border-securx-cyan focus:ring focus:ring-securx-cyan/20 bg-slate-50 py-2.5 px-3">
+                    <div class="relative">
+                        <input type="time" id="appointment_time" name="appointment_time" required 
+                            value="{{ now()->timezone('Asia/Manila')->format('H:i') }}"
+                            class="w-full rounded-xl border-gray-300 shadow-sm focus:border-securx-cyan focus:ring focus:ring-securx-cyan/20 bg-slate-50 py-2.5 px-3">
+                        
+                        <button type="button" 
+                                onclick="document.getElementById('appointment_time').value = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false })" 
+                                class="absolute right-2 top-1/2 -translate-y-1/2 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded-lg transition font-medium">
+                            Set to Now
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Automatically defaults to the current time. Adjust if logging retroactively.</p>
                 </div>
 
                 <div class="space-y-2">
