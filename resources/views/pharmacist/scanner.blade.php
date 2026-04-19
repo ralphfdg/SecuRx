@@ -77,137 +77,168 @@
                                     <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx" class="h-3 w-auto">
                                 </div>
 
-                                <div class="flex flex-row items-center gap-3 border-b-2 border-gray-800 pb-3 mb-3 shrink-0">
-                                    <div
-                                        class="w-12 h-12 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center shrink-0 overflow-hidden">
-                                        <svg class="w-6 h-6 text-blue-800 opacity-80" fill="none" stroke="currentColor"
-                                            viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-                                            </path>
-                                        </svg>
-                                    </div>
-                                    <div class="flex-1 flex flex-col min-w-0">
-                                        <h1 class="text-base sm:text-lg font-serif font-black text-gray-900 tracking-wide uppercase text-center mb-1 leading-tight"
-                                            x-text="doctor.clinic_name"></h1>
-                                        <div
-                                            class="flex flex-col xl:flex-row justify-between items-center xl:items-start gap-1 w-full">
-                                            <p class="text-[9px] sm:text-[10px] font-serif text-gray-600 leading-snug flex-1 text-center xl:text-left"
-                                                x-text="doctor.clinic_address"></p>
-                                            <p class="text-[9px] sm:text-[10px] font-serif text-gray-800 font-bold shrink-0 text-center xl:text-right whitespace-nowrap mt-0.5 xl:mt-0"
-                                                x-text="'Tel: ' + doctor.contact_number"></p>
+                                <div
+                                    class="w-1/2 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 relative flex flex-col rounded-sm overflow-hidden min-h-0">
+                                    <div class="h-2 w-full bg-securx-navy shrink-0"></div>
+
+                                    <div class="p-4 sm:p-5 flex-1 flex flex-col relative z-10 min-h-0">
+                                        <div class="w-full flex justify-center mb-3 shrink-0">
+                                            <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx" class="h-3 w-auto">
                                         </div>
-                                    </div>
-                                </div>
 
-                                <div
-                                    class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9px] font-serif text-gray-800 mb-3 border-b border-gray-300 pb-2 shrink-0">
-                                    <div class="col-span-2">
-                                        <p class="text-[7px] font-bold text-gray-500 uppercase">Name:</p>
-                                        <p class="font-bold border-b border-gray-300 border-dotted truncate text-gray-900"
-                                            x-text="patient.name"></p>
-                                    </div>
-                                    <div class="col-span-1">
-                                        <p class="text-[7px] font-bold text-gray-500 uppercase">Age/Sex:</p>
-                                        <p class="font-bold border-b border-gray-300 border-dotted text-gray-900"
-                                            x-text="patient.age + '/' + patient.sex"></p>
-                                    </div>
-                                    <div class="col-span-1">
-                                        <p class="text-[7px] font-bold text-gray-500 uppercase">Date:</p>
-                                        <p class="font-bold border-b border-gray-300 border-dotted text-gray-900"
-                                            x-text="date"></p>
-                                    </div>
-                                </div>
-
-                                <div class="mb-1 shrink-0">
-                                    <span
-                                        class="text-3xl font-serif font-black text-gray-900 italic tracking-tighter">Rx</span>
-                                </div>
-
-                                <div
-                                    class="flex-1 space-y-3 pl-1 font-serif overflow-y-auto custom-scrollbar pr-2 flex flex-col min-h-0 relative">
-                                    <template x-for="(item, index) in prescriptionItems" :key="item.item_id">
-                                        <div class="relative group border-b border-gray-100 pb-2">
-                                            <p class="text-xs font-bold text-gray-900 flex items-center flex-wrap gap-1.5">
-                                                <span x-text="`${index + 1}. ${item.generic_name}`"></span>
-                                                <span x-show="item.dosage"
-                                                    class="bg-red-100 text-red-700 border border-red-200 font-black px-1 py-0.5 rounded text-[9px] uppercase tracking-wider shadow-sm"
-                                                    x-text="item.dosage"></span>
-                                                <span class="text-[10px] text-gray-500 font-medium"
-                                                    x-text="`(${item.brand_name})`"></span>
-                                            </p>
-                                            <div class="flex justify-between items-end mt-0.5">
-                                                <p class="text-[11px] text-gray-700 italic" x-text="`Sig: ${item.sig}`">
-                                                </p>
-                                                <p class="text-[11px] font-bold text-gray-900"
-                                                    x-text="`#${item.quantity}`"></p>
+                                        <div
+                                            class="flex flex-row items-center gap-3 border-b-2 border-gray-800 pb-3 mb-3 shrink-0">
+                                            <div
+                                                class="w-12 h-12 bg-white border border-gray-200 rounded-lg flex flex-col items-center justify-center shrink-0 overflow-hidden">
+                                                <svg class="w-6 h-6 text-blue-800 opacity-80" fill="none"
+                                                    stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                                    </path>
+                                                </svg>
                                             </div>
-                                            <p x-show="item.dispense_as_written"
-                                                class="text-[8px] text-red-600 font-bold italic mt-1 border-l-2 border-red-200 pl-2 ml-1"
-                                                x-text="`To Rx: ${item.dispense_as_written}`"></p>
+                                            <div class="flex-1 flex flex-col min-w-0">
+                                                <h1 class="text-base sm:text-lg font-serif font-black text-gray-900 tracking-wide uppercase text-center mb-1 leading-tight"
+                                                    x-text="doctor.clinic_name"></h1>
+                                                <div
+                                                    class="flex flex-col xl:flex-row justify-between items-center xl:items-start gap-1 w-full">
+                                                    <p class="text-[9px] sm:text-[10px] font-serif text-gray-600 leading-snug flex-1 text-center xl:text-left"
+                                                        x-text="doctor.clinic_address"></p>
+                                                    <p class="text-[9px] sm:text-[10px] font-serif text-gray-800 font-bold shrink-0 text-center xl:text-right whitespace-nowrap mt-0.5 xl:mt-0"
+                                                        x-text="'Tel: ' + doctor.contact_number"></p>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </template>
-                                </div>
 
-                                <div class="mt-2 pt-2 border-t border-gray-100 shrink-0">
-                                    <div class="flex justify-between items-end">
                                         <div
-                                            class="w-12 h-12 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
-                                            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor"
-                                                viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                    d="M5 13l4 4L19 7"></path>
-                                            </svg>
+                                            class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9px] font-serif text-gray-800 mb-3 border-b border-gray-300 pb-2 shrink-0">
+                                            <div class="col-span-2">
+                                                <p class="text-[7px] font-bold text-gray-500 uppercase">Name:</p>
+                                                <p class="font-bold border-b border-gray-300 border-dotted truncate text-gray-900"
+                                                    x-text="patient.name"></p>
+                                            </div>
+                                            <div class="col-span-1">
+                                                <p class="text-[7px] font-bold text-gray-500 uppercase">Age/Sex:</p>
+                                                <p class="font-bold border-b border-gray-300 border-dotted text-gray-900"
+                                                    x-text="patient.age + '/' + patient.sex"></p>
+                                            </div>
+                                            <div class="col-span-1">
+                                                <p class="text-[7px] font-bold text-gray-500 uppercase">Date:</p>
+                                                <p class="font-bold border-b border-gray-300 border-dotted text-gray-900"
+                                                    x-text="date"></p>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-1 shrink-0">
                                             <span
-                                                class="text-[5px] text-emerald-600 mt-1 font-sans font-bold tracking-wider">VERIFIED</span>
+                                                class="text-3xl font-serif font-black text-gray-900 italic tracking-tighter">Rx</span>
                                         </div>
-                                        <div class="text-left w-[140px] ml-auto flex flex-col font-serif">
-                                            <div class="relative z-0 space-y-1 text-[9px]">
-                                                <div class="relative">
-                                                    <span class="text-gray-400 tracking-tighter">__________________,
-                                                        MD</span>
-                                                    <span
-                                                        class="absolute left-0.5 bottom-0 font-sans font-bold text-blue-800 uppercase opacity-90 truncate max-w-[120px] inline-block"
-                                                        x-text="doctor.name"></span>
+
+                                        <div
+                                            class="flex-1 space-y-3 pl-1 font-serif overflow-y-auto custom-scrollbar pr-2 flex flex-col min-h-0 relative">
+                                            <template x-for="(item, index) in prescriptionItems" :key="item.item_id">
+                                                <div class="relative group border-b border-gray-100 pb-2">
+                                                    <p
+                                                        class="text-xs font-bold text-gray-900 flex items-center flex-wrap gap-1.5">
+                                                        <span x-text="`${index + 1}. ${item.generic_name}`"></span>
+                                                        <span x-show="item.dosage"
+                                                            class="bg-red-100 text-red-700 border border-red-200 font-black px-1 py-0.5 rounded text-[9px] uppercase tracking-wider shadow-sm"
+                                                            x-text="item.dosage"></span>
+                                                        <span class="text-[10px] text-gray-500 font-medium"
+                                                            x-text="`(${item.brand_name})`"></span>
+                                                    </p>
+
+                                                    <div class="flex justify-between items-end mt-0.5">
+                                                        <p class="text-[11px] text-gray-700 italic"
+                                                            x-text="`Sig: ${item.sig}`"></p>
+                                                        <p class="text-[11px] font-bold text-gray-900"
+                                                            x-text="`#${item.quantity_originally_prescribed}`"></p>
+                                                    </div>
+
+                                                    <p x-show="item.dispense_as_written"
+                                                        class="text-[8px] text-red-600 font-bold italic mt-1 border-l-2 border-red-200 pl-2 ml-1"
+                                                        x-text="`To Rx: ${item.dispense_as_written}`"></p>
+
+                                                    <p class="text-[10px] font-sans font-bold text-emerald-600 mt-1"
+                                                        x-text="`Remaining: ${item.quantity_remaining}`"></p>
                                                 </div>
-                                                <div class="relative">
-                                                    <span class="text-gray-400">Lic. _______________</span>
+                                            </template>
+                                        </div>
+
+                                        <div class="mt-2 pt-2 border-t border-gray-100 shrink-0">
+                                            <div class="flex justify-between items-end">
+                                                <div
+                                                    class="w-12 h-12 bg-gray-50 border border-gray-200 flex flex-col items-center justify-center shrink-0">
+                                                    <svg class="w-5 h-5 text-emerald-500" fill="none"
+                                                        stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                    </svg>
                                                     <span
-                                                        class="absolute left-5 bottom-0 font-sans font-bold text-blue-800 opacity-90"
-                                                        x-text="doctor.prc_license"></span>
+                                                        class="text-[5px] text-emerald-600 mt-1 font-sans font-bold tracking-wider">VERIFIED</span>
                                                 </div>
-                                                <div class="relative">
-                                                    <span class="text-gray-400">PTR _______________</span>
-                                                    <span
-                                                        class="absolute left-6 bottom-0 font-sans font-bold text-blue-800 opacity-90"
-                                                        x-text="doctor.ptr_number"></span>
+
+                                                <div class="text-left w-[140px] ml-auto flex flex-col font-serif">
+                                                    <div class="relative z-0 space-y-1 text-[9px]">
+                                                        <div class="relative">
+                                                            <span
+                                                                class="text-gray-400 tracking-tighter">__________________,
+                                                                MD</span>
+                                                            <span
+                                                                class="absolute left-0.5 bottom-0 font-sans font-bold text-blue-800 uppercase opacity-90 truncate max-w-[120px] inline-block"
+                                                                x-text="doctor.name"></span>
+                                                        </div>
+                                                        <div class="relative">
+                                                            <span class="text-gray-400">Lic. _______________</span>
+                                                            <span
+                                                                class="absolute left-5 bottom-0 font-sans font-bold text-blue-800 opacity-90"
+                                                                x-text="doctor.prc_license"></span>
+                                                        </div>
+                                                        <div class="relative">
+                                                            <span class="text-gray-400">PTR _______________</span>
+                                                            <span
+                                                                class="absolute left-6 bottom-0 font-sans font-bold text-blue-800 opacity-90"
+                                                                x-text="doctor.ptr_number"></span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+
+                                <div class="p-5 border-t bg-white flex justify-between">
+                                    <button @click="resetScanner()"
+                                        class="bg-gray-100 font-bold py-2 px-6 rounded-xl">Cancel</button>
+                                    <a :href="'/pharmacist/dispense/' + prescriptionId"
+                                        class="bg-securx-navy text-white font-bold py-2 px-8 rounded-xl">Proceed to
+                                        Dispense</a>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="p-5 border-t bg-white flex justify-between">
-                        <button @click="resetScanner()" class="bg-gray-100 font-bold py-2 px-6 rounded-xl">Cancel</button>
-                        <a :href="'/pharmacist/dispense/' + prescriptionId"
-                            class="bg-securx-navy text-white font-bold py-2 px-8 rounded-xl">Proceed to Dispense</a>
-                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-@endsection
+            @endsection
 
-@push('scripts')
-    <style>
-        .scan-line { animation: scan 3s ease-in-out infinite; } 
-        @keyframes scan { 
-            0%, 100% { top: 5%; opacity: 0; } 
-            50% { top: 95%; opacity: 1; } 
-        }
-    </style>
-    @vite(['resources/js/pharmacist-scanner.js'])
-@endpush
+            @push('scripts')
+                <style>
+                    .scan-line {
+                        animation: scan 3s ease-in-out infinite;
+                    }
+
+                    @keyframes scan {
+
+                        0%,
+                        100% {
+                            top: 5%;
+                            opacity: 0;
+                        }
+
+                        50% {
+                            top: 95%;
+                            opacity: 1;
+                        }
+                    }
+                </style>
+                @vite(['resources/js/pharmacist-scanner.js'])
+            @endpush

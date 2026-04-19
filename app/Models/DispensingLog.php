@@ -14,9 +14,25 @@ class DispensingLog extends Model
 
     // 2. Ensure your primary key type is set correctly since you are using UUIDs (char(36))
     protected $keyType = 'string';
+
     public $incrementing = false;
 
     protected $guarded = [];
+
+    protected $fillable = [
+        'id', 'prescription_item_id', 'pharmacist_id', 'guest_prc_license',
+        'guest_pharmacy_name', 'guest_pharmacy_address', 'quantity_dispensed',
+        'actual_drug_dispensed', 'lot_number', 'expiry_date',
+
+        // Ensure these snapshot columns are fillable!
+        'representative_id', 'receiver_name_snapshot',
+        'receiver_relationship_snapshot', 'receiver_id_presented', 'dispensed_at',
+    ];
+
+    protected $casts = [
+        'dispensed_at' => 'datetime',
+        'expiry_date' => 'date',
+    ];
 
     public function prescriptionItem()
     {

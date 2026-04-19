@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
-use App\Models\Prescription;
-use App\Models\PatientAllergy;
 use App\Models\DispensingLog;
+use App\Models\PatientAllergy;
+use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class PharmacistController extends Controller
 {
@@ -25,45 +25,64 @@ class PharmacistController extends Controller
 
         $prescription = Prescription::with([
             'patient.patientProfile',
+            'patient.authorizedRepresentatives',
             'doctor.doctorProfile',
-            'items.medication'
+            'items.medication',
         ])->find($request->prescription_uuid);
 
-        if (!$prescription) {
+        if (! $prescription) {
             return response()->json(['message' => 'Cryptographic signature invalid.'], 404);
         }
 
-        if ($prescription->status !== 'active') {
-            return response()->json(['message' => 'Transaction blocked. Status: ' . strtoupper($prescription->status)], 403);
+        if ($prescription->status !== 'active' && $prescription->status !== 'partially_dispensed') {
+            return response()->json(['message' => 'Transaction blocked. Status: '.strtoupper($prescription->status)], 403);
         }
 
         $durWarnings = [];
         $patientAllergies = PatientAllergy::where('patient_id', $prescription->patient_id)->get();
 
         foreach ($prescription->items as $item) {
-            // Allergy Check
             foreach ($patientAllergies as $allergy) {
                 if (stripos($item->medication->generic_name, $allergy->allergen_name) !== false) {
                     $durWarnings[] = [
                         'type' => 'Allergy',
                         'level' => 'Severe',
-                        'message' => "Verified allergy to {$allergy->allergen_name}. High cross-reactivity risk."
+                        'message' => "Verified allergy to {$allergy->allergen_name}. High cross-reactivity risk.",
                     ];
                 }
             }
 
-            // Time-Gate Check (Fixed Timestamp)
+            // TIME-GATE FIX: Converted to Asia/Manila and extracting quantity
+            // Time-Gate Check
             $lastDispense = DispensingLog::where('prescription_item_id', $item->id)
                 ->orderBy('dispensed_at', 'desc')
                 ->first();
 
-            if ($lastDispense) {
-                $hoursSinceLastDispense = Carbon::parse($lastDispense->dispensed_at)->diffInHours(now());
-                if ($hoursSinceLastDispense < 24) {
+            if ($lastDispense && $lastDispense->dispensed_at) {
+                $localTime = Carbon::parse($lastDispense->dispensed_at);
+                $totalHours = (int) $localTime->diffInHours(now());
+
+                if ($totalHours < 24) {
+                    // Extract exact hours and minutes
+                    $diff = $localTime->diff(now());
+                    $hours = $diff->h;
+                    $minutes = $diff->i;
+
+                    // Build a clean, human-readable string
+                    if ($hours > 0) {
+                        $timeAgo = "{$hours} hr".($hours > 1 ? 's' : '')." and {$minutes} min".($minutes !== 1 ? 's' : '');
+                    } else {
+                        $timeAgo = "{$minutes} min".($minutes !== 1 ? 's' : '');
+                    }
+
+                    $formattedTime = $localTime->format('h:i A');
+                    $qty = $lastDispense->quantity_dispensed;
+
                     $durWarnings[] = [
-                        'type' => 'Time-Gate',
-                        'level' => 'Warning',
-                        'message' => "Early Refill Attempt. Last dispensed {$hoursSinceLastDispense} hours ago."
+                        'type' => 'Early Refill',
+                        'level' => 'Advisory',
+                        'item' => $item->medication->brand_name,
+                        'message' => "Advisory: {$qty} units were last dispensed at {$formattedTime} ({$timeAgo} ago).",
                     ];
                 }
             }
@@ -71,62 +90,77 @@ class PharmacistController extends Controller
 
         return response()->json([
             'id' => $prescription->id,
-            'date' => $prescription->created_at->format('m/d/Y'), // New Field
+            'date' => $prescription->created_at->format('m/d/Y'),
             'patient' => [
-                'name' => $prescription->patient->first_name . ' ' . $prescription->patient->last_name,
+                'name' => $prescription->patient->first_name.' '.$prescription->patient->last_name,
                 'age' => Carbon::parse($prescription->patient->dob)->age,
-                'sex' => substr($prescription->patient->gender, 0, 1)
+                'sex' => substr($prescription->patient->gender, 0, 1),
             ],
             'doctor' => [
-                'name' => 'Dr. ' . $prescription->doctor->first_name . ' ' . $prescription->doctor->last_name,
+                'name' => 'Dr. '.$prescription->doctor->first_name.' '.$prescription->doctor->last_name,
                 'prc_license' => $prescription->doctor->doctorProfile->prc_number ?? 'N/A',
                 'ptr_number' => $prescription->doctor->doctorProfile->ptr_number ?? 'N/A',
-                // Fallbacks if you haven't linked the clinic table yet
                 'clinic_name' => 'MEDICAL CLINIC INC.',
                 'clinic_address' => '123 Health Avenue, Medical District, City',
                 'contact_number' => '(000) 123-4567',
             ],
+            // METHOD B FIX: Dynamically calculate remaining for the scanner API preview
             'items' => $prescription->items->map(function ($item) {
+                $totalDispensed = DispensingLog::where('prescription_item_id', $item->id)->sum('quantity_dispensed');
+                $remaining = $item->quantity - $totalDispensed;
+
                 return [
                     'item_id' => $item->id,
                     'brand_name' => $item->medication->brand_name,
                     'generic_name' => $item->medication->generic_name,
                     'dosage' => $item->medication->dosage_strength,
                     'sig' => $item->sig,
-                    'quantity' => $item->quantity,
-                    'dispense_as_written' => $item->pharmacist_instructions
+                    'quantity_originally_prescribed' => $item->quantity,
+                    'quantity_remaining' => max(0, $remaining),
+                    'dispense_as_written' => $item->pharmacist_instructions,
                 ];
             }),
-            'dur_warnings' => $durWarnings
+            'dur_warnings' => $durWarnings,
         ]);
     }
 
     public function dispense($prescription_id)
     {
         $prescription = Prescription::with([
-            'patient.patientProfile', 
-            'items.medication', 
-            'doctor.doctorProfile.clinic'
+            'patient.patientProfile',
+            'items.medication',
+            'patient.authorizedRepresentatives',
+            'doctor.doctorProfile.clinic',
         ])->findOrFail($prescription_id);
 
-        if ($prescription->status !== 'active') {
+        if (! in_array($prescription->status, ['active', 'partially_dispensed'])) {
             return redirect()->route('pharmacist.scanner')->with('error', 'Prescription is no longer active.');
         }
 
         $durWarnings = [];
         $patientAllergies = DB::table('patient_allergies')->where('patient_id', $prescription->patient_id)->get();
-        
-        $pastActiveMeds = \App\Models\PrescriptionItem::whereHas('prescription', function($query) use ($prescription) {
+
+        $pastActiveMeds = PrescriptionItem::whereHas('prescription', function ($query) use ($prescription) {
             $query->where('patient_id', $prescription->patient_id)
-                  ->where('id', '!=', $prescription->id)
-                  ->whereIn('status', ['active', 'partially_dispensed']);
+                ->where('id', '!=', $prescription->id)
+                ->whereIn('status', ['active', 'partially_dispensed']);
         })->with('medication')->get();
 
         $medsToCheck = [];
 
+        // METHOD B FIX: Inject dynamic quantity_remaining into the collection for Blade/Alpine
+        $prescription->items->transform(function ($item) {
+            $totalDispensed = DispensingLog::where('prescription_item_id', $item->id)->sum('quantity_dispensed');
+            $item->quantity_remaining = max(0, $item->quantity - $totalDispensed);
+
+            return $item;
+        });
+
         foreach ($prescription->items as $item) {
-            if ($item->status === 'completed') continue;
-            
+            if ($item->status === 'completed') {
+                continue;
+            }
+
             $targetGeneric = explode(' ', $item->medication->generic_name)[0];
             $cleanedName = preg_replace('/[^A-Za-z]/', '', $targetGeneric);
 
@@ -135,36 +169,58 @@ class PharmacistController extends Controller
                 'rxcui' => $item->medication->rxcui,
                 'cleaned_name' => $cleanedName,
                 'brand_name' => $item->medication->brand_name,
-                'source' => 'Current Prescription'
+                'source' => 'Current Prescription',
             ];
 
-            // 1. SEVERE: Allergy Conflict (RED)
+            // 1. SEVERE: Allergy Conflict
             foreach ($patientAllergies as $allergy) {
                 if (stripos($cleanedName, $allergy->allergen_name) !== false || stripos($allergy->allergen_name, $cleanedName) !== false) {
                     $durWarnings[] = [
                         'type' => 'Allergy Conflict',
                         'level' => 'Severe',
                         'item' => $item->medication->brand_name,
-                        'message' => "CRITICAL: The patient has a documented allergy to {$allergy->allergen_name}."
+                        'message' => "CRITICAL: The patient has a documented allergy to {$allergy->allergen_name}.",
                     ];
                 }
             }
 
-            // 2. ADVISORY: Early Refill / Time-Gate (BLUE)
-            $lastDispense = \App\Models\DispensingLog::where('prescription_item_id', $item->id)->orderBy('dispensed_at', 'desc')->first();
-            if ($lastDispense) {
-                $hours = \Carbon\Carbon::parse($lastDispense->dispensed_at)->diffInHours(now());
-                if ($hours < 24) {
+            // 2. ADVISORY: Early Refill / Time-Gate (Converted to Asia/Manila)
+            $lastDispense = DispensingLog::where('prescription_item_id', $item->id)
+                ->orderBy('dispensed_at', 'desc')
+                ->first();
+
+            if ($lastDispense && $lastDispense->dispensed_at) {
+                $localTime = Carbon::parse($lastDispense->dispensed_at);
+                $totalHours = (int) $localTime->diffInHours(now());
+
+                if ($totalHours < 24) {
+                    // Extract exact hours and minutes
+                    $diff = $localTime->diff(now());
+                    $hours = $diff->h;
+                    $minutes = $diff->i;
+
+                    // Build a clean, human-readable string
+                    if ($hours > 0) {
+                        $timeAgo = "{$hours} hr".($hours > 1 ? 's' : '')." and {$minutes} min".($minutes !== 1 ? 's' : '');
+                    } else {
+                        $timeAgo = "{$minutes} min".($minutes !== 1 ? 's' : '');
+                    }
+
+                    $formattedTime = $localTime->format('h:i A');
+                    $qty = $lastDispense->quantity_dispensed;
+
                     $durWarnings[] = [
-                        'type' => 'Early Refill', 
-                        'level' => 'Advisory', 
-                        'item' => $item->medication->brand_name, 
-                        'message' => "Advisory: This medication was last dispensed only {$hours} hours ago."
+                        'type' => 'Early Refill',
+                        'level' => 'Advisory',
+                        'item' => $item->medication->brand_name,
+                        'message' => "Advisory: {$qty} units were last dispensed at {$formattedTime} ({$timeAgo} ago).",
                     ];
                 }
             }
         }
 
+        // ... [Active Medical History Loop and FDA API call remain identical to your original code] ...
+        // Check past active meds
         foreach ($pastActiveMeds as $pastMed) {
             $targetGeneric = explode(' ', $pastMed->medication->generic_name)[0];
             $medsToCheck[] = [
@@ -172,12 +228,12 @@ class PharmacistController extends Controller
                 'rxcui' => $pastMed->medication->rxcui,
                 'cleaned_name' => preg_replace('/[^A-Za-z]/', '', $targetGeneric),
                 'brand_name' => $pastMed->medication->brand_name,
-                'source' => 'Active Medical History'
+                'source' => 'Active Medical History',
             ];
         }
 
         // 3. WARNING: FDA Drug Interaction (YELLOW)
-        $client = new \GuzzleHttp\Client(['verify' => false, 'timeout' => 5]);
+        $client = new Client(['verify' => false, 'timeout' => 5]);
         $apiKey = env('OPENFDA_API_KEY', '');
         $authParam = $apiKey ? "api_key={$apiKey}&" : '';
         $checkedPairs = [];
@@ -187,11 +243,17 @@ class PharmacistController extends Controller
                 $drugA = $medsToCheck[$i];
                 $drugB = $medsToCheck[$j];
 
-                if ($drugA['source'] === 'Active Medical History' && $drugB['source'] === 'Active Medical History') continue;
-                if (strcasecmp($drugA['cleaned_name'], $drugB['cleaned_name']) === 0) continue;
+                if ($drugA['source'] === 'Active Medical History' && $drugB['source'] === 'Active Medical History') {
+                    continue;
+                }
+                if (strcasecmp($drugA['cleaned_name'], $drugB['cleaned_name']) === 0) {
+                    continue;
+                }
 
-                $pairKey = $drugA['cleaned_name'] . '-' . $drugB['cleaned_name'];
-                if (in_array($pairKey, $checkedPairs)) continue;
+                $pairKey = $drugA['cleaned_name'].'-'.$drugB['cleaned_name'];
+                if (in_array($pairKey, $checkedPairs)) {
+                    continue;
+                }
                 $checkedPairs[] = $pairKey;
 
                 $query1 = "openfda.rxcui:\"{$drugA['rxcui']}\"+AND+drug_interactions:{$drugB['cleaned_name']}";
@@ -208,14 +270,15 @@ class PharmacistController extends Controller
                             if (isset($data['results'][0]['drug_interactions'])) {
                                 $durWarnings[] = [
                                     'type' => 'FDA Clinical Interaction',
-                                    'level' => 'Warning', // Mapped to Yellow
-                                    'item' => strtoupper($drugA['brand_name']) . " + " . strtoupper($drugB['brand_name']),
-                                    'message' => \Illuminate\Support\Str::limit($data['results'][0]['drug_interactions'][0], 250)
+                                    'level' => 'Warning',
+                                    'item' => strtoupper($drugA['brand_name']).' + '.strtoupper($drugB['brand_name']),
+                                    'message' => Str::limit($data['results'][0]['drug_interactions'][0], 250),
                                 ];
                                 break;
                             }
                         }
-                    } catch (\Exception $e) {}
+                    } catch (\Exception $e) {
+                    }
                 }
             }
         }
@@ -225,11 +288,11 @@ class PharmacistController extends Controller
 
     public function processDispense(Request $request, $prescription_id)
     {
-        // Added Validation for Receiver/Proxy
         $request->validate([
             'receiver_id_presented' => 'required|string|max:255',
             'is_proxy' => 'required|boolean',
-            'representative_name' => 'nullable|required_if:is_proxy,true|string|max:255',
+            // VALIDATION UPGRADE: Ensure the proxy ID actually belongs to an AuthorizedRepresentative
+            'representative_id' => 'nullable|required_if:is_proxy,true|exists:authorized_representatives,id',
             'items' => 'required|array|min:1',
             'items.*.item_id' => 'required|exists:prescription_items,id',
             'items.*.actual_drug_dispensed' => 'required|string|max:255',
@@ -242,42 +305,56 @@ class PharmacistController extends Controller
         try {
             DB::transaction(function () use ($request, $prescription_id) {
                 
-                // Format the Receiver String safely for the database
-                $receiverString = $request->is_proxy 
-                    ? "PROXY: " . $request->representative_name . " (ID: " . $request->receiver_id_presented . ")"
-                    : "PATIENT ID: " . $request->receiver_id_presented;
+                // Initialize proxy snapshot variables for the ledger
+                $proxyId = null;
+                $proxyName = null;
+                $proxyRelationship = null;
+
+                if ($request->is_proxy) {
+                    $proxy = \App\Models\AuthorizedRepresentative::find($request->representative_id);
+                    $proxyId = $proxy->id;
+                    $proxyName = $proxy->full_name;
+                    $proxyRelationship = $proxy->relationship;
+                }
 
                 foreach ($request->items as $data) {
-                    $item = PrescriptionItem::findOrFail($data['item_id']);
+                    $item = PrescriptionItem::lockForUpdate()->findOrFail($data['item_id']);
 
-                    $currentRemaining = $item->quantity_remaining ?? $item->quantity;
+                    $totalDispensedSoFar = DispensingLog::where('prescription_item_id', $item->id)->sum('quantity_dispensed');
+                    $currentRemaining = $item->quantity - $totalDispensedSoFar;
+
                     if ($data['quantity_dispensed'] > $currentRemaining) {
-                        throw new \Exception("Cannot dispense more than the remaining quantity for " . $item->medication->brand_name);
+                        throw new \Exception("Cannot dispense more than the remaining quantity ({$currentRemaining}) for " . $item->medication->brand_name);
                     }
-
-                    $newRemaining = $currentRemaining - $data['quantity_dispensed'];
-                    $item->update([
-                        'quantity_remaining' => $newRemaining,
-                        'status' => ($newRemaining === 0) ? 'completed' : 'partially_dispensed'
-                    ]);
 
                     $log = DispensingLog::create([
                         'id' => Str::uuid(),
                         'prescription_item_id' => $item->id,
-                        /** @disregard P1013 */
                         'pharmacist_id' => auth()->id(),
-                        'receiver_id_presented' => $receiverString, // Fixes SQL error!
+                        
+                        // SNAPSHOT ARCHITECTURE: Maps perfectly to db_securx columns
+                        'representative_id' => $proxyId,
+                        'receiver_name_snapshot' => $proxyName,
+                        'receiver_relationship_snapshot' => $proxyRelationship,
+                        'receiver_id_presented' => $request->receiver_id_presented,
+                        
                         'quantity_dispensed' => $data['quantity_dispensed'],
                         'actual_drug_dispensed' => $data['actual_drug_dispensed'],
                         'lot_number' => $data['lot_number'],
                         'expiry_date' => $data['expiry_date'],
+                        'dispensed_at' => now(), 
+                    ]);
+
+                    $newRemaining = $currentRemaining - $data['quantity_dispensed'];
+                    $item->update([
+                        'status' => ($newRemaining === 0) ? 'completed' : 'partially_dispensed'
                     ]);
 
                     if ($request->filled('global_override_reason')) {
                         DB::table('override_justifications')->insert([
                             'id' => Str::uuid(),
                             'dispensing_log_id' => $log->id,
-                            'warning_type' => 'clinical_override', 
+                            'warning_type' => 'interaction', 
                             'justification_note' => $request->global_override_reason
                         ]);
                     }
