@@ -46,20 +46,35 @@
 
         <div class="flex flex-col lg:flex-row gap-6">
 
-            <div
-                class="flex-1 bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-6">
-                <span
-                    class="font-bold text-securx-navy border-b sm:border-b-0 sm:border-r border-gray-200 pb-2 sm:pb-0 sm:pr-6 whitespace-nowrap">Status
-                    Legend</span>
-                <ul class="flex flex-wrap items-center gap-4 text-sm">
-                    <li class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></span>
-                        Pending Approval</li>
-                    <li class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-green-500 shadow-sm"></span>
-                        Confirmed</li>
-                    <li class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-slate-500 shadow-sm"></span>
-                        Completed</li>
-                    <li class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-500 shadow-sm"></span>
-                        Cancelled</li>
+            <div class="flex-1 bg-white/80 backdrop-blur-md border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-6">
+                <span class="font-bold text-securx-navy border-b sm:border-b-0 sm:border-r border-gray-200 pb-2 sm:pb-0 sm:pr-6 whitespace-nowrap">
+                    Status Legend
+                </span>
+                <ul class="flex flex-wrap items-center gap-4 text-sm font-medium text-gray-700">
+                    <li class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></span>
+                        Pending Approval
+                    </li>
+                    
+                    <li class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-green-500 shadow-sm"></span>
+                        Confirmed
+                    </li>
+
+                    <li class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-blue-500 shadow-sm animate-pulse"></span>
+                        Arrived (In-Progress)
+                    </li>
+                    
+                    <li class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-slate-500 shadow-sm"></span>
+                        Completed
+                    </li>
+                    
+                    <li class="flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-full bg-red-500 shadow-sm"></span>
+                        Cancelled
+                    </li>
                 </ul>
             </div>
 

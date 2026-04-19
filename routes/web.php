@@ -303,6 +303,13 @@ Route::middleware(['auth', 'role:secretary'])->prefix('secretary')->name('secret
     // Dashboard
     Route::get('/dashboard', [SecretaryController::class, 'dashboard'])->name('dashboard');
 
+    // Add these missing state-mutation routes for the appointments
+    Route::patch('/appointments/{id}/approve', [SecretaryController::class, 'approveAppointment'])->name('appointments.approve');
+    Route::patch('/appointments/{id}/decline', [SecretaryController::class, 'declineAppointment'])->name('appointments.decline');
+    Route::patch('/appointments/{id}/arrive', [SecretaryController::class, 'arriveAppointment'])->name('appointments.arrive');
+
+    Route::post('/appointments/no-show', [SecretaryController::class, 'markNoShow'])->name('appointments.no-show');
+
     // Calendar
     Route::get('/calendar', [SecretaryController::class, 'calendar'])->name('calendar');
     Route::get('/api/appointments', [SecretaryController::class, 'getAppointments'])->name('api.appointments');

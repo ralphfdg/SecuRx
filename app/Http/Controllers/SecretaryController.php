@@ -17,22 +17,33 @@ class SecretaryController extends Controller
     /**
      * Display the Secretary Dashboard (Fully Dynamic)
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $user = Auth::user();
+        $user = auth()->user();
 
-        // 1. Fetch real Pending Requests (Status = 'pending')
+        // 1. Get the clinic ID assigned to the logged-in secretary
+        $assignedClinicId = $user->secretaryProfile->clinic_id;
+
+        // 2. Paginate Pending Requests (Scoped to any doctor in this specific clinic)
         $pendingRequests = Appointment::with(['patient', 'doctor'])
+            ->whereHas('doctor.doctorProfile', function ($query) use ($assignedClinicId) {
+                $query->where('clinic_id', $assignedClinicId); 
+            })
             ->where('status', 'pending')
             ->orderBy('appointment_date', 'asc')
-            ->get();
+            ->paginate(5, ['*'], 'pending_page')
+            ->appends($request->except('pending_page'));
 
-        // 2. Fetch real Today's Expected Patients (Status = 'confirmed' or 'completed', Date = Today)
+        // 3. Paginate Today's Expected (Scoped to any doctor in this specific clinic)
         $todaysExpected = Appointment::with(['patient', 'doctor'])
-            ->whereDate('appointment_date', Carbon::today())
-            ->whereIn('status', ['confirmed', 'completed'])
-            ->orderBy('appointment_date', 'asc')
-            ->get();
+            ->whereHas('doctor.doctorProfile', function ($query) use ($assignedClinicId) {
+                $query->where('clinic_id', $assignedClinicId); 
+            })
+            ->whereDate('appointment_date', today())
+            ->whereIn('status', ['confirmed', 'in-progress', 'completed'])
+            ->orderBy('appointment_time', 'asc')
+            ->paginate(10, ['*'], 'expected_page')
+            ->appends($request->except('expected_page'));
 
         return view('secretary.dashboard', compact('user', 'pendingRequests', 'todaysExpected'));
     }
@@ -50,13 +61,19 @@ class SecretaryController extends Controller
     /**
      * API Endpoint for FullCalendar to fetch dynamic appointments
      */
-    /**
-     * API Endpoint for FullCalendar to fetch dynamic appointments
-     */
     public function getAppointments(Request $request)
     {
-        // Fetch all appointments dynamically
-        $appointments = Appointment::with(['patient', 'doctor'])->get();
+        $user = auth()->user();
+
+        // 1. Get the clinic ID assigned to the logged-in secretary
+        $assignedClinicId = $user->secretaryProfile->clinic_id;
+
+        // 2. Fetch appointments ONLY for doctors in this secretary's clinic
+        $appointments = Appointment::with(['patient', 'doctor'])
+            ->whereHas('doctor.doctorProfile', function ($query) use ($assignedClinicId) {
+                $query->where('clinic_id', $assignedClinicId); 
+            })
+            ->get();
 
         $events = [];
 
@@ -68,24 +85,36 @@ class SecretaryController extends Controller
             $startDateTime = $date . 'T' . $time;
 
             // 2. SEPARATE APPOINTMENT CONTEXTS VISUALLY
-            if ($appointment->is_rescheduled) {
-                $color = '#8b5cf6'; // Purple for Rescheduled
-                $typeLabel = 'Rescheduled';
-            } elseif ($appointment->appointment_type === 'walk-in') {
-                $color = '#f59e0b'; // Amber for Walk-in
-                $typeLabel = 'Walk-In';
-            } elseif ($appointment->appointment_type === 'online') {
-                $color = '#10b981'; // Green for New Appointment
-                $typeLabel = 'New Appointment';
-            } else {
-                $color = '#3b82f6'; // Blue for Follow-ups
-                $typeLabel = ucfirst($appointment->appointment_type);
+            switch ($appointment->status) {
+                case 'pending':
+                    $color = '#f59e0b'; // Amber/Yellow for Pending
+                    $typeLabel = 'Pending (' . ucfirst($appointment->appointment_type) . ')';
+                    break;
+                case 'confirmed':
+                    $color = '#10b981'; // Green for Confirmed
+                    $typeLabel = 'Confirmed (' . ucfirst($appointment->appointment_type) . ')';
+                    break;
+                case 'in-progress':
+                    $color = '#3b82f6'; // Blue for In-Progress (Arrived)
+                    $typeLabel = 'Arrived (' . ucfirst($appointment->appointment_type) . ')';
+                    break;
+                case 'completed':
+                    $color = '#64748b'; // Slate/Gray for Done
+                    $typeLabel = 'Completed';
+                    break;
+                case 'cancelled':
+                    $color = '#ef4444'; // Red for Cancelled/No-Show
+                    $typeLabel = 'Cancelled';
+                    break;
+                default:
+                    $color = '#9ca3af'; // Default Gray
+                    $typeLabel = ucfirst($appointment->status);
+                    break;
             }
 
-            // Override color if cancelled
-            if ($appointment->status === 'cancelled') {
-                $color = '#ef4444'; // Red
-                $typeLabel .= ' (Cancelled)';
+            // Optional: Still flag rescheduled appointments visually in the title
+            if ($appointment->is_rescheduled) {
+                $typeLabel = '[Rescheduled] ' . $typeLabel;
             }
 
             // Safely grab names
@@ -109,10 +138,6 @@ class SecretaryController extends Controller
 
         return response()->json($events);
     }
-
-    /**
-     * Show the form for creating a new Walk-in Appointment
-     */
     /**
      * Show the form for creating a new Walk-in Appointment
      */
@@ -447,4 +472,40 @@ class SecretaryController extends Controller
         // 5. Redirect back with the success pulse banner
         return back()->with('success', 'Account credentials successfully updated.');
     }
+
+    /**
+     * Approve a pending appointment.
+     */
+    public function approveAppointment($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $appointment->update(['status' => 'confirmed']);
+
+        return back()->with('success', 'Appointment has been approved and confirmed.');
+    }
+
+    /**
+     * Decline a pending appointment.
+     */
+    public function declineAppointment($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $appointment->update(['status' => 'cancelled']);
+
+        return back()->with('success', 'Appointment request has been declined.');
+    }
+
+    /**
+     * Mark a confirmed appointment as 'Arrived/In-Progress'.
+     */
+    public function arriveAppointment($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        // Using 'in-progress' based on your database enum rules
+        $appointment->update(['status' => 'in-progress']); 
+
+        return back()->with('success', 'Patient has arrived and is ready for triage.');
+    }
+
+    
 }
