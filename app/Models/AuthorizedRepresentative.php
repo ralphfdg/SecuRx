@@ -12,6 +12,13 @@ class AuthorizedRepresentative extends Model
 
     protected $guarded = [];
 
+    protected $fillable = [
+        'patient_id',
+        'full_name',
+        'relationship',
+        'is_active',
+    ];
+
     // Add this to convert tinyint to true/false automatically!
     protected $casts = [
         'is_active' => 'boolean',

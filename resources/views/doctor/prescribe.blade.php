@@ -499,7 +499,7 @@
                             <div class="flex-1 flex flex-col min-w-0">
                                 <h1
                                     class="text-base sm:text-lg font-serif font-black text-gray-900 tracking-wide uppercase text-center mb-1 leading-tight">
-                                    {{ $doctorProfile->clinic->clinic_name ?? 'MEDICAL CLINIC INC.' }}
+                                    {{ $doctorProfile->clinic->clinic_name ?? 'SecuRx' }}
                                 </h1>
 
                                 <div

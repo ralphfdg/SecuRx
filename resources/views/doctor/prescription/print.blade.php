@@ -7,22 +7,38 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <style>
-        /* Force standard A5 medical pad size */
+        /* Force strict A5 medical pad size and let HTML handle the safe zones */
         @page {
-            size: A5 portrait;
-            margin: 10mm;
+            size: 148mm 210mm;
+            margin: 0; 
         }
         
-        /* Print-specific overrides to preserve Tailwind colors */
+        /* Print-specific overrides to preserve Tailwind colors and lock the layout */
         @media print {
+            html, body { 
+                background-color: white !important; 
+                margin: 0 !important; 
+                padding: 0 !important; 
+                width: 148mm;
+                height: 210mm;
+            }
             .no-print { display: none !important; }
-            body { background-color: white !important; margin: 0; padding: 0; display: block; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .print-canvas { box-shadow: none !important; border: none !important; margin: 0 auto !important; }
+            
+            .print-canvas { 
+                box-shadow: none !important; 
+                border: none !important; 
+                margin: 0 !important; 
+                width: 148mm !important; 
+                height: 210mm !important; 
+                max-width: 148mm !important;
+                /* Replicate the page margin here so background elements stay contained */
+                padding: 8mm !important;
+            }
         }
     </style>
 </head>
-<body class="bg-slate-100 flex justify-center items-start min-h-screen py-8 font-sans">
+<body class="bg-slate-200 flex justify-center items-start min-h-screen py-8 font-sans">
 
     <div class="fixed top-6 right-6 flex gap-3 no-print z-50">
         <button onclick="window.close()" class="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2 px-5 rounded-xl shadow-sm transition text-sm">
@@ -34,11 +50,11 @@
         </button>
     </div>
 
-    <div class="print-canvas bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)] border border-gray-200 relative flex flex-col w-full max-w-[148mm] min-h-[210mm] rounded-sm overflow-hidden">
+    <div class="print-canvas bg-white shadow-2xl relative flex flex-col w-[148mm] min-h-[210mm] rounded-sm box-border">
         
         <div class="h-2 w-full bg-securx-navy shrink-0"></div>
 
-        <div class="p-5 flex-1 flex flex-col relative z-10 min-h-0">
+        <div class="p-5 flex-1 flex flex-col relative z-10 box-border">
             
             <div class="w-full flex justify-center mb-3 shrink-0">
                 <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx" class="h-3 w-auto">
@@ -150,19 +166,23 @@
                     </div>
 
                     <div class="text-left w-[140px] ml-auto flex flex-col font-serif">
-                        <div class="relative z-0 space-y-1 text-[9px]">
-                            <div class="relative">
-                                <span class="text-gray-400 tracking-tighter">__________________, MD</span>
-                                <span class="absolute left-0.5 bottom-0 font-sans font-bold text-blue-800 uppercase opacity-90 truncate max-w-[120px] inline-block">{{ $prescription->doctor->name }}</span>
+                        <div class="space-y-1 text-[9px]">
+                            
+                            <div class="grid grid-cols-1 grid-rows-1 items-end">
+                                <span class="col-start-1 row-start-1 text-gray-400 tracking-tighter">__________________, MD</span>
+                                <span class="col-start-1 row-start-1 pl-0.5 font-sans font-bold text-blue-800 uppercase opacity-90 truncate max-w-[120px]">{{ $prescription->doctor->name }}</span>
                             </div>
-                            <div class="relative">
-                                <span class="text-gray-400">Lic. _______________</span>
-                                <span class="absolute left-5 bottom-0 font-sans font-bold text-blue-800 opacity-90">{{ $prescription->doctor->doctorProfile->prc_number ?? 'N/A' }}</span>
+                            
+                            <div class="grid grid-cols-1 grid-rows-1 items-end">
+                                <span class="col-start-1 row-start-1 text-gray-400">Lic. _______________</span>
+                                <span class="col-start-1 row-start-1 pl-5 font-sans font-bold text-blue-800 opacity-90">{{ $prescription->doctor->doctorProfile->prc_number ?? 'N/A' }}</span>
                             </div>
-                            <div class="relative">
-                                <span class="text-gray-400">PTR _______________</span>
-                                <span class="absolute left-6 bottom-0 font-sans font-bold text-blue-800 opacity-90">{{ $prescription->doctor->doctorProfile->ptr_number ?? 'N/A' }}</span>
+                            
+                            <div class="grid grid-cols-1 grid-rows-1 items-end">
+                                <span class="col-start-1 row-start-1 text-gray-400">PTR _______________</span>
+                                <span class="col-start-1 row-start-1 pl-6 font-sans font-bold text-blue-800 opacity-90">{{ $prescription->doctor->doctorProfile->ptr_number ?? 'N/A' }}</span>
                             </div>
+                            
                         </div>
                     </div>
                 </div>

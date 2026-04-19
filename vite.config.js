@@ -23,6 +23,8 @@ export default defineConfig({
                 'resources/js/dataset-management.js',
                 'resources/js/specializations.js',
                 'resources/js/doctor-history.js',
+                'resources/js/pharmacist-scanner.js',
+                'resources/js/pharmacist-dispense.js',
             ],
             refresh: true,
         }),
