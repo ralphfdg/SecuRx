@@ -269,12 +269,23 @@ class SecretaryController extends Controller
     /**
      * Display the Patient Directory
      */
-    public function patients(Request $request)
+public function patients(Request $request)
     {
         $user = Auth::user();
+        $assignedClinicId = $user->secretaryProfile->clinic_id;
 
-        // Base query for patients, eager loading their medical profile
-        $query = User::where('role', 'patient')->with('patientProfile');
+        $query = User::where('role', 'patient')
+            ->with('patientProfile')
+            ->where(function ($mainQuery) use ($assignedClinicId) {
+                // Check A: Direct Clinic Link
+                $mainQuery->whereHas('patientProfile', function ($q) use ($assignedClinicId) {
+                    $q->where('clinic_id', $assignedClinicId);
+                })
+                // Check B: Linked by patient appointment history (Fixed relationship name)
+                ->orWhereHas('patientAppointments.doctor.doctorProfile', function ($q) use ($assignedClinicId) {
+                    $q->where('clinic_id', $assignedClinicId);
+                });
+            });
 
         // Simple Search functionality
         if ($request->has('search') && $request->search != '') {
@@ -286,14 +297,15 @@ class SecretaryController extends Controller
             });
         }
 
-        // Paginate results (15 per page)
-        $patients = $query->orderBy('last_name', 'asc')->paginate(15);
+        $patients = $query->orderBy('last_name', 'asc')
+            ->paginate(15)
+            ->appends($request->except('page'));
 
         return view('secretary.patients', compact('user', 'patients'));
     }
 
     /**
-     * Store a New Patient (Perfectly Mapped)
+     * Store a New Patient (Perfectly Mapped with Clinic Link)
      */
     public function storePatient(Request $request)
     {
@@ -320,6 +332,9 @@ class SecretaryController extends Controller
 
         $userId = (string) Str::uuid();
 
+        // [NEW] Get the clinic ID assigned to the logged-in secretary
+        $assignedClinicId = auth()->user()->secretaryProfile->clinic_id;
+
         // 1. Create Core User Account
         DB::table('users')->insert([
             'id' => $userId,
@@ -340,10 +355,11 @@ class SecretaryController extends Controller
             'updated_at' => now(),
         ]);
 
-        // 2. Create Patient Profile
+        // 2. Create Patient Profile WITH the Clinic ID
         DB::table('patient_profiles')->insert([
             'id' => (string) Str::uuid(),
             'user_id' => $userId,
+            'clinic_id' => $assignedClinicId, // <--- [NEW] DIRECT CLINIC LINK ADDED HERE
             'height' => $request->height,
             'weight' => $request->weight,
             'address' => $request->address,
@@ -357,7 +373,7 @@ class SecretaryController extends Controller
             'updated_at' => now(),
         ]);
 
-        return back()->with('success', 'Patient profile successfully created and linked.');
+        return back()->with('success', 'Patient profile successfully created and linked to this clinic.');
     }
 
     /**
