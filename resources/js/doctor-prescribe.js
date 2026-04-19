@@ -16,6 +16,8 @@ export default function consultationConsole(config) {
         showPatientName: false,
         nextAppointment: "",
         generalInstructions: "",
+        overrideExpiry: false,
+        customExpiryDate: "",
 
         medications: [],
         newMed: {
@@ -32,6 +34,8 @@ export default function consultationConsole(config) {
             sig: "",
             quantity: null,
             est_price: null,
+            is_maintenance: false,
+            max_refills: 0,
         },
         showGenerateModal: false,
         isGenerating: false,
@@ -339,6 +343,8 @@ export default function consultationConsole(config) {
                 sig: "",
                 quantity: null,
                 est_price: null,
+                is_maintenance: false,
+                max_refills: 0,
             };
 
             // 5. Clear the Search UI
@@ -369,6 +375,8 @@ export default function consultationConsole(config) {
                         print_patient_name: this.showPatientName,
                         general_instructions: this.generalInstructions,
                         medications: this.medications,
+                        override_expiry: this.overrideExpiry,
+                        custom_expiry_date: this.customExpiryDate,
                     }),
                 });
                 const data = await response.json();
