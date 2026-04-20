@@ -9,7 +9,9 @@ use App\Http\Controllers\Doctor\QueueController;
 use App\Http\Controllers\Doctor\TemplateController;
 use App\Http\Controllers\GuestVerificationController;
 use App\Http\Controllers\PatientController;
-use App\Http\Controllers\PharmacistController;
+use App\Http\Controllers\Pharmacist\PharmacistController;
+use App\Http\Controllers\Pharmacist\DashboardController;
+use App\Http\Controllers\Pharmacist\LogsController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SecretaryController;
 use Illuminate\Support\Facades\Route;
@@ -226,9 +228,7 @@ Route::middleware(['auth', 'role:doctor'])->prefix('doctor')->name('doctor.')->g
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('pharmacist.')->group(function () {
-    Route::get('/dashboard', function () {
-        return view('pharmacist.dashboard');
-    })->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Scanner
     Route::get('/scanner', [PharmacistController::class, 'scanner'])->name('scanner');
@@ -240,9 +240,8 @@ Route::middleware(['auth', 'role:pharmacist'])->prefix('pharmacist')->name('phar
         Route::post('/dispense/{prescription_id}', [PharmacistController::class, 'processDispense'])->name('api.dispense');
     });
 
-    Route::get('/', function () {
-        return view('logs');
-    })->name('logs');
+    // Logs
+    Route::get('/logs', [LogsController::class, 'index'])->name('logs');
 
     Route::get('/settings', function () {
         return view('pharmacist.settings');

@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Pharmacist;
 
+use App\Http\Controllers\Controller;
 use App\Models\DispensingLog;
 use App\Models\PatientAllergy;
 use App\Models\Prescription;

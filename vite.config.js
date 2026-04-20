@@ -25,6 +25,7 @@ export default defineConfig({
                 'resources/js/doctor-history.js',
                 'resources/js/pharmacist-scanner.js',
                 'resources/js/pharmacist-dispense.js',
+                'resources/js/pharmacist-logs.js',
             ],
             refresh: true,
         }),

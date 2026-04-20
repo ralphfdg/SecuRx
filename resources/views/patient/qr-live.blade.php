@@ -135,7 +135,7 @@
                                             </svg>
 
                                             <p id="dpri-price-{{ $index }}" class="sensitive-doh-price text-[10px] sm:text-[11px] text-green-700 font-sans font-semibold tracking-wide blur-[4px] select-none transition-all duration-300 ease-in-out">
-                                                DOH Price: ₱{{ number_format($item->medication->latestDpriRecord->median_price, 2) }}
+                                                DOH Est. Price: ₱{{ number_format($item->medication->latestDpriRecord->median_price, 2) }}
                                             </p>
                                         </div>
                                     @endif

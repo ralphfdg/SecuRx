@@ -22,20 +22,19 @@
         class="w-64 glass-panel m-4 flex flex-col z-20 hidden md:flex h-[calc(100vh-2rem)] border-r border-gray-200/50 bg-white/60 rounded-2xl shadow-sm">
 
         <div class="p-6 border-b border-gray-200/50 flex justify-center shrink-0">
-            <a href="{{ route('home') }}" class="relative inline-block group pt-2 pb-1">
+            <a href="{{ route('pharmacist.dashboard') }}" class="relative inline-block group pt-2 pb-1">
                 <img src="{{ asset('images/logo-1.png') }}" alt="SecuRx Logo"
                     class="h-10 w-auto object-contain transition-transform duration-300 group-hover:scale-105">
-                <span
-                    class="absolute -bottom-2 right-0 text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">RPh</span>
+                <span class="absolute -bottom-2 right-0 text-[10px] font-extrabold uppercase tracking-widest text-emerald-600">RPh</span>
             </a>
         </div>
 
         <nav class="flex-1 p-4 space-y-1.5 overflow-y-auto custom-scrollbar">
             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 px-3">Dispensary</p>
 
-            <a href="{{ route('pharmacist.dashboard') ?? '#' }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-securx-cyan/10 text-securx-navy font-bold transition shadow-sm">
-                <svg class="w-5 h-5 text-securx-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ route('pharmacist.dashboard') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition shadow-sm {{ request()->routeIs('pharmacist.dashboard') ? 'bg-securx-cyan/10 text-securx-navy font-bold' : 'text-gray-500 hover:bg-white hover:text-securx-navy font-semibold group' }}">
+                <svg class="w-5 h-5 {{ request()->routeIs('pharmacist.dashboard') ? 'text-securx-cyan' : 'text-gray-400 group-hover:text-securx-cyan transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
                     </path>
@@ -43,10 +42,9 @@
                 Dashboard
             </a>
 
-            <a href="{{ route('pharmacist.scanner') ?? '#' }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-white hover:text-securx-navy hover:shadow-sm font-semibold transition group">
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-securx-cyan transition-colors" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ route('pharmacist.scanner') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('pharmacist.scanner', 'pharmacist.dispense') ? 'bg-securx-cyan/10 text-securx-navy font-bold shadow-sm' : 'text-gray-500 hover:bg-white hover:text-securx-navy hover:shadow-sm font-semibold group' }}">
+                <svg class="w-5 h-5 {{ request()->routeIs('pharmacist.scanner', 'pharmacist.dispense') ? 'text-securx-cyan' : 'text-gray-400 group-hover:text-securx-cyan transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z">
                     </path>
@@ -56,10 +54,9 @@
 
             <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3 px-3 pt-5">Records & Audit</p>
 
-            <a href="{{ route('pharmacist.logs') ?? '#' }}"
-                class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-gray-500 hover:bg-white hover:text-securx-navy hover:shadow-sm font-semibold transition group">
-                <svg class="w-5 h-5 text-gray-400 group-hover:text-securx-cyan transition-colors" fill="none"
-                    stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ route('pharmacist.logs') }}"
+                class="flex items-center gap-3 px-3 py-2.5 rounded-xl transition {{ request()->routeIs('pharmacist.logs') ? 'bg-securx-cyan/10 text-securx-navy font-bold shadow-sm' : 'text-gray-500 hover:bg-white hover:text-securx-navy hover:shadow-sm font-semibold group' }}">
+                <svg class="w-5 h-5 {{ request()->routeIs('pharmacist.logs') ? 'text-securx-cyan' : 'text-gray-400 group-hover:text-securx-cyan transition-colors' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
                     </path>
@@ -70,17 +67,18 @@
 
         <div class="p-4 border-t border-gray-200/50 flex flex-col gap-2 shrink-0">
 
-            <a href="{{ route('pharmacist.settings') ?? '#' }}"
-                class="flex items-center gap-3 w-full p-2.5 rounded-xl hover:bg-white/80 transition group cursor-pointer border border-transparent hover:border-gray-200 hover:shadow-sm">
-                <div
-                    class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-black text-sm shadow-inner group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
-                    JR
+            <a href="{{ route('pharmacist.settings') }}"
+                class="flex items-center gap-3 w-full p-2.5 rounded-xl transition group cursor-pointer border {{ request()->routeIs('pharmacist.settings') ? 'bg-white border-gray-200 shadow-sm' : 'border-transparent hover:bg-white/80 hover:border-gray-200 hover:shadow-sm' }}">
+                <div class="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-black text-sm shadow-inner group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
+                    {{ strtoupper(substr(auth()->user()->first_name ?? 'P', 0, 1) . substr(auth()->user()->last_name ?? 'H', 0, 1)) }}
                 </div>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-bold text-securx-navy truncate">Pharm. Rizal</p>
-                    <p
-                        class="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-emerald-600 transition-colors">
-                        Profile & Settings</p>
+                    <p class="text-sm font-bold text-securx-navy truncate">
+                        Pharm. {{ auth()->user()->last_name ?? 'User' }}
+                    </p>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider group-hover:text-emerald-600 transition-colors">
+                        Profile & Settings
+                    </p>
                 </div>
                 <svg class="w-4 h-4 text-gray-300 group-hover:text-emerald-500 transition-transform group-hover:translate-x-1 shrink-0"
                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +86,7 @@
                 </svg>
             </a>
 
-            <form method="POST" action="{{ route('logout') ?? '#' }}" class="w-full">
+            <form method="POST" action="{{ route('logout') }}" class="w-full">
                 @csrf
                 <button type="submit"
                     class="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 hover:text-red-700 transition border border-transparent hover:border-red-100">
@@ -100,7 +98,6 @@
                     Log Out
                 </button>
             </form>
-
         </div>
     </aside>
 

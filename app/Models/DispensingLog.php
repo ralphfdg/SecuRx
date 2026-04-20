@@ -39,6 +39,11 @@ class DispensingLog extends Model
         return $this->belongsTo(PrescriptionItem::class, 'prescription_item_id');
     }
 
+    public function prescription()
+    {
+        return $this->belongsTo(Prescription::class, 'prescription_id');
+    }
+
     public function pharmacist()
     {
         return $this->belongsTo(User::class, 'pharmacist_id');
