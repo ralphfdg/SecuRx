@@ -98,7 +98,15 @@ class DoctorController extends Controller
 
     public function directory(Request $request)
     {
-        $query = User::where('role', 'patient')->with('patientProfile');
+        // Get the logged-in doctor's clinic ID
+        $clinicId = Auth::user()->doctorProfile->clinic_id;
+
+        // Filter patients to only those who belong to the doctor's clinic
+        $query = User::where('role', 'patient')
+            ->whereHas('patientProfile', function ($q) use ($clinicId) {
+                $q->where('clinic_id', $clinicId);
+            })
+            ->with('patientProfile');
 
         // Handle Search
         if ($request->filled('search')) {
@@ -114,12 +122,9 @@ class DoctorController extends Controller
         // Handle Sorting
         if ($request->filled('sort')) {
             switch ($request->sort) {
-                case 'z-a': $query->orderBy('last_name', 'desc');
-                    break;
-                case 'newest': $query->orderBy('created_at', 'desc');
-                    break;
-                default: $query->orderBy('last_name', 'asc');
-                    break; // a-z
+                case 'z-a': $query->orderBy('last_name', 'desc'); break;
+                case 'newest': $query->orderBy('created_at', 'desc'); break;
+                default: $query->orderBy('last_name', 'asc'); break; // a-z
             }
         } else {
             $query->orderBy('last_name', 'asc');

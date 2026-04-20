@@ -28,7 +28,6 @@ class PatientProfile extends Model
     {
         return $this->belongsTo(Clinic::class, 'clinic_id');
     }
-}
 
     public function authorizedRepresentatives()
     {
